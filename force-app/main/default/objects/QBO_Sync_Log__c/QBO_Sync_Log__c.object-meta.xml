@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <deploymentStatus>Deployed</deploymentStatus>
+    <enableActivities>false</enableActivities>
+    <enableReports>true</enableReports>
+    <label>QBO Sync Log</label>
+    <nameField>
+        <displayFormat>LOG-{000000}</displayFormat>
+        <label>QBO Sync Log Number</label>
+        <type>AutoNumber</type>
+    </nameField>
+    <pluralLabel>QBO Sync Logs</pluralLabel>
+    <sharingModel>ReadWrite</sharingModel>
+</CustomObject>
