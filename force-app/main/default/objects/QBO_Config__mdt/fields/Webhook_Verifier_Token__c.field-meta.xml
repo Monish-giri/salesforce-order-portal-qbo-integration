@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Webhook_Verifier_Token__c</fullName>
+    <label>Webhook Verifier Token</label>
+    <length>255</length>
+    <type>Text</type>
+</CustomField>
