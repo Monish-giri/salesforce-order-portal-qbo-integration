@@ -11,4 +11,5 @@
     </nameField>
     <pluralLabel>QBO Sync Logs</pluralLabel>
     <sharingModel>ReadWrite</sharingModel>
+    <externalSharingModel>Private</externalSharingModel>
 </CustomObject>
