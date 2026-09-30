@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Return_Status__c</fullName>
+    <label>Return Status</label>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>None</fullName><default>true</default><label>None</label></value>
+            <value><fullName>Requested</fullName><default>false</default><label>Requested</label></value>
+            <value><fullName>Approved</fullName><default>false</default><label>Approved</label></value>
+            <value><fullName>Credited/Refunded</fullName><default>false</default><label>Credited/Refunded</label></value>
+            <value><fullName>Rejected</fullName><default>false</default><label>Rejected</label></value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>
