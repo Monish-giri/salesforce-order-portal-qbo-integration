@@ -3,6 +3,10 @@
     <label>Default</label>
     <protected>false</protected>
     <values>
+        <field>Realm_Id__c</field>
+        <value xsi:type="xsd:string">SET_IN_ORG</value>
+    </values>
+    <values>
         <field>Minor_Version__c</field>
         <value xsi:type="xsd:string">75</value>
     </values>
