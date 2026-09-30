@@ -11,4 +11,5 @@
     </nameField>
     <pluralLabel>Return Requests</pluralLabel>
     <sharingModel>ReadWrite</sharingModel>
+    <externalSharingModel>Private</externalSharingModel>
 </CustomObject>
