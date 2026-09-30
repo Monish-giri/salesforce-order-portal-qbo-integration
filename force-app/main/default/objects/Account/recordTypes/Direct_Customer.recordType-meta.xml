@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <RecordType xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Direct_Customer</fullName>
     <active>true</active>
     <description>Account record type for customers who place orders directly.</description>
     <label>Direct Customer</label>
