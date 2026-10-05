@@ -185,7 +185,9 @@
 .quantity-controls {
     display: flex;
     align-items: center;
+    justify-content: flex-end;
     gap: 0.25rem;
+    min-height: 2rem;
 }
 
 .quantity-button {
@@ -193,6 +195,7 @@
     width: 2rem;
     height: 2rem;
     flex: 0 0 2rem;
+    box-sizing: border-box;
     place-items: center;
     padding: 0;
     border: 1px solid #cbd5e1;
@@ -210,7 +213,24 @@
 }
 
 .quantity-input {
+    box-sizing: border-box;
     width: 5rem;
+    height: 2rem;
+    margin: 0;
+    padding: 0 0.5rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 0.45rem;
+    background: #ffffff;
+    color: #172033;
+    font-size: 0.85rem;
+    line-height: 2rem;
+    text-align: center;
+}
+
+.quantity-input:focus {
+    outline: none;
+    border-color: #0b5cab;
+    box-shadow: 0 0 0 1px #0b5cab;
 }
 
 .confirm-cart-button {
