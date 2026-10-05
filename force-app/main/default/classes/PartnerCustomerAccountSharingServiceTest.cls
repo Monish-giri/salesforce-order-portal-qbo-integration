@@ -13,27 +13,18 @@ private class PartnerCustomerAccountSharingServiceTest {
         insert customerAccount;
     }
 
-    private static void configureTestSharing(
-        Id partnerAccountAId,
-        Id partnerAccountBId,
-        Id groupAId,
-        Id groupBId
-    ) {
+    private static void configureTestSharing(Id partnerAccountAId, Id partnerAccountBId) {
+        Id currentUserId = UserInfo.getUserId();
+
         PartnerCustomerAccountSharingService.testPartnerRoleIdsByPartnerAccount =
             new Map<Id, Set<Id>>{
-                partnerAccountAId => new Set<Id>{ partnerAccountAId },
-                partnerAccountBId => new Set<Id>{ partnerAccountBId }
-            };
-
-        PartnerCustomerAccountSharingService.testRoleGroupByRoleId =
-            new Map<Id, Id>{
-                partnerAccountAId => groupAId,
-                partnerAccountBId => groupBId
+                partnerAccountAId => new Set<Id>{ currentUserId },
+                partnerAccountBId => new Set<Id>{ currentUserId }
             };
     }
 
     @IsTest
-    static void createsReadShareForPartnerRoleGroup() {
+    static void createsReadShareForPartnerUser() {
         Account customerAccount = [
             SELECT Id, Partner_Account__c
             FROM Account
@@ -41,22 +32,7 @@ private class PartnerCustomerAccountSharingServiceTest {
             LIMIT 1
         ];
 
-        Group partnerRoleGroup = new Group(
-            Name = 'Test Partner Role Group A',
-            Type = 'Regular'
-        );
-        insert partnerRoleGroup;
-
-        PartnerCustomerAccountSharingService.testPartnerRoleIdsByPartnerAccount =
-            new Map<Id, Set<Id>>{
-                customerAccount.Partner_Account__c =>
-                    new Set<Id>{ customerAccount.Partner_Account__c }
-            };
-
-        PartnerCustomerAccountSharingService.testRoleGroupByRoleId =
-            new Map<Id, Id>{
-                customerAccount.Partner_Account__c => partnerRoleGroup.Id
-            };
+        configureTestSharing(customerAccount.Partner_Account__c, customerAccount.Partner_Account__c);
 
         Test.startTest();
         PartnerCustomerAccountSharingService.syncAccounts(
@@ -69,12 +45,13 @@ private class PartnerCustomerAccountSharingServiceTest {
             SELECT Id, AccountId, UserOrGroupId, AccountAccessLevel, RowCause
             FROM AccountShare
             WHERE AccountId = :customerAccount.Id
-            AND UserOrGroupId = :partnerRoleGroup.Id
+            AND UserOrGroupId = :UserInfo.getUserId()
+            AND RowCause = 'Manual'
             LIMIT 1
         ];
 
         System.assertEquals(customerAccount.Id, share.AccountId);
-        System.assertEquals(partnerRoleGroup.Id, share.UserOrGroupId);
+        System.assertEquals(UserInfo.getUserId(), share.UserOrGroupId);
         System.assertEquals('Read', share.AccountAccessLevel);
         System.assertEquals('Manual', String.valueOf(share.RowCause));
     }
@@ -88,22 +65,7 @@ private class PartnerCustomerAccountSharingServiceTest {
             LIMIT 1
         ];
 
-        Group partnerRoleGroup = new Group(
-            Name = 'Test Partner Role Group Duplicate',
-            Type = 'Regular'
-        );
-        insert partnerRoleGroup;
-
-        PartnerCustomerAccountSharingService.testPartnerRoleIdsByPartnerAccount =
-            new Map<Id, Set<Id>>{
-                customerAccount.Partner_Account__c =>
-                    new Set<Id>{ customerAccount.Partner_Account__c }
-            };
-
-        PartnerCustomerAccountSharingService.testRoleGroupByRoleId =
-            new Map<Id, Id>{
-                customerAccount.Partner_Account__c => partnerRoleGroup.Id
-            };
+        configureTestSharing(customerAccount.Partner_Account__c, customerAccount.Partner_Account__c);
 
         Test.startTest();
         PartnerCustomerAccountSharingService.syncAccounts(
@@ -120,7 +82,7 @@ private class PartnerCustomerAccountSharingServiceTest {
             SELECT COUNT()
             FROM AccountShare
             WHERE AccountId = :customerAccount.Id
-            AND UserOrGroupId = :partnerRoleGroup.Id
+            AND UserOrGroupId = :UserInfo.getUserId()
             AND RowCause = 'Manual'
         ];
 
@@ -128,7 +90,7 @@ private class PartnerCustomerAccountSharingServiceTest {
     }
 
     @IsTest
-    static void removesOldPartnerRoleShareWhenPartnerChanges() {
+    static void removesLegacyRoleGroupShare() {
         Account customerAccount = [
             SELECT Id, Partner_Account__c
             FROM Account
@@ -136,64 +98,47 @@ private class PartnerCustomerAccountSharingServiceTest {
             LIMIT 1
         ];
 
-        Id oldPartnerAccountId = customerAccount.Partner_Account__c;
-
-        Account newPartnerAccount = [
-            SELECT Id
-            FROM Account
-            WHERE Name = 'Test Partner B'
-            LIMIT 1
-        ];
-
-        Group partnerRoleGroupA = new Group(
-            Name = 'Test Partner Role Group Old',
+        Group legacyRoleGroup = new Group(
+            Name = 'Test Legacy Partner Role Group',
             Type = 'Regular'
         );
-        Group partnerRoleGroupB = new Group(
-            Name = 'Test Partner Role Group New',
-            Type = 'Regular'
-        );
-        insert new List<Group>{ partnerRoleGroupA, partnerRoleGroupB };
+        insert legacyRoleGroup;
 
-        configureTestSharing(
-            oldPartnerAccountId,
-            newPartnerAccount.Id,
-            partnerRoleGroupA.Id,
-            partnerRoleGroupB.Id
+        insert new AccountShare(
+            AccountId = customerAccount.Id,
+            UserOrGroupId = legacyRoleGroup.Id,
+            AccountAccessLevel = 'Read',
+            CaseAccessLevel = 'None',
+            OpportunityAccessLevel = 'None',
+            RowCause = 'Manual'
         );
+
+        configureTestSharing(customerAccount.Partner_Account__c, customerAccount.Partner_Account__c);
 
         Test.startTest();
         PartnerCustomerAccountSharingService.syncAccounts(
             new Set<Id>{ customerAccount.Id },
-            new Set<Id>{ oldPartnerAccountId }
-        );
-
-        customerAccount.Partner_Account__c = newPartnerAccount.Id;
-        update customerAccount;
-
-        PartnerCustomerAccountSharingService.syncAccounts(
-            new Set<Id>{ customerAccount.Id },
-            new Set<Id>{ oldPartnerAccountId, newPartnerAccount.Id }
+            new Set<Id>{ customerAccount.Partner_Account__c }
         );
         Test.stopTest();
 
-        Integer oldShareCount = [
+        Integer legacyShareCount = [
             SELECT COUNT()
             FROM AccountShare
             WHERE AccountId = :customerAccount.Id
-            AND UserOrGroupId = :partnerRoleGroupA.Id
+            AND UserOrGroupId = :legacyRoleGroup.Id
             AND RowCause = 'Manual'
         ];
 
-        Integer newShareCount = [
+        Integer userShareCount = [
             SELECT COUNT()
             FROM AccountShare
             WHERE AccountId = :customerAccount.Id
-            AND UserOrGroupId = :partnerRoleGroupB.Id
+            AND UserOrGroupId = :UserInfo.getUserId()
             AND RowCause = 'Manual'
         ];
 
-        System.assertEquals(0, oldShareCount);
-        System.assertEquals(1, newShareCount);
+        System.assertEquals(0, legacyShareCount);
+        System.assertEquals(1, userShareCount);
     }
 }
