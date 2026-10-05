@@ -91,13 +91,13 @@ export default class OrderPortal extends LightningElement {
         if (existing) {
             this.cartItems = this.cartItems.map(item =>
                 item.pricebookEntryId === product.pricebookEntryId
-                    ? { ...item, quantity: item.quantity + 1 }
+                    ? { ...item, quantity: item.quantity + 1, lineTotal: item.unitPrice * (item.quantity + 1) }
                     : item
             );
         } else {
             this.cartItems = [
                 ...this.cartItems,
-                { ...product, quantity: 1 }
+                { ...product, quantity: 1, lineTotal: product.unitPrice }
             ];
         }
     }
