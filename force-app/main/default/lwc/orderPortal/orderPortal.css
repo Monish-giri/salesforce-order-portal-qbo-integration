@@ -366,3 +366,74 @@
 .nav-count { margin-left:auto; min-width:1.25rem; padding:.12rem .3rem; border-radius:999px; background:#263246; color:#aeb8c9; font-size:.58rem; text-align:center; }
 @media (max-width:900px) { .cart-layout { grid-template-columns:1fr; } }
 @media (max-width:700px) { .cart-item { grid-template-columns:2.5rem 1fr auto; } .quantity-control { grid-column:2; justify-self:start; } .line-total { grid-column:3; grid-row:1 / span 2; } .remove-button { grid-column:3; grid-row:3; justify-self:end; } .view-heading { align-items:flex-start; flex-direction:column; } }
+
+
+.order-confirmation {
+    display: flex;
+    min-height: 26rem;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 2rem;
+    border: 1px solid #dce7f3;
+    border-radius: 1rem;
+    background: #ffffff;
+    text-align: center;
+    box-shadow: 0 8px 24px rgba(16, 24, 40, 0.045);
+}
+
+.confirmation-icon {
+    display: grid;
+    width: 4.2rem;
+    height: 4.2rem;
+    margin-bottom: 1rem;
+    place-items: center;
+    border-radius: 1.2rem;
+    background: #ecfdf3;
+}
+
+.confirmation-icon lightning-icon {
+    --slds-c-icon-color-foreground-default: #12b76a;
+}
+
+.order-confirmation h1 {
+    margin: 0;
+    color: #172033;
+    font-size: 1.55rem;
+}
+
+.order-confirmation > p:not(.section-kicker) {
+    max-width: 32rem;
+    margin: 0.55rem 0 0;
+    color: #667085;
+    font-size: 0.8rem;
+    line-height: 1.5;
+}
+
+.confirmation-total {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-top: 1.1rem;
+    padding: 0.7rem 1rem;
+    border: 1px solid #e0e6ee;
+    border-radius: 0.7rem;
+    background: #f8fafc;
+    color: #667085;
+    font-size: 0.72rem;
+}
+
+.confirmation-total lightning-formatted-number {
+    color: #172033;
+    font-size: 1rem;
+    font-weight: 800;
+}
+
+.confirmation-note {
+    font-size: 0.68rem !important;
+}
+
+.order-confirmation .back-button {
+    width: auto;
+    min-width: 9rem;
+}
