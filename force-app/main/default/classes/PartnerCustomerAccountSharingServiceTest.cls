@@ -13,6 +13,25 @@ private class PartnerCustomerAccountSharingServiceTest {
         insert customerAccount;
     }
 
+    private static void configureTestSharing(
+        Id partnerAccountAId,
+        Id partnerAccountBId,
+        Id groupAId,
+        Id groupBId
+    ) {
+        PartnerCustomerAccountSharingService.testPartnerRoleIdsByPartnerAccount =
+            new Map<Id, Set<Id>>{
+                partnerAccountAId => new Set<Id>{ partnerAccountAId },
+                partnerAccountBId => new Set<Id>{ partnerAccountBId }
+            };
+
+        PartnerCustomerAccountSharingService.testRoleGroupByRoleId =
+            new Map<Id, Id>{
+                partnerAccountAId => groupAId,
+                partnerAccountBId => groupBId
+            };
+    }
+
     @IsTest
     static void createsReadShareForPartnerRoleGroup() {
         Account customerAccount = [
@@ -28,16 +47,15 @@ private class PartnerCustomerAccountSharingServiceTest {
         );
         insert partnerRoleGroup;
 
-        Id roleId = UserInfo.getUserId();
-
         PartnerCustomerAccountSharingService.testPartnerRoleIdsByPartnerAccount =
             new Map<Id, Set<Id>>{
-                customerAccount.Partner_Account__c => new Set<Id>{ roleId }
+                customerAccount.Partner_Account__c =>
+                    new Set<Id>{ customerAccount.Partner_Account__c }
             };
 
         PartnerCustomerAccountSharingService.testRoleGroupByRoleId =
             new Map<Id, Id>{
-                roleId => partnerRoleGroup.Id
+                customerAccount.Partner_Account__c => partnerRoleGroup.Id
             };
 
         Test.startTest();
@@ -76,16 +94,15 @@ private class PartnerCustomerAccountSharingServiceTest {
         );
         insert partnerRoleGroup;
 
-        Id roleId = UserInfo.getUserId();
-
         PartnerCustomerAccountSharingService.testPartnerRoleIdsByPartnerAccount =
             new Map<Id, Set<Id>>{
-                customerAccount.Partner_Account__c => new Set<Id>{ roleId }
+                customerAccount.Partner_Account__c =>
+                    new Set<Id>{ customerAccount.Partner_Account__c }
             };
 
         PartnerCustomerAccountSharingService.testRoleGroupByRoleId =
             new Map<Id, Id>{
-                roleId => partnerRoleGroup.Id
+                customerAccount.Partner_Account__c => partnerRoleGroup.Id
             };
 
         Test.startTest();
@@ -119,7 +136,9 @@ private class PartnerCustomerAccountSharingServiceTest {
             LIMIT 1
         ];
 
-        Account partnerAccountB = [
+        Id oldPartnerAccountId = customerAccount.Partner_Account__c;
+
+        Account newPartnerAccount = [
             SELECT Id
             FROM Account
             WHERE Name = 'Test Partner B'
@@ -136,33 +155,25 @@ private class PartnerCustomerAccountSharingServiceTest {
         );
         insert new List<Group>{ partnerRoleGroupA, partnerRoleGroupB };
 
-        Id roleIdA = UserInfo.getUserId();
-        Id roleIdB = UserInfo.getUserId();
-
-        PartnerCustomerAccountSharingService.testPartnerRoleIdsByPartnerAccount =
-            new Map<Id, Set<Id>>{
-                customerAccount.Partner_Account__c => new Set<Id>{ roleIdA },
-                partnerAccountB.Id => new Set<Id>{ roleIdB }
-            };
-
-        PartnerCustomerAccountSharingService.testRoleGroupByRoleId =
-            new Map<Id, Id>{
-                roleIdA => partnerRoleGroupA.Id,
-                roleIdB => partnerRoleGroupB.Id
-            };
+        configureTestSharing(
+            oldPartnerAccountId,
+            newPartnerAccount.Id,
+            partnerRoleGroupA.Id,
+            partnerRoleGroupB.Id
+        );
 
         Test.startTest();
         PartnerCustomerAccountSharingService.syncAccounts(
             new Set<Id>{ customerAccount.Id },
-            new Set<Id>{ customerAccount.Partner_Account__c }
+            new Set<Id>{ oldPartnerAccountId }
         );
 
-        customerAccount.Partner_Account__c = partnerAccountB.Id;
+        customerAccount.Partner_Account__c = newPartnerAccount.Id;
         update customerAccount;
 
         PartnerCustomerAccountSharingService.syncAccounts(
             new Set<Id>{ customerAccount.Id },
-            new Set<Id>{ partnerAccountB.Id, [SELECT Partner_Account__c FROM Account WHERE Id = :customerAccount.Id].Partner_Account__c }
+            new Set<Id>{ oldPartnerAccountId, newPartnerAccount.Id }
         );
         Test.stopTest();
 
