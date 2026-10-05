@@ -1,141 +1,145 @@
 :host {
     display: block;
-    background: #f7f9fc;
+}
+
+.catalog-section {
+    padding: 1.15rem;
+    border: 1px solid #e1e7ef;
     border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 8px 24px rgba(16, 24, 40, 0.045);
 }
 
-.catalog-shell {
-    padding: 1.5rem;
-    min-height: 32rem;
-}
-
-.catalog-header {
+.catalog-heading {
     display: flex;
-    align-items: flex-start;
+    align-items: flex-end;
     justify-content: space-between;
-    gap: 1.5rem;
-    margin-bottom: 1.5rem;
+    gap: 1rem;
+    margin-bottom: 1rem;
 }
 
 .eyebrow {
-    margin: 0 0 0.35rem;
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 0.14em;
-    color: #6b7280;
+    margin: 0 0 0.25rem;
+    color: #0b5cab;
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.13em;
 }
 
-h1 {
+.catalog-heading h2 {
     margin: 0;
-    font-size: 1.8rem;
-    line-height: 1.2;
     color: #172033;
+    font-size: 1.15rem;
 }
 
 .subtitle {
-    margin: 0.45rem 0 0;
+    margin: 0.3rem 0 0;
     color: #667085;
+    font-size: 0.78rem;
 }
 
-.cart-summary {
+.result-badge {
     display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    padding: 0.65rem 0.9rem;
-    border: 1px solid #dfe4ec;
-    border-radius: 999px;
-    background: #ffffff;
-    color: #344054;
-    font-weight: 600;
-    box-shadow: 0 2px 8px rgba(16, 24, 40, 0.05);
+    align-items: baseline;
+    gap: 0.3rem;
+    padding: 0.45rem 0.65rem;
+    border: 1px solid #dce7f3;
+    border-radius: 0.6rem;
+    background: #f7fbff;
+    color: #667085;
+    font-size: 0.65rem;
 }
 
-.cart-count {
-    min-width: 1.35rem;
-    padding: 0.15rem 0.4rem;
-    border-radius: 999px;
-    background: #eef4ff;
-    color: #1b5297;
-    text-align: center;
-    font-size: 0.75rem;
+.result-badge span:first-child {
+    color: #0b5cab;
+    font-size: 0.9rem;
+    font-weight: 800;
 }
 
 .search-panel {
-    margin-bottom: 1.5rem;
-    padding: 0.8rem;
-    background: #ffffff;
-    border: 1px solid #e5e9f0;
-    border-radius: 0.9rem;
-    box-shadow: 0 4px 14px rgba(16, 24, 40, 0.04);
+    margin-bottom: 1rem;
+    padding: 0.65rem;
+    border: 1px solid #e3e8ef;
+    border-radius: 0.75rem;
+    background: #f8fafc;
 }
 
 .catalog-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
-    gap: 1rem;
+    gap: 0.9rem;
 }
 
 .product-card {
     display: flex;
+    min-height: 15rem;
     flex-direction: column;
-    min-height: 16rem;
-    padding: 1.15rem;
-    border: 1px solid #e3e7ee;
-    border-radius: 1rem;
+    padding: 1rem;
+    border: 1px solid #e0e6ee;
+    border-radius: 0.9rem;
     background: #ffffff;
-    box-shadow: 0 4px 14px rgba(16, 24, 40, 0.04);
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: 0 4px 12px rgba(16, 24, 40, 0.035);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
 .product-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 22px rgba(16, 24, 40, 0.09);
+    border-color: #b8d2e9;
+    box-shadow: 0 10px 22px rgba(16, 24, 40, 0.08);
+}
+
+.product-visual {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
 }
 
 .product-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 3.1rem;
-    height: 3.1rem;
-    margin-bottom: 1rem;
+    display: grid;
+    width: 2.9rem;
+    height: 2.9rem;
+    place-items: center;
     border-radius: 0.8rem;
-    background: #eef4ff;
+    background: #edf5fc;
+}
+
+.product-family {
+    max-width: 8rem;
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.35rem;
+    background: #f2f4f7;
+    color: #667085;
+    font-size: 0.58rem;
+    font-weight: 750;
+    text-transform: uppercase;
 }
 
 .product-content {
     flex: 1;
+    padding-top: 0.85rem;
 }
 
-.product-family {
-    display: inline-block;
-    margin-bottom: 0.4rem;
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    color: #667085;
-}
-
-.product-content h2 {
+.product-content h3 {
     margin: 0;
     color: #172033;
-    font-size: 1rem;
+    font-size: 0.95rem;
     line-height: 1.35;
 }
 
 .product-code {
-    margin: 0.35rem 0 0;
+    margin: 0.3rem 0 0;
     color: #667085;
-    font-size: 0.75rem;
+    font-size: 0.68rem;
+    font-weight: 600;
 }
 
 .product-description {
     display: -webkit-box;
-    margin: 0.7rem 0 0;
+    margin: 0.65rem 0 0;
     overflow: hidden;
     color: #667085;
-    font-size: 0.82rem;
+    font-size: 0.75rem;
     line-height: 1.45;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 3;
@@ -143,29 +147,38 @@ h1 {
 
 .product-footer {
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     justify-content: space-between;
-    gap: 0.75rem;
-    margin-top: 1.2rem;
-    padding-top: 0.9rem;
+    gap: 0.7rem;
+    margin-top: 1rem;
+    padding-top: 0.8rem;
     border-top: 1px solid #edf0f4;
+}
+
+.price-label {
+    display: block;
+    margin-bottom: 0.1rem;
+    color: #98a2b3;
+    font-size: 0.58rem;
+    text-transform: uppercase;
 }
 
 .price {
     color: #172033;
-    font-weight: 700;
+    font-size: 1rem;
+    font-weight: 800;
 }
 
 .state-panel {
     display: flex;
-    min-height: 14rem;
+    min-height: 12rem;
     align-items: center;
     justify-content: center;
-    gap: 0.75rem;
+    gap: 0.7rem;
     flex-direction: column;
-    padding: 2rem;
+    padding: 1.5rem;
     border: 1px dashed #d5dae3;
-    border-radius: 1rem;
+    border-radius: 0.9rem;
     background: #ffffff;
     text-align: center;
     color: #667085;
@@ -174,11 +187,12 @@ h1 {
 .state-panel h2 {
     margin: 0;
     color: #172033;
-    font-size: 1rem;
+    font-size: 0.95rem;
 }
 
 .state-panel p {
     margin: 0;
+    font-size: 0.78rem;
 }
 
 .error-panel {
@@ -187,11 +201,12 @@ h1 {
 }
 
 @media (max-width: 640px) {
-    .catalog-shell {
-        padding: 1rem;
+    .catalog-section {
+        padding: 0.8rem;
     }
 
-    .catalog-header {
+    .catalog-heading {
+        align-items: flex-start;
         flex-direction: column;
     }
 
