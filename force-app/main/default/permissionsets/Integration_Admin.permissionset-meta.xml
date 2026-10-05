@@ -3,6 +3,10 @@
     <label>Integration Admin</label>
     <description>Baseline internal access to integration records and QuickBooks-managed fields. Assign only to trusted internal integration operators.</description>
     <hasActivationRequired>false</hasActivationRequired>
+    <classAccesses>
+        <apexClass>QboCompanyInfoSmokeTest</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
     <objectPermissions>
         <allowCreate>true</allowCreate><allowDelete>false</allowDelete><allowEdit>true</allowEdit><allowRead>true</allowRead>
         <modifyAllRecords>false</modifyAllRecords><object>QBO_Sync_Log__c</object><viewAllRecords>true</viewAllRecords>
