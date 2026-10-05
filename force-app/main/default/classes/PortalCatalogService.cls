@@ -35,12 +35,17 @@ public with sharing class PortalCatalogService {
         }
     }
 
+    @TestVisible
+    private static String testPricebookDeveloperName;
+
     @AuraEnabled(cacheable=true)
     public static CatalogResponse getProducts(String searchTerm, Integer pageSize) {
         Integer requestedPageSize = pageSize == null ? DEFAULT_PAGE_SIZE : pageSize;
         Integer effectivePageSize = Math.max(1, Math.min(requestedPageSize, MAX_PAGE_SIZE));
         String audience = resolveAudience();
-        String pricebookDeveloperName = resolvePricebookDeveloperName(audience);
+        String pricebookDeveloperName = Test.isRunningTest() && testPricebookDeveloperName != null
+            ? testPricebookDeveloperName
+            : resolvePricebookDeveloperName(audience);
 
         if (String.isBlank(pricebookDeveloperName)) {
             throw new AuraHandledException('No active catalog configuration is available for your portal audience.');
