@@ -2,22 +2,14 @@
 private class OrderSubmissionServiceTest {
     @TestSetup
     static void setupData() {
-        Account partner = new Account(
-            Name = 'Test Partner',
-            IsPartner = true
-        );
-        insert partner;
-
         Account customer = new Account(
-            Name = 'Test Customer',
-            IsPartner = false,
-            Partner_Account__c = partner.Id
+            Name = 'Test Direct Customer'
         );
         insert customer;
 
         Contact contact = new Contact(
             LastName = 'Portal User',
-            AccountId = partner.Id,
+            AccountId = customer.Id,
             Email = 'order-submission-test@example.com'
         );
         insert contact;
@@ -53,11 +45,11 @@ private class OrderSubmissionServiceTest {
     }
 
     @IsTest
-    static void partnerCanSeeAuthorizedCustomers() {
-        Account partner = [
+    static void directCustomerCheckoutContextUsesOwnAccount() {
+        Account customer = [
             SELECT Id, Name, IsPartner
             FROM Account
-            WHERE Name = 'Test Partner'
+            WHERE Name = 'Test Direct Customer'
             LIMIT 1
         ];
         Contact contact = [
@@ -67,7 +59,7 @@ private class OrderSubmissionServiceTest {
             LIMIT 1
         ];
 
-        OrderSubmissionService.testActorAccountId = partner.Id;
+        OrderSubmissionService.testActorAccountId = customer.Id;
         OrderSubmissionService.testContactId = contact.Id;
 
         Test.startTest();
@@ -75,30 +67,18 @@ private class OrderSubmissionServiceTest {
             OrderSubmissionService.getCheckoutContext();
         Test.stopTest();
 
-        System.assertEquals(true, context.isPartner);
-        System.assertEquals(1, context.customerAccounts.size());
-        System.assertEquals(
-            'Test Customer',
-            context.customerAccounts[0].name
-        );
-        System.assertEquals(
-            context.customerAccounts[0].id,
-            context.defaultOrderAccountId
-        );
+        System.assertEquals(false, context.isPartner);
+        System.assertEquals(customer.Id, context.defaultOrderAccountId);
+        System.assertEquals(customer.Name, context.defaultOrderAccountName);
+        System.assertEquals(0, context.customerAccounts.size());
     }
 
     @IsTest
     static void submitsOrderUsingServerSidePricingAndQuantity() {
-        Account partner = [
-            SELECT Id
-            FROM Account
-            WHERE Name = 'Test Partner'
-            LIMIT 1
-        ];
         Account customer = [
             SELECT Id, Name
             FROM Account
-            WHERE Name = 'Test Customer'
+            WHERE Name = 'Test Direct Customer'
             LIMIT 1
         ];
         Contact contact = [
@@ -108,13 +88,13 @@ private class OrderSubmissionServiceTest {
             LIMIT 1
         ];
         PricebookEntry entry = [
-            SELECT Id, UnitPrice
+            SELECT Id, UnitPrice, Pricebook2Id
             FROM PricebookEntry
             WHERE Pricebook2.Name = 'Order Submission Test Pricebook'
             LIMIT 1
         ];
 
-        OrderSubmissionService.testActorAccountId = partner.Id;
+        OrderSubmissionService.testActorAccountId = customer.Id;
         OrderSubmissionService.testContactId = contact.Id;
         OrderSubmissionService.testPricebookName = 'Order Submission Test Pricebook';
 
@@ -149,7 +129,7 @@ private class OrderSubmissionServiceTest {
 
         System.assertEquals(customer.Id, createdOrder.AccountId);
         System.assertEquals('Activated', createdOrder.Status);
-        System.assertEquals(partner.Id, createdOrder.Placed_By_Account__c);
+        System.assertEquals(customer.Id, createdOrder.Placed_By_Account__c);
         System.assertEquals(contact.Id, createdOrder.Placed_By_Contact__c);
         System.assertEquals('test-submission-001', createdOrder.Submission_Key__c);
 
@@ -167,16 +147,10 @@ private class OrderSubmissionServiceTest {
 
     @IsTest
     static void repeatedSubmissionReturnsExistingOrder() {
-        Account partner = [
-            SELECT Id
-            FROM Account
-            WHERE Name = 'Test Partner'
-            LIMIT 1
-        ];
         Account customer = [
             SELECT Id
             FROM Account
-            WHERE Name = 'Test Customer'
+            WHERE Name = 'Test Direct Customer'
             LIMIT 1
         ];
         Contact contact = [
@@ -192,7 +166,7 @@ private class OrderSubmissionServiceTest {
             LIMIT 1
         ];
 
-        OrderSubmissionService.testActorAccountId = partner.Id;
+        OrderSubmissionService.testActorAccountId = customer.Id;
         OrderSubmissionService.testContactId = contact.Id;
         OrderSubmissionService.testPricebookName = 'Order Submission Test Pricebook';
 
@@ -229,26 +203,26 @@ private class OrderSubmissionServiceTest {
     }
 
     @IsTest
-    static void rejectsUnauthorizedCustomer() {
-        Account partner = [
+    static void rejectsDifferentAccountForDirectCustomer() {
+        Account customer = [
             SELECT Id
             FROM Account
-            WHERE Name = 'Test Partner'
+            WHERE Name = 'Test Direct Customer'
             LIMIT 1
         ];
+        Account unrelated = new Account(
+            Name = 'Unrelated Customer'
+        );
+        insert unrelated;
+
         Contact contact = [
             SELECT Id
             FROM Contact
             WHERE Email = 'order-submission-test@example.com'
             LIMIT 1
         ];
-        Account unrelated = new Account(
-            Name = 'Unrelated Customer',
-            IsPartner = false
-        );
-        insert unrelated;
 
-        OrderSubmissionService.testActorAccountId = partner.Id;
+        OrderSubmissionService.testActorAccountId = customer.Id;
         OrderSubmissionService.testContactId = contact.Id;
         OrderSubmissionService.testPricebookName = 'Order Submission Test Pricebook';
 
@@ -267,8 +241,7 @@ private class OrderSubmissionServiceTest {
             System.assert(false, 'Expected authorization failure.');
         } catch (AuraHandledException ex) {
             System.assert(
-                ex.getMessage().contains('not authorized')
-                || ex.getMessage().contains('authorized')
+                ex.getMessage().contains('own account')
             );
         }
         Test.stopTest();
