@@ -119,6 +119,63 @@ public without sharing class PartnerCustomerAccountSharingService {
         }
     }
 
+    @future
+    public static void syncForUserIds(Set<Id> userIds, Set<Id> oldContactIds) {
+        if ((userIds == null || userIds.isEmpty()) &&
+            (oldContactIds == null || oldContactIds.isEmpty())) {
+            return;
+        }
+
+        Set<Id> partnerAccountIds = new Set<Id>();
+
+        if (userIds != null && !userIds.isEmpty()) {
+            for (User userRecord : [
+                SELECT Id, UserType, IsActive, Contact.AccountId
+                FROM User
+                WHERE Id IN :userIds
+                WITH SYSTEM_MODE
+            ]) {
+                if (userRecord.UserType == PARTNER_USER_TYPE &&
+                    userRecord.IsActive &&
+                    userRecord.Contact != null &&
+                    userRecord.Contact.AccountId != null) {
+                    partnerAccountIds.add(userRecord.Contact.AccountId);
+                }
+            }
+        }
+
+        if (oldContactIds != null && !oldContactIds.isEmpty()) {
+            for (Contact oldContact : [
+                SELECT Id, AccountId
+                FROM Contact
+                WHERE Id IN :oldContactIds
+                WITH SYSTEM_MODE
+            ]) {
+                if (oldContact.AccountId != null) {
+                    partnerAccountIds.add(oldContact.AccountId);
+                }
+            }
+        }
+
+        if (partnerAccountIds.isEmpty()) {
+            return;
+        }
+
+        Set<Id> customerAccountIds = new Set<Id>();
+        for (Account customerAccount : [
+            SELECT Id
+            FROM Account
+            WHERE Partner_Account__c IN :partnerAccountIds
+            WITH SYSTEM_MODE
+        ]) {
+            customerAccountIds.add(customerAccount.Id);
+        }
+
+        if (!customerAccountIds.isEmpty()) {
+            syncAccounts(customerAccountIds, partnerAccountIds);
+        }
+    }
+
     public static void syncForUsers(List<User> users, Map<Id, User> oldMap) {
         Set<Id> userIds = new Set<Id>();
         Set<Id> oldContactIds = new Set<Id>();
