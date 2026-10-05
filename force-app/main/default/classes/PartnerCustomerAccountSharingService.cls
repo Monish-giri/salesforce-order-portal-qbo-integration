@@ -37,8 +37,11 @@ public without sharing class PartnerCustomerAccountSharingService {
             partnerAccountIds.addAll(affectedPartnerAccountIds);
         }
 
-        Map<Id, Set<Id>> partnerRoleIds = resolvePartnerRoleIds(partnerAccountIds);
+        Map<Id, Set<Id>> desiredShareTargetIdsByAccount =
+            resolvePartnerShareTargets(customerAccounts, partnerAccountIds);
+
         Set<Id> roleIds = new Set<Id>();
+        Map<Id, Set<Id>> partnerRoleIds = resolvePartnerRoleIds(partnerAccountIds);
         for (Set<Id> roleSet : partnerRoleIds.values()) {
             roleIds.addAll(roleSet);
         }
@@ -47,36 +50,13 @@ public without sharing class PartnerCustomerAccountSharingService {
         Set<Id> roleGroupIds = new Set<Id>();
         roleGroupIds.addAll(roleGroupByRoleId.values());
 
-        Map<Id, Set<Id>> desiredGroupIdsByAccount = new Map<Id, Set<Id>>();
-        for (Account customerAccount : customerAccounts.values()) {
-            Set<Id> desiredGroupIds = new Set<Id>();
-
-            if (customerAccount.Partner_Account__c != null) {
-                Set<Id> roleSet = partnerRoleIds.get(customerAccount.Partner_Account__c);
-                if (roleSet != null) {
-                    for (Id roleId : roleSet) {
-                        Id groupId = roleGroupByRoleId.get(roleId);
-                        if (groupId != null) {
-                            desiredGroupIds.add(groupId);
-                        }
-                    }
-                }
-            }
-
-            desiredGroupIdsByAccount.put(customerAccount.Id, desiredGroupIds);
-        }
-
-        List<AccountShare> existingShares = new List<AccountShare>();
-        if (!roleGroupIds.isEmpty()) {
-            existingShares = [
-                SELECT Id, AccountId, UserOrGroupId, RowCause
-                FROM AccountShare
-                WHERE AccountId IN :customerAccounts.keySet()
-                AND UserOrGroupId IN :roleGroupIds
-                AND RowCause = :MANUAL_ROW_CAUSE
-                WITH SYSTEM_MODE
-            ];
-        }
+        List<AccountShare> existingShares = [
+            SELECT Id, AccountId, UserOrGroupId, RowCause
+            FROM AccountShare
+            WHERE AccountId IN :customerAccounts.keySet()
+            AND RowCause = :MANUAL_ROW_CAUSE
+            WITH SYSTEM_MODE
+        ];
 
         Set<String> existingKeys = new Set<String>();
         List<AccountShare> sharesToDelete = new List<AccountShare>();
@@ -85,22 +65,24 @@ public without sharing class PartnerCustomerAccountSharingService {
             String key = buildShareKey(existingShare.AccountId, existingShare.UserOrGroupId);
             existingKeys.add(key);
 
-            Set<Id> desiredGroups = desiredGroupIdsByAccount.get(existingShare.AccountId);
-            if (desiredGroups == null || !desiredGroups.contains(existingShare.UserOrGroupId)) {
+            Set<Id> desiredTargets = desiredShareTargetIdsByAccount.get(existingShare.AccountId);
+            Boolean isRoleGroupShare = roleGroupIds.contains(existingShare.UserOrGroupId);
+            if (isRoleGroupShare &&
+                (desiredTargets == null || !desiredTargets.contains(existingShare.UserOrGroupId))) {
                 sharesToDelete.add(existingShare);
             }
         }
 
         List<AccountShare> sharesToInsert = new List<AccountShare>();
 
-        for (Id accountId : desiredGroupIdsByAccount.keySet()) {
-            for (Id groupId : desiredGroupIdsByAccount.get(accountId)) {
-                String key = buildShareKey(accountId, groupId);
+        for (Id accountId : desiredShareTargetIdsByAccount.keySet()) {
+            for (Id targetId : desiredShareTargetIdsByAccount.get(accountId)) {
+                String key = buildShareKey(accountId, targetId);
 
                 if (!existingKeys.contains(key)) {
                     sharesToInsert.add(new AccountShare(
                         AccountId = accountId,
-                        UserOrGroupId = groupId,
+                        UserOrGroupId = targetId,
                         AccountAccessLevel = ACCOUNT_ACCESS_READ,
                         CaseAccessLevel = 'None',
                         OpportunityAccessLevel = 'None',
@@ -174,6 +156,60 @@ public without sharing class PartnerCustomerAccountSharingService {
         if (!customerAccountIds.isEmpty()) {
             syncAccounts(customerAccountIds, partnerAccountIds);
         }
+    }
+
+    private static Map<Id, Set<Id>> resolvePartnerShareTargets(
+        Map<Id, Account> customerAccounts,
+        Set<Id> partnerAccountIds
+    ) {
+        Map<Id, Set<Id>> result = new Map<Id, Set<Id>>();
+
+        if (partnerAccountIds == null || partnerAccountIds.isEmpty()) {
+            return result;
+        }
+
+        Map<Id, Set<Id>> partnerUserIdsByPartnerAccount = new Map<Id, Set<Id>>();
+
+        if (Test.isRunningTest() && testPartnerRoleIdsByPartnerAccount != null) {
+            partnerUserIdsByPartnerAccount = testPartnerRoleIdsByPartnerAccount;
+        } else {
+            for (User partnerUser : [
+                SELECT Id, Contact.AccountId
+                FROM User
+                WHERE UserType = :PARTNER_USER_TYPE
+                AND IsActive = true
+                AND Contact.AccountId IN :partnerAccountIds
+                WITH SYSTEM_MODE
+            ]) {
+                if (!partnerUserIdsByPartnerAccount.containsKey(partnerUser.Contact.AccountId)) {
+                    partnerUserIdsByPartnerAccount.put(
+                        partnerUser.Contact.AccountId,
+                        new Set<Id>()
+                    );
+                }
+
+                partnerUserIdsByPartnerAccount
+                    .get(partnerUser.Contact.AccountId)
+                    .add(partnerUser.Id);
+            }
+        }
+
+        for (Account customerAccount : customerAccounts.values()) {
+            Set<Id> targets = new Set<Id>();
+
+            if (customerAccount.Partner_Account__c != null) {
+                Set<Id> userIds =
+                    partnerUserIdsByPartnerAccount.get(customerAccount.Partner_Account__c);
+
+                if (userIds != null) {
+                    targets.addAll(userIds);
+                }
+            }
+
+            result.put(customerAccount.Id, targets);
+        }
+
+        return result;
     }
 
     public static void syncForUsers(List<User> users, Map<Id, User> oldMap) {
