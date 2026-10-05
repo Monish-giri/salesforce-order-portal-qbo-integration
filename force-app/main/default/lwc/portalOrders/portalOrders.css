@@ -118,6 +118,30 @@
     color: #182230;
 }
 
+.detail-header .back-button {
+    border: 1px solid #d0d5dd;
+    border-radius: 10px;
+    background: #fff;
+    color: #344054;
+    padding: 0.65rem 1rem;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.detail-header .back-button:hover {
+    background: #f8fafc;
+    border-color: #98a2b3;
+    color: #182230;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+}
+
+.detail-header .back-button:focus-visible {
+    outline: 2px solid #1570ef;
+    outline-offset: 2px;
+}
+
 .detail-header p:last-child {
     margin: 0;
     color: #667085;
