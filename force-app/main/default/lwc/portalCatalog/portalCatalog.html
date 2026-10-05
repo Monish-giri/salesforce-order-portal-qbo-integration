@@ -78,12 +78,59 @@
                                             maximum-fraction-digits="0">
                                         </lightning-formatted-number>
                                     </div>
-                                    <lightning-button
-                                        label="Add to cart"
-                                        variant="brand"
-                                        data-id={product.pricebookEntryId}
-                                        onclick={handleAddToCart}>
-                                    </lightning-button>
+
+                                    <template if:false={product.isSelectingQuantity}>
+                                        <lightning-button
+                                            label="Add to cart"
+                                            variant="brand"
+                                            data-id={product.pricebookEntryId}
+                                            onclick={handleAddToCart}>
+                                        </lightning-button>
+                                    </template>
+
+                                    <template if:true={product.isSelectingQuantity}>
+                                        <div class="quantity-panel">
+                                            <label class="quantity-label" for={product.quantityInputId}>Quantity</label>
+                                            <div class="quantity-controls">
+                                                <button
+                                                    class="quantity-button"
+                                                    type="button"
+                                                    title="Decrease quantity"
+                                                    aria-label="Decrease quantity"
+                                                    data-id={product.pricebookEntryId}
+                                                    onclick={handleDecreaseQuantity}>
+                                                    −
+                                                </button>
+                                                <lightning-input
+                                                    class="quantity-input"
+                                                    type="number"
+                                                    variant="label-hidden"
+                                                    label="Quantity"
+                                                    min="1"
+                                                    step="1"
+                                                    value={product.selectedQuantity}
+                                                    data-id={product.pricebookEntryId}
+                                                    onchange={handleQuantityInput}>
+                                                </lightning-input>
+                                                <button
+                                                    class="quantity-button"
+                                                    type="button"
+                                                    title="Increase quantity"
+                                                    aria-label="Increase quantity"
+                                                    data-id={product.pricebookEntryId}
+                                                    onclick={handleIncreaseQuantity}>
+                                                    +
+                                                </button>
+                                            </div>
+                                            <lightning-button
+                                                class="confirm-cart-button"
+                                                label="Add to cart"
+                                                variant="brand"
+                                                data-id={product.pricebookEntryId}
+                                                onclick={handleConfirmAddToCart}>
+                                            </lightning-button>
+                                        </div>
+                                    </template>
                                 </div>
                             </article>
                         </template>
