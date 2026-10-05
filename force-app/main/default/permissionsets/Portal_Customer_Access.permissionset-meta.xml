@@ -3,6 +3,10 @@
     <label>Portal Customer Access</label>
     <description>Baseline object access for direct customer portal users. Record visibility is controlled separately by external sharing.</description>
     <hasActivationRequired>false</hasActivationRequired>
+    <classAccesses>
+        <apexClass>PortalCatalogService</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
     <objectPermissions>
         <allowCreate>true</allowCreate>
         <allowDelete>false</allowDelete>
