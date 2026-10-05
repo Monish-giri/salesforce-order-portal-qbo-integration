@@ -1,16 +1,14 @@
 <template>
-    <section class="catalog-shell">
-        <div class="catalog-header">
+    <section class="catalog-section">
+        <div class="catalog-heading">
             <div>
-                <p class="eyebrow">ORDER PORTAL</p>
-                <h1>Product Catalog</h1>
-                <p class="subtitle">Browse the products available to your account.</p>
+                <p class="eyebrow">PRODUCT CATALOG</p>
+                <h2>Browse available products</h2>
+                <p class="subtitle">Choose the products and services available to your account.</p>
             </div>
-
-            <div class="cart-summary" aria-label="Cart">
-                <lightning-icon icon-name="utility:cart" size="small" alternative-text="Cart"></lightning-icon>
-                <span>Cart</span>
-                <span class="cart-count">0</span>
+            <div class="result-badge">
+                <span>{products.length}</span>
+                <span>available</span>
             </div>
         </div>
 
@@ -50,29 +48,38 @@
                     <div class="catalog-grid">
                         <template for:each={products} for:item="product">
                             <article class="product-card" key={product.pricebookEntryId}>
-                                <div class="product-icon">
-                                    <lightning-icon icon-name="standard:product" size="medium" alternative-text=""></lightning-icon>
-                                </div>
-
-                                <div class="product-content">
+                                <div class="product-visual">
+                                    <div class="product-icon">
+                                        <lightning-icon icon-name="standard:product" size="medium" alternative-text=""></lightning-icon>
+                                    </div>
                                     <template if:true={product.family}>
                                         <span class="product-family">{product.family}</span>
                                     </template>
-                                    <h2 title={product.name}>{product.name}</h2>
+                                </div>
 
+                                <div class="product-content">
+                                    <h3 title={product.name}>{product.name}</h3>
                                     <template if:true={product.productCode}>
                                         <p class="product-code">{product.productCode}</p>
                                     </template>
-
                                     <template if:true={product.description}>
                                         <p class="product-description">{product.description}</p>
                                     </template>
                                 </div>
 
                                 <div class="product-footer">
-                                    <span class="price">₹ {product.unitPrice}</span>
+                                    <div>
+                                        <span class="price-label">Starting at</span>
+                                        <lightning-formatted-number
+                                            class="price"
+                                            value={product.unitPrice}
+                                            format-style="currency"
+                                            currency-code="INR"
+                                            maximum-fraction-digits="0">
+                                        </lightning-formatted-number>
+                                    </div>
                                     <lightning-button
-                                        label="Add"
+                                        label="Add to cart"
                                         variant="brand"
                                         data-id={product.pricebookEntryId}
                                         onclick={handleAddToCart}>
