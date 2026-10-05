@@ -225,6 +225,14 @@
     font-size: 0.85rem;
     line-height: 2rem;
     text-align: center;
+    appearance: textfield;
+    -moz-appearance: textfield;
+}
+
+.quantity-input::-webkit-inner-spin-button,
+.quantity-input::-webkit-outer-spin-button {
+    margin: 0;
+    -webkit-appearance: none;
 }
 
 .quantity-input:focus {
