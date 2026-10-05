@@ -1,0 +1,92 @@
+<template>
+    <div class="portal-app">
+        <header class="portal-header">
+            <div class="brand-block">
+                <div class="brand-mark" aria-hidden="true">
+                    <lightning-icon icon-name="utility:cart" size="small" alternative-text=""></lightning-icon>
+                </div>
+                <div>
+                    <p class="brand-name">ORDER PORTAL</p>
+                    <p class="brand-subtitle">Smart ordering, made simple.</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="cart-button" type="button" title="Shopping cart">
+                    <lightning-icon icon-name="utility:cart" size="x-small" alternative-text="Cart"></lightning-icon>
+                    <span>Cart</span>
+                    <span class="cart-count">{cartCount}</span>
+                </button>
+                <div class="profile-block">
+                    <div class="avatar" aria-hidden="true">
+                        <lightning-icon icon-name="utility:user" size="x-small" alternative-text=""></lightning-icon>
+                    </div>
+                    <div class="profile-copy">
+                        <span class="profile-name">{userName}</span>
+                        <span class="profile-label">Portal account</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="portal-body">
+            <aside class="sidebar">
+                <div class="sidebar-heading">Workspace</div>
+                <nav aria-label="Portal navigation">
+                    <button class={catalogNavClass} type="button" data-section="catalog" onclick={handleNavigation}>
+                        <lightning-icon icon-name="utility:product" size="x-small" alternative-text=""></lightning-icon>
+                        <span>Catalog</span>
+                    </button>
+                    <button class={ordersNavClass} type="button" data-section="orders" onclick={handleNavigation}>
+                        <lightning-icon icon-name="utility:orders" size="x-small" alternative-text=""></lightning-icon>
+                        <span>My Orders</span>
+                        <span class="nav-soon">Soon</span>
+                    </button>
+                    <button class={returnsNavClass} type="button" data-section="returns" onclick={handleNavigation}>
+                        <lightning-icon icon-name="utility:replace" size="x-small" alternative-text=""></lightning-icon>
+                        <span>Returns</span>
+                        <span class="nav-soon">Soon</span>
+                    </button>
+                </nav>
+                <div class="sidebar-footer">
+                    <div class="status-dot"></div>
+                    <div>
+                        <span class="status-title">Portal Online</span>
+                        <span class="status-copy">Secure Salesforce session</span>
+                    </div>
+                </div>
+            </aside>
+
+            <main class="content-area">
+                <template if:true={isCatalog}>
+                    <section class="welcome-banner">
+                        <div>
+                            <p class="section-kicker">YOUR ORDERING HUB</p>
+                            <h1>Everything you need, in one place.</h1>
+                            <p>Browse available products, build your cart, and manage your orders from a single portal.</p>
+                        </div>
+                        <div class="banner-accent" aria-hidden="true">
+                            <span class="accent-ring ring-one"></span>
+                            <span class="accent-ring ring-two"></span>
+                            <span class="accent-icon">
+                                <lightning-icon icon-name="utility:shopping_bag" size="medium" alternative-text=""></lightning-icon>
+                            </span>
+                        </div>
+                    </section>
+                    <c-portal-catalog onaddtocart={handleAddToCart}></c-portal-catalog>
+                </template>
+
+                <template if:false={isCatalog}>
+                    <section class="coming-soon">
+                        <div class="coming-icon">
+                            <lightning-icon icon-name="utility:construction" size="medium" alternative-text=""></lightning-icon>
+                        </div>
+                        <p class="section-kicker">COMING NEXT</p>
+                        <h1>{sectionTitle}</h1>
+                        <p>This section will be connected to the portal flow next.</p>
+                        <button class="back-button" type="button" onclick={showCatalog}>Back to Catalog</button>
+                    </section>
+                </template>
+            </main>
+        </div>
+    </div>
+</template>
