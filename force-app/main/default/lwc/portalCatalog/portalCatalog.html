@@ -1,0 +1,96 @@
+<template>
+    <section class="catalog-shell">
+        <div class="catalog-header">
+            <div>
+                <p class="eyebrow">ORDER PORTAL</p>
+                <h1>Product Catalog</h1>
+                <p class="subtitle">Browse the products available to your account.</p>
+            </div>
+
+            <div class="cart-summary" aria-label="Cart">
+                <lightning-icon icon-name="utility:cart" size="small" alternative-text="Cart"></lightning-icon>
+                <span>Cart</span>
+                <span class="cart-count">0</span>
+            </div>
+        </div>
+
+        <div class="search-panel">
+            <lightning-input
+                type="search"
+                variant="label-hidden"
+                label="Search products"
+                placeholder="Search by product name or code..."
+                value={searchTerm}
+                onchange={handleSearchInput}
+                class="search-input">
+            </lightning-input>
+        </div>
+
+        <template if:true={isLoading}>
+            <div class="state-panel">
+                <lightning-spinner alternative-text="Loading products" size="medium"></lightning-spinner>
+                <p>Loading catalog...</p>
+            </div>
+        </template>
+
+        <template if:true={errorMessage}>
+            <div class="state-panel error-panel" role="alert">
+                <lightning-icon icon-name="utility:error" size="small" alternative-text="Error"></lightning-icon>
+                <div>
+                    <h2>We couldn't load the catalog</h2>
+                    <p>{errorMessage}</p>
+                    <lightning-button label="Try Again" variant="brand" onclick={loadProducts}></lightning-button>
+                </div>
+            </div>
+        </template>
+
+        <template if:false={isLoading}>
+            <template if:false={errorMessage}>
+                <template if:true={hasProducts}>
+                    <div class="catalog-grid">
+                        <template for:each={products} for:item="product">
+                            <article class="product-card" key={product.pricebookEntryId}>
+                                <div class="product-icon">
+                                    <lightning-icon icon-name="standard:product" size="medium" alternative-text=""></lightning-icon>
+                                </div>
+
+                                <div class="product-content">
+                                    <template if:true={product.family}>
+                                        <span class="product-family">{product.family}</span>
+                                    </template>
+                                    <h2 title={product.name}>{product.name}</h2>
+
+                                    <template if:true={product.productCode}>
+                                        <p class="product-code">{product.productCode}</p>
+                                    </template>
+
+                                    <template if:true={product.description}>
+                                        <p class="product-description">{product.description}</p>
+                                    </template>
+                                </div>
+
+                                <div class="product-footer">
+                                    <span class="price">₹ {product.unitPrice}</span>
+                                    <lightning-button
+                                        label="Add"
+                                        variant="brand"
+                                        data-id={product.pricebookEntryId}
+                                        onclick={handleAddToCart}>
+                                    </lightning-button>
+                                </div>
+                            </article>
+                        </template>
+                    </div>
+                </template>
+
+                <template if:false={hasProducts}>
+                    <div class="state-panel empty-panel">
+                        <lightning-icon icon-name="utility:search" size="medium" alternative-text=""></lightning-icon>
+                        <h2>No products found</h2>
+                        <p>Try a different search term or check back later.</p>
+                    </div>
+                </template>
+            </template>
+        </template>
+    </section>
+</template>
