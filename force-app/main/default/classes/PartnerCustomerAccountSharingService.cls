@@ -220,7 +220,6 @@ public without sharing class PartnerCustomerAccountSharingService {
             SELECT Id, UserRoleId, Contact.AccountId
             FROM User
             WHERE UserType = :PARTNER_USER_TYPE
-            AND IsActive = true
             AND UserRoleId != null
             AND Contact.AccountId IN :partnerAccountIds
             WITH SYSTEM_MODE
