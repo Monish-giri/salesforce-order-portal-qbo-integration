@@ -91,13 +91,13 @@ export default class OrderPortal extends LightningElement {
         if (existing) {
             this.cartItems = this.cartItems.map(item =>
                 item.pricebookEntryId === product.pricebookEntryId
-                    ? { ...item, quantity: item.quantity + 1, lineTotal: item.unitPrice * (item.quantity + 1) }
+                    ? { ...item, quantity: item.quantity + product.quantity, lineTotal: item.unitPrice * (item.quantity + product.quantity) }
                     : item
             );
         } else {
             this.cartItems = [
                 ...this.cartItems,
-                { ...product, quantity: 1, lineTotal: product.unitPrice }
+                { ...product, quantity: product.quantity, lineTotal: product.unitPrice * product.quantity }
             ];
         }
     }
@@ -106,7 +106,11 @@ export default class OrderPortal extends LightningElement {
         const id = event.currentTarget.dataset.id;
         this.cartItems = this.cartItems.map(item =>
             item.pricebookEntryId === id
-                ? { ...item, quantity: item.quantity + 1 }
+                ? {
+                    ...item,
+                    quantity: item.quantity + 1,
+                    lineTotal: item.unitPrice * (item.quantity + 1)
+                }
                 : item
         );
     }
@@ -116,7 +120,11 @@ export default class OrderPortal extends LightningElement {
         this.cartItems = this.cartItems
             .map(item =>
                 item.pricebookEntryId === id
-                    ? { ...item, quantity: item.quantity - 1 }
+                    ? {
+                        ...item,
+                        quantity: item.quantity - 1,
+                        lineTotal: item.unitPrice * (item.quantity - 1)
+                    }
                     : item
             )
             .filter(item => item.quantity > 0);
