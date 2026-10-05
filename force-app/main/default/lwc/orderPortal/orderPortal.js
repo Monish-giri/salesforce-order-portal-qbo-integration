@@ -50,8 +50,12 @@ export default class OrderPortal extends LightningElement {
         return !!this.orderConfirmation;
     }
 
+    get isOrders() {
+        return this.activeSection === 'orders' && !this.showCart && !this.showCheckout && !this.isOrderConfirmation;
+    }
+
     get isComingSoon() {
-        return !this.isCatalog && !this.isCart && !this.isCheckout && !this.isOrderConfirmation;
+        return !this.isCatalog && !this.isCart && !this.isCheckout && !this.isOrderConfirmation && !this.isOrders;
     }
 
     get sectionTitle() {
@@ -81,10 +85,9 @@ export default class OrderPortal extends LightningElement {
     handleNavigation(event) {
         const section = event.currentTarget.dataset.section;
         this.showCart = false;
-
-        if (section === 'catalog') {
-            this.activeSection = section;
-        }
+        this.showCheckout = false;
+        this.orderConfirmation = undefined;
+        this.activeSection = section;
     }
 
     openCart() {
