@@ -1,0 +1,91 @@
+import { LightningElement } from 'lwc';
+import getProducts from '@salesforce/apex/PortalCatalogService.getProducts';
+
+const PAGE_SIZE = 24;
+const SEARCH_DELAY = 350;
+
+export default class PortalCatalog extends LightningElement {
+    products = [];
+    searchTerm = '';
+    isLoading = true;
+    errorMessage;
+    hasMore = false;
+
+    searchTimer;
+
+    connectedCallback() {
+        this.loadProducts();
+    }
+
+    disconnectedCallback() {
+        window.clearTimeout(this.searchTimer);
+    }
+
+    get hasProducts() {
+        return this.products.length > 0;
+    }
+
+    handleSearchInput(event) {
+        this.searchTerm = event.target.value;
+
+        window.clearTimeout(this.searchTimer);
+        this.searchTimer = window.setTimeout(() => {
+            this.loadProducts();
+        }, SEARCH_DELAY);
+    }
+
+    async loadProducts() {
+        this.isLoading = true;
+        this.errorMessage = undefined;
+
+        try {
+            const response = await getProducts({
+                searchTerm: this.searchTerm,
+                pageSize: PAGE_SIZE
+            });
+
+            this.products = response?.products ?? [];
+            this.hasMore = response?.hasMore ?? false;
+        } catch (error) {
+            this.products = [];
+            this.hasMore = false;
+            this.errorMessage = this.reduceError(error);
+        } finally {
+            this.isLoading = false;
+        }
+    }
+
+    handleAddToCart(event) {
+        const pricebookEntryId = event.currentTarget.dataset.id;
+        const product = this.products.find(
+            item => item.pricebookEntryId === pricebookEntryId
+        );
+
+        if (!product) {
+            return;
+        }
+
+        this.dispatchEvent(
+            new CustomEvent('addtocart', {
+                detail: {
+                    productId: product.productId,
+                    pricebookEntryId: product.pricebookEntryId,
+                    name: product.name,
+                    unitPrice: product.unitPrice
+                }
+            })
+        );
+    }
+
+    reduceError(error) {
+        if (error?.body?.message) {
+            return error.body.message;
+        }
+
+        if (Array.isArray(error?.body) && error.body.length > 0) {
+            return error.body.map(item => item.message).join(', ');
+        }
+
+        return 'An unexpected error occurred while loading the catalog.';
+    }
+}
