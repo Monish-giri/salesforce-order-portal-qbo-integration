@@ -27,7 +27,7 @@ Everything you set up and learn on the QuickBooks/Intuit side before and while w
 | Refresh token | Long-lived (about 100 days) but **rotates**: every refresh can return a new one **[VERIFY]** |
 | Production keys | Require Intuit's app assessment; not needed for this POC |
 
-**Free-tier rules (Builder tier):** write calls (create invoice, credit memo, payment) are unlimited; read calls are metered at 500,000 per month in production; **sandbox calls are not metered**. Throttling applies in both: about 500 requests/min per company, 10 concurrent requests, and about 120/min on the Batch endpoint. Over the limit you get HTTP 429.
+**Free-tier rules (Builder tier):** write calls (create invoice, credit memo, payment) are unlimited; read calls are metered at 500,000 per month in production; **sandbox calls are not metered**. Throttling applies in both: about 500 requests/min per company, 10 concurrent requests, and about 40 batch requests/min (10 payloads per batch). Over the limit you get HTTP 429.
 
 ---
 
@@ -142,16 +142,13 @@ Reference shape to apply a credit memo to an invoice (experiment with it):
   "CustomerRef": { "value": "58" },
   "TotalAmt": 0,
   "Line": [
-    {
-      "Amount": 50.00,
-      "LinkedTxn": [
-        { "TxnId": "<invoiceId>",    "TxnType": "Invoice" },
-        { "TxnId": "<creditMemoId>", "TxnType": "CreditMemo" }
-      ]
-    }
+    { "Amount": 50.00, "LinkedTxn": [ { "TxnId": "<invoiceId>",    "TxnType": "Invoice" } ] },
+    { "Amount": 50.00, "LinkedTxn": [ { "TxnId": "<creditMemoId>", "TxnType": "CreditMemo" } ] }
   ]
 }
 ```
+
+The invoice and the credit memo go on **separate lines with the same amount**, and `TotalAmt` is 0 because no cash moves. A payment linked only to a credit memo is rejected. The amount applied cannot exceed the invoice's outstanding balance, so apply the smaller of the credit and the balance. The Postman collection (folder 5A) exercises this.
 
 Important: a refund object may not carry a formal link back to the invoice. If so, record the link yourself in `PrivateNote`/`DocNumber` (e.g. `RET-00012 for SO-000123`) **and** in Salesforce (`Return_Request__c` stores the IDs).
 
@@ -171,7 +168,7 @@ QuickBooks-side tools you can use:
 
 | Guard | How |
 |---|---|
-| **`requestid`** query parameter | Same `requestid` on a retry lets QuickBooks recognise a repeat of the same request. Use a stable key: `INV-<OrderId>` and `CM-<ReturnId>` (keep within the length limit, about 50 chars). **[VERIFY]** how long QuickBooks remembers a request id |
+| **`requestid`** query parameter | Intuit documents that a repeated `requestid` returns the **original response** instead of repeating the operation. It must be **unique per company** and at most **50 characters** (36 for batch operations). Use a stable key: `INV-<order number>`, `CM-<return number>`, and send it on every write. **[VERIFY]** how long QuickBooks remembers a request id (the documentation does not state it) |
 | **Pre-create query** | Before creating, query for an existing document whose `DocNumber` (or note) matches the Salesforce reference |
 | **Store first, act second** | Write the returned QBO Id to Salesforce immediately; on retry, if the Id exists, skip creation |
 
@@ -264,3 +261,21 @@ Classify errors as **retryable** (429, 5xx, timeout, 401 once) or **terminal** (
 2. Mapping sheet: Product ↔ Item Id, Account ↔ Customer Id.
 3. Decisions recorded for: tax approach, partner representation, refund-vs-credit rule.
 4. Values for `QBO_Config__mdt`: realmId, base URL, minorversion, webhook verifier token (POC only).
+
+---
+
+## 11. Verified against Intuit documentation (September 2026)
+
+| Topic | What the documentation says | Where it is reflected |
+|---|---|---|
+| Minor version | Examples use `minorversion=75`; send it on every call | Postman variable `minorVersion` |
+| Request IDs | Unique per company, max 50 characters, replay returns the original response | §5, Postman folder 3 and 5 replay requests |
+| Throttling | About 500 requests/min and 10 concurrent per company; about 40 batch requests/min with 10 payloads each | §1 |
+| Apply a credit memo | Payment with `TotalAmt` 0, one line linking the invoice and a separate line linking the credit memo, with equal amounts. A payment linked only to a credit memo is rejected | §4.5, Postman 5A.5 |
+| Refund receipt | Requires `DepositToAccountRef` and at least one line; no documented link back to an invoice | §4.5, Postman 5B.2 and 5B.3 |
+| Duplicate document numbers | Integration guides report error 6140 when custom transaction numbers are on. Treat as unconfirmed until Postman request 3.5 shows it in your sandbox | §5 |
+| Update conflicts | Updates need the current `SyncToken`; stale tokens fail | §4.7, Postman 7.3 |
+
+## 12. Postman collection
+
+`QBO-Order-Portal-POC.postman_collection.json` runs every call in this guide in order: token refresh, customers (including the partner sub-customer), invoice create with `requestid` and replay, partial/full/overdue payments, credit memo application, refund receipt, Change Data Capture, simulated webhooks and error cases. Fill `realmId`, `accessToken`, `refreshToken`, `clientId`, `clientSecret` as *current values* and run folders 0 to 7 in order.
