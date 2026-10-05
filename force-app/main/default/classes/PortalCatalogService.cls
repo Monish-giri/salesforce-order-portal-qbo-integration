@@ -36,22 +36,22 @@ public with sharing class PortalCatalogService {
     }
 
     @TestVisible
-    private static String testPricebookDeveloperName;
+    private static String testPricebookName;
 
     @AuraEnabled(cacheable=true)
     public static CatalogResponse getProducts(String searchTerm, Integer pageSize) {
         Integer requestedPageSize = pageSize == null ? DEFAULT_PAGE_SIZE : pageSize;
         Integer effectivePageSize = Math.max(1, Math.min(requestedPageSize, MAX_PAGE_SIZE));
         String audience = resolveAudience();
-        String pricebookDeveloperName = Test.isRunningTest() && testPricebookDeveloperName != null
-            ? testPricebookDeveloperName
-            : resolvePricebookDeveloperName(audience);
+        String pricebookName = Test.isRunningTest() && testPricebookName != null
+            ? testPricebookName
+            : resolvePricebookName(audience);
 
-        if (String.isBlank(pricebookDeveloperName)) {
+        if (String.isBlank(pricebookName)) {
             throw new AuraHandledException('No active catalog configuration is available for your portal audience.');
         }
 
-        Pricebook2 configuredPricebook = getConfiguredPricebook(pricebookDeveloperName);
+        Pricebook2 configuredPricebook = getConfiguredPricebook(pricebookName);
         if (configuredPricebook == null) {
             throw new AuraHandledException('The configured catalog pricebook could not be found or is inactive.');
         }
@@ -104,7 +104,7 @@ public with sharing class PortalCatalogService {
         return UserInfo.getUserType() == PARTNER_USER_TYPE ? 'Partner' : 'Customer';
     }
 
-    private static String resolvePricebookDeveloperName(String audience) {
+    private static String resolvePricebookName(String audience) {
         List<Portal_Catalog_Config__mdt> configs = [
             SELECT Pricebook__c
             FROM Portal_Catalog_Config__mdt
@@ -117,11 +117,11 @@ public with sharing class PortalCatalogService {
         return configs.isEmpty() ? null : configs[0].Pricebook__c;
     }
 
-    private static Pricebook2 getConfiguredPricebook(String developerName) {
+    private static Pricebook2 getConfiguredPricebook(String pricebookName) {
         List<Pricebook2> pricebooks = [
-            SELECT Id, Name, IsActive, DeveloperName
+            SELECT Id, Name, IsActive
             FROM Pricebook2
-            WHERE DeveloperName = :developerName
+            WHERE Name = :pricebookName
               AND IsActive = true
             LIMIT 1
         ];
