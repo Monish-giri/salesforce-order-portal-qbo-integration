@@ -15,18 +15,25 @@ private class QboCompanyInfoSmokeTestTest {
 
     private class CompanyInfoMock implements HttpCalloutMock {
         public HttpResponse respond(HttpRequest request) {
+            QBO_Config__mdt config = QBO_Config__mdt.getInstance('Default');
+
             System.assertEquals('GET', request.getMethod());
             System.assert(request.getEndpoint().startsWith(
-                'callout:QuickBooks_Sandbox/v3/company/9341458157110411/companyinfo/9341458157110411'
+                'callout:QuickBooks_Sandbox/v3/company/'
+                + EncodingUtil.urlEncode(config.Realm_Id__c, 'UTF-8')
+                + '/companyinfo/'
+                + EncodingUtil.urlEncode(config.Realm_Id__c, 'UTF-8')
             ));
-            System.assert(request.getEndpoint().contains('minorversion=75'));
+            System.assert(request.getEndpoint().contains(
+                'minorversion=' + EncodingUtil.urlEncode(config.Minor_Version__c, 'UTF-8')
+            ));
             System.assertEquals('application/json', request.getHeader('Accept'));
 
             HttpResponse response = new HttpResponse();
             response.setStatusCode(200);
             response.setStatus('OK');
             response.setHeader('Content-Type', 'application/json');
-            response.setBody('{"CompanyInfo":{"Id":"9341458157110411","CompanyName":"QBO Sandbox Test Company"}}');
+            response.setBody('{"CompanyInfo":{"Id":"TEST","CompanyName":"QBO Sandbox Test Company"}}');
             return response;
         }
     }
