@@ -11,7 +11,7 @@
                 </div>
             </div>
             <div class="header-actions">
-                <button class="cart-button" type="button" title="Shopping cart">
+                <button class="cart-button" type="button" title="Shopping cart" onclick={openCart}>
                     <lightning-icon icon-name="utility:cart" size="x-small" alternative-text="Cart"></lightning-icon>
                     <span>Cart</span>
                     <span class="cart-count">{cartCount}</span>
@@ -35,6 +35,11 @@
                     <button class={catalogNavClass} type="button" data-section="catalog" onclick={handleNavigation}>
                         <lightning-icon icon-name="utility:product" size="x-small" alternative-text=""></lightning-icon>
                         <span>Catalog</span>
+                    </button>
+                    <button class="nav-item" type="button" onclick={openCart}>
+                        <lightning-icon icon-name="utility:cart" size="x-small" alternative-text=""></lightning-icon>
+                        <span>Cart</span>
+                        <span class="nav-count">{cartCount}</span>
                     </button>
                     <button class={ordersNavClass} type="button" data-section="orders" onclick={handleNavigation}>
                         <lightning-icon icon-name="utility:orders" size="x-small" alternative-text=""></lightning-icon>
@@ -75,16 +80,88 @@
                     <c-portal-catalog onaddtocart={handleAddToCart}></c-portal-catalog>
                 </template>
 
-                <template if:false={isCatalog}>
-                    <section class="coming-soon">
-                        <div class="coming-icon">
-                            <lightning-icon icon-name="utility:construction" size="medium" alternative-text=""></lightning-icon>
+                <template if:true={isCart}>
+                    <section class="cart-view">
+                        <div class="view-heading">
+                            <div>
+                                <p class="section-kicker">YOUR CART</p>
+                                <h1>Review your selections</h1>
+                                <p>Adjust quantities before we move to checkout.</p>
+                            </div>
+                            <button class="back-button" type="button" onclick={showCatalog}>Continue Shopping</button>
                         </div>
-                        <p class="section-kicker">COMING NEXT</p>
-                        <h1>{sectionTitle}</h1>
-                        <p>This section will be connected to the portal flow next.</p>
-                        <button class="back-button" type="button" onclick={showCatalog}>Back to Catalog</button>
+
+                        <template if:true={hasCartItems}>
+                            <div class="cart-layout">
+                                <div class="cart-list">
+                                    <template for:each={cartItems} for:item="item">
+                                        <article class="cart-item" key={item.pricebookEntryId}>
+                                            <div class="cart-item-icon">
+                                                <lightning-icon icon-name="standard:product" size="small" alternative-text=""></lightning-icon>
+                                            </div>
+                                            <div class="cart-item-info">
+                                                <h2>{item.name}</h2>
+                                                <p>Unit price</p>
+                                                <lightning-formatted-number value={item.unitPrice} format-style="currency" currency-code="INR" maximum-fraction-digits="0"></lightning-formatted-number>
+                                            </div>
+                                            <div class="quantity-control">
+                                                <button type="button" data-id={item.pricebookEntryId} onclick={decreaseQuantity} title="Decrease quantity">−</button>
+                                                <span>{item.quantity}</span>
+                                                <button type="button" data-id={item.pricebookEntryId} onclick={increaseQuantity} title="Increase quantity">+</button>
+                                            </div>
+                                            <div class="line-total">
+                                                <span>Total</span>
+                                                <lightning-formatted-number value={item.lineTotal} format-style="currency" currency-code="INR" maximum-fraction-digits="0"></lightning-formatted-number>
+                                            </div>
+                                            <button class="remove-button" type="button" data-id={item.pricebookEntryId} onclick={removeItem} title="Remove product">
+                                                <lightning-icon icon-name="utility:delete" size="x-small" alternative-text="Remove"></lightning-icon>
+                                            </button>
+                                        </article>
+                                    </template>
+                                </div>
+
+                                <aside class="cart-summary">
+                                    <p class="summary-label">ORDER SUMMARY</p>
+                                    <div class="summary-row">
+                                        <span>Items</span>
+                                        <span>{cartCount}</span>
+                                    </div>
+                                    <div class="summary-divider"></div>
+                                    <div class="summary-total">
+                                        <span>Subtotal</span>
+                                        <lightning-formatted-number value={cartSubtotal} format-style="currency" currency-code="INR" maximum-fraction-digits="0"></lightning-formatted-number>
+                                    </div>
+                                    <button class="checkout-button" type="button" disabled>Proceed to Checkout</button>
+                                    <p class="checkout-note">Checkout will be connected after the cart flow is verified.</p>
+                                </aside>
+                            </div>
+                        </template>
+
+                        <template if:false={hasCartItems}>
+                            <div class="empty-cart">
+                                <div class="empty-cart-icon">
+                                    <lightning-icon icon-name="utility:cart" size="medium" alternative-text=""></lightning-icon>
+                                </div>
+                                <h2>Your cart is empty</h2>
+                                <p>Add products from the catalog to start an order.</p>
+                                <button class="back-button primary" type="button" onclick={showCatalog}>Browse Catalog</button>
+                            </div>
+                        </template>
                     </section>
+                </template>
+
+                <template if:false={isCatalog}>
+                    <template if:false={isCart}>
+                        <section class="coming-soon">
+                            <div class="coming-icon">
+                                <lightning-icon icon-name="utility:construction" size="medium" alternative-text=""></lightning-icon>
+                            </div>
+                            <p class="section-kicker">COMING NEXT</p>
+                            <h1>{sectionTitle}</h1>
+                            <p>This section will be connected to the portal flow next.</p>
+                            <button class="back-button" type="button" onclick={showCatalog}>Back to Catalog</button>
+                        </section>
+                    </template>
                 </template>
             </main>
         </div>
