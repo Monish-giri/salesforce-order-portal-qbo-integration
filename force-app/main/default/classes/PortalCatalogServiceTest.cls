@@ -41,13 +41,13 @@ private class PortalCatalogServiceTest {
     @IsTest
     static void returnsConfiguredProducts() {
         Pricebook2 portalPricebook = [
-            SELECT Id, DeveloperName
+            SELECT Id, Name
             FROM Pricebook2
             WHERE Name = 'Test Portal Catalog'
             LIMIT 1
         ];
 
-        PortalCatalogService.testPricebookDeveloperName = portalPricebook.DeveloperName;
+        PortalCatalogService.testPricebookName = portalPricebook.Name;
 
         Test.startTest();
         PortalCatalogService.CatalogResponse response =
@@ -68,13 +68,13 @@ private class PortalCatalogServiceTest {
     @IsTest
     static void filtersProductsServerSide() {
         Pricebook2 portalPricebook = [
-            SELECT Id, DeveloperName
+            SELECT Id, Name
             FROM Pricebook2
             WHERE Name = 'Test Portal Catalog'
             LIMIT 1
         ];
 
-        PortalCatalogService.testPricebookDeveloperName = portalPricebook.DeveloperName;
+        PortalCatalogService.testPricebookName = portalPricebook.Name;
 
         Test.startTest();
         PortalCatalogService.CatalogResponse response =
@@ -88,13 +88,13 @@ private class PortalCatalogServiceTest {
     @IsTest
     static void capsRequestedPageSize() {
         Pricebook2 portalPricebook = [
-            SELECT DeveloperName
+            SELECT Name
             FROM Pricebook2
             WHERE Name = 'Test Portal Catalog'
             LIMIT 1
         ];
 
-        PortalCatalogService.testPricebookDeveloperName = portalPricebook.DeveloperName;
+        PortalCatalogService.testPricebookName = portalPricebook.Name;
 
         Test.startTest();
         PortalCatalogService.CatalogResponse response =
