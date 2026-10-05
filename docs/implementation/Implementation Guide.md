@@ -98,7 +98,7 @@ Also: 2 Platform Events (`Order_Invoice_Request__e`, `Return_Credit_Request__e`)
 | Order | `Placed_By_Account__c`, `Placed_By_Contact__c`, `Submission_Key__c` (External ID, unique), `Invoice_Status__c`, `QBO_Invoice_Id__c` (External ID), `QBO_Invoice_Number__c`, `Invoice_Total__c`, `Invoice_Balance__c`, `Invoice_Due_Date__c`, `Payment_Status__c`, `Last_QBO_Sync__c`, `Sync_Drift__c` (checkbox) |
 | OrderItem | `Returned_Quantity__c`, `Return_Status__c`, `Tax_Amount__c` |
 
-**Placed by vs for whom:** `Order.AccountId` = the customer the order is for. `Order.Placed_By_Account__c` / `Placed_By_Contact__c` = the partner (or the customer themselves for direct orders). Both must reach QuickBooks (see the QuickBooks guide for how).
+**Placed by vs for whom:** `Order.AccountId` = the customer the order is for. `Order.Placed_By_Account__c` / `Placed_By_Contact__c` = the partner (or the customer themselves for direct orders). Both must reach QuickBooks (see the QuickBooks guide for how). Order visibility follows `Order.AccountId` through Controlled by Parent; `Placed_By_Account__c` (set on every order, the customer itself for direct orders) drives return sharing and the audit trail.
 
 ---
 
@@ -115,6 +115,8 @@ Also: 2 Platform Events (`Order_Invoice_Request__e`, `Return_Credit_Request__e`)
 | D7 | Return money movement happens only after approval, driven by a status change | Meets "self-service submission is not approval" |
 | D8 | Returns run as a step machine (credit memo → apply/refund → complete) | Each step is idempotent and resumable |
 | D9 | Log everything to `QBO_Sync_Log__c`, but truncate bodies and purge old rows | Dev Edition storage is tiny |
+| D10 | Order visibility uses **Order = Controlled by Parent** plus Account access, not `OrderShare` and not Sharing Sets | Salesforce documents Controlled by Parent for orders; Order is not a Sharing Set target and `OrderShare` rejects inserts (confirmed in the org) |
+| D11 | Partners see their customers' orders by being granted access to those customer **Accounts** (sharing rule + public group for the POC, `AccountShare` rows for scale) | Controlled by Parent follows the Account, so the Account is where partner access must be granted |
 
 ### State machines
 
@@ -146,7 +148,8 @@ Each phase ends with a **checkpoint**: paste your work for review before moving 
 
 ### Phase 2 — Portal and ordering (4–6 days)
 - Create the Experience Cloud site; set up user onboarding for partners and customers.
-- Configure sharing (Sharing Sets or sharing rules, per your licences).
+- Set Order's external default to **Controlled by Parent** (check it is offered in Sharing Settings), keep Account Private, and grant partner users access to their customers' Accounts (Org Guide §4).
+- Keep a code-scoped Apex fallback ready only if Controlled by Parent is not available.
 - Build LWCs: catalog, cart, order list, order detail. Build the Apex submission service.
 - **Done when:** a partner sees only their customers' orders; a direct customer sees only their own; a second partner sees nothing of theirs.
 - **Checkpoint:** the sharing test matrix results, then your `OrderSubmissionService`.
@@ -235,6 +238,8 @@ Rough total: **25–35 working days** part-time, depending on how much QuickBook
 4. Who is the **approver** for returns (a person, a queue, a role)?
 5. Can one customer belong to more than one partner? (Decides whether `Partner_Customer__c` is needed.)
 6. Do partners have negotiated pricing, or one shared price book?
+7. Can the end customers of a partner log in themselves? (If yes, they would also see their own orders through the Account.)
+8. Is it acceptable that a partner who is granted a customer's Account can also see that Account's Contacts?
 
 ---
 
@@ -246,3 +251,21 @@ Rough total: **25–35 working days** part-time, depending on how much QuickBook
 4. Log in as Partner B; show it cannot see that order.
 5. Request a partial return; approve it internally; show the credit memo in QuickBooks and the updated balance in the portal.
 6. Force a failure; show the failed sync report and the retry.
+
+---
+
+## 9. Findings log (verified against Salesforce and Intuit documentation, September 2026)
+
+| # | Finding | Effect on the plan |
+|---|---|---|
+| 1 | `OrderShare` rows cannot be inserted (deployment error); Apex managed sharing is documented for custom objects only | The earlier Apex sharing option was removed |
+| 2 | Order is not available as a Sharing Set object in this org | Sharing Sets used only for custom objects |
+| 3 | Order supports the Controlled by Parent default (access follows the Account) | Core visibility design (D10, D11) |
+| 4 | High-volume (Customer Community) users get Read on their own Account | Direct customers need no extra sharing |
+| 5 | Share Groups are not available to Customer Community Plus / Partner Community | Not used |
+| 6 | Intuit: a repeated `requestid` returns the original response; it must be unique per company and at most 50 characters | Idempotency design confirmed; always send it on writes |
+| 7 | Intuit: applying a credit memo needs a Payment with `TotalAmt` 0 and separate invoice and credit memo lines | Corrected in the QuickBooks guide |
+| 8 | Intuit: batch throttle is about 40 requests per minute (10 payloads each), not 120 | Corrected in the QuickBooks guide |
+| 9 | Intuit: a RefundReceipt needs `DepositToAccountRef` and at least one line | Reflected in the Postman collection |
+
+Items still marked **[VERIFY]** in the guides must be confirmed in your own org or sandbox.
