@@ -131,8 +131,8 @@
                                         <span>Subtotal</span>
                                         <lightning-formatted-number value={cartSubtotal} format-style="currency" currency-code="INR" maximum-fraction-digits="0"></lightning-formatted-number>
                                     </div>
-                                    <button class="checkout-button" type="button" disabled>Proceed to Checkout</button>
-                                    <p class="checkout-note">Checkout will be connected after the cart flow is verified.</p>
+                                    <button class="checkout-button" type="button" onclick={openCheckout}>Proceed to Checkout</button>
+                                    <p class="checkout-note">Review the order and customer account before submitting.</p>
                                 </aside>
                             </div>
                         </template>
@@ -150,8 +150,37 @@
                     </section>
                 </template>
 
-                <template if:false={isCatalog}>
-                    <template if:false={isCart}>
+                <template if:true={isCheckout}>
+                    <c-portal-checkout
+                        cart-items={cartItems}
+                        onordersubmitted={handleOrderSubmitted}
+                        onbacktocart={handleCheckoutBack}>
+                    </c-portal-checkout>
+                </template>
+
+                <template if:true={isOrderConfirmation}>
+                    <section class="order-confirmation">
+                        <div class="confirmation-icon">
+                            <lightning-icon icon-name="utility:success" size="medium" alternative-text=""></lightning-icon>
+                        </div>
+                        <p class="section-kicker">ORDER CONFIRMED</p>
+                        <h1>Order #{orderConfirmation.orderNumber}</h1>
+                        <p>Your order for <strong>{orderConfirmation.accountName}</strong> has been created in Salesforce.</p>
+                        <div class="confirmation-total">
+                            <span>Order total</span>
+                            <lightning-formatted-number
+                                value={orderConfirmation.totalAmount}
+                                format-style="currency"
+                                currency-code="INR"
+                                maximum-fraction-digits="0">
+                            </lightning-formatted-number>
+                        </div>
+                        <p class="confirmation-note">QuickBooks invoicing will be connected in the next integration phase.</p>
+                        <button class="back-button primary" type="button" onclick={showCatalog}>Back to Catalog</button>
+                    </section>
+                </template>
+
+                <template if:true={isComingSoon}>
                         <section class="coming-soon">
                             <div class="coming-icon">
                                 <lightning-icon icon-name="utility:construction" size="medium" alternative-text=""></lightning-icon>
