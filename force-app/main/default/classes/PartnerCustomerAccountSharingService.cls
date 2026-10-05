@@ -102,6 +102,8 @@ public without sharing class PartnerCustomerAccountSharingService {
                         AccountId = accountId,
                         UserOrGroupId = groupId,
                         AccountAccessLevel = ACCOUNT_ACCESS_READ,
+                        CaseAccessLevel = 'None',
+                        OpportunityAccessLevel = 'None',
                         RowCause = MANUAL_ROW_CAUSE
                     ));
                 }
@@ -118,13 +120,54 @@ public without sharing class PartnerCustomerAccountSharingService {
     }
 
     public static void syncForUsers(List<User> users, Map<Id, User> oldMap) {
-        Set<Id> partnerAccountIds = new Set<Id>();
+        Set<Id> userIds = new Set<Id>();
+        Set<Id> oldContactIds = new Set<Id>();
 
         for (User userRecord : users) {
-            collectPartnerAccountId(userRecord, partnerAccountIds);
+            userIds.add(userRecord.Id);
 
             if (oldMap != null && oldMap.containsKey(userRecord.Id)) {
-                collectPartnerAccountId(oldMap.get(userRecord.Id), partnerAccountIds);
+                User oldUser = oldMap.get(userRecord.Id);
+                if (oldUser.ContactId != null) {
+                    oldContactIds.add(oldUser.ContactId);
+                }
+            }
+        }
+
+        if (userIds.isEmpty() && oldContactIds.isEmpty()) {
+            return;
+        }
+
+        Set<Id> partnerAccountIds = new Set<Id>();
+
+        for (User userRecord : [
+            SELECT Id, UserType, IsActive, ContactId, Contact.AccountId
+            FROM User
+            WHERE Id IN :userIds
+            WITH SYSTEM_MODE
+        ]) {
+            if (userRecord.UserType == PARTNER_USER_TYPE &&
+                userRecord.IsActive &&
+                userRecord.Contact != null &&
+                userRecord.Contact.AccountId != null) {
+                partnerAccountIds.add(userRecord.Contact.AccountId);
+            }
+        }
+
+        if (!oldContactIds.isEmpty()) {
+            for (Contact oldContact : [
+                SELECT Id, AccountId
+                FROM Contact
+                WHERE Id IN :oldContactIds
+                WITH SYSTEM_MODE
+            ]) {
+                User oldUser = findOldUserByContactId(oldMap, oldContact.Id);
+
+                if (oldUser != null &&
+                    oldUser.UserType == PARTNER_USER_TYPE &&
+                    oldContact.AccountId != null) {
+                    partnerAccountIds.add(oldContact.AccountId);
+                }
             }
         }
 
@@ -148,27 +191,18 @@ public without sharing class PartnerCustomerAccountSharingService {
         }
     }
 
-    private static void collectPartnerAccountId(User userRecord, Set<Id> partnerAccountIds) {
-        if (userRecord == null) {
-            return;
+    private static User findOldUserByContactId(Map<Id, User> oldMap, Id contactId) {
+        if (oldMap == null || contactId == null) {
+            return null;
         }
 
-        if (userRecord.UserType == PARTNER_USER_TYPE &&
-            userRecord.IsActive &&
-            userRecord.ContactId != null) {
-
-            User queriedUser = [
-                SELECT Contact.AccountId
-                FROM User
-                WHERE Id = :userRecord.Id
-                WITH SYSTEM_MODE
-                LIMIT 1
-            ];
-
-            if (queriedUser.Contact != null && queriedUser.Contact.AccountId != null) {
-                partnerAccountIds.add(queriedUser.Contact.AccountId);
+        for (User oldUser : oldMap.values()) {
+            if (oldUser.ContactId == contactId) {
+                return oldUser;
             }
         }
+
+        return null;
     }
 
     private static Map<Id, Set<Id>> resolvePartnerRoleIds(Set<Id> partnerAccountIds) {
