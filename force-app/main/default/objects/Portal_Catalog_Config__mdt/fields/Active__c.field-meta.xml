@@ -3,6 +3,5 @@
     <fullName>Active__c</fullName>
     <defaultValue>false</defaultValue>
     <label>Active</label>
-    <required>true</required>
     <type>Checkbox</type>
 </CustomField>
