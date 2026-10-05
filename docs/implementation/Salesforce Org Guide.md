@@ -16,6 +16,8 @@ Check these before designing anything else, because they shape the security mode
 | Orders, Digital Experiences, Platform Events, Sites available | Setup quick find | All required |
 | `ReturnOrder` object present? | Object Manager | If yes you may use it instead of custom return objects **[VERIFY]** |
 | My Domain deployed | Setup → My Domain | Needed for Experience Cloud and callback URLs |
+| **Order sharing options** (is *Controlled by Parent* offered for Order?) | Setup → Sharing Settings → Organization-Wide Defaults → Order row | The whole visibility design in §4 depends on it |
+| Is **Order** in the Sharing Set object list? | Setup → Digital Experiences → Settings → Sharing Sets | Confirmed **not available** in this org; do not plan around it |
 
 Then set up tooling: VS Code with Salesforce Extension Pack, Salesforce CLI, a Git repo, and a scratch folder for the Postman collection.
 
@@ -32,7 +34,7 @@ Follow this order so dependencies exist when you need them.
 5. **Platform Events:** `Order_Invoice_Request__e`, `Return_Credit_Request__e`.
 6. **Custom Metadata Type:** `QBO_Config__mdt`.
 7. **Permission sets** (§4). Page layouts and compact layouts for internal users.
-8. **Org-wide defaults** for external users (§4).
+8. **Org-wide defaults** for external users, including Order = Controlled by Parent, and the partner Account sharing (§4).
 9. **Experience Cloud site** (§5).
 10. **Integration config** (§6).
 11. **Apex, triggers, LWC, Flows** (§7–9).
@@ -102,39 +104,66 @@ Fields: `Related_Record_Id__c`, `Object_Type__c`, `Direction__c` (Outbound/Inbou
 
 ## 4. Security and sharing
 
-### 4.1 Org-wide defaults (external access)
+### 4.1 What Salesforce's documentation allows (and what it does not)
 
-| Object | External OWD |
+Checked against Salesforce Help and developer documentation in September 2026, and against what your org returned.
+
+| Finding | Source | Consequence for this project |
+|---|---|---|
+| **Order can have the *Controlled by Parent* default**, meaning access to an order follows access to its account. When either internal or external is Controlled by Parent, the two settings must match | Salesforce Help: *Organization-Wide Default Access Settings* and *Set Your Internal Organization-Wide Sharing Defaults* | **This is the foundation of the design.** Whoever can see an Account can see its Orders. Confirm the option appears in your Sharing Settings **[VERIFY]** |
+| High-volume users (Customer Community licence) have Read access to the account they belong to, and can access a record when its parent is accessible and the default is Controlled by Parent | Salesforce Help: *About High-Volume Community or Site Users* | Direct customers see their own orders with no extra configuration |
+| **Sharing Sets** can use only certain objects. Account sharing sets can also control Contract, Entitlement and **OrderItem** | Salesforce Help: *Create a Sharing Set for Experience Cloud Site Users* | Order is not selectable (confirmed in your org). Sharing Sets remain usable for the **custom** `Return_Request__c` |
+| **Apex managed sharing and Apex sharing reasons are available only for custom objects.** For a standard object only Manual rows exist | Apex Developer Guide: *Sharing a Record Using Apex* | Do not build `OrderShare` logic. Your deployment confirmed it: *DML operation Insert not allowed on OrderShare*. (The OrderShare reference page lists the object since API 48 but its supported calls could not be read from the docs; the org result is authoritative) |
+| **Share Groups are not available to Customer Community Plus or Partner Community** users | Salesforce Help (Sharing Sets topic) | Not a route for partner visibility |
+| Account and custom-object **sharing rules are available in Developer Edition**; criteria-based rules are not available for every object, and **you cannot create criteria-based sharing rules with Apex** | Salesforce Help: *Sharing Rule Considerations* | Partner access to customer Accounts can be a configured rule (below) |
+| An **owner-based sharing rule for Orders exists** (`OrderOwnerSharingRule`, managed through the SharingRules Metadata API) and can share between public groups that include portal users | Metadata/Object Reference | A possible secondary option. Not needed if Controlled by Parent works |
+
+### 4.2 Org-wide defaults (external access)
+
+| Object | Default external access | Notes |
+|---|---|---|
+| Account | Private | |
+| Contact | Private (or Controlled by Parent) | |
+| **Order** | **Controlled by Parent** | Internal must match. Order visibility then follows `Order.AccountId` (the customer the order is *for*). **[VERIFY]** the option exists |
+| OrderItem | Follows Order | Confirm lines appear under visible orders **[VERIFY]** |
+| `Return_Request__c` | Private | Custom object: Sharing Set or sharing rule |
+| `Return_Request_Line__c` | Controlled by Parent | Master-detail |
+| `QBO_Sync_Log__c` | Private | Internal only |
+| Product2 / Pricebook | Per pricebook and product access settings | Check partner pricing separation **[VERIFY]** |
+
+Internal users are affected too: with Order Controlled by Parent, an internal user's access to an order follows their access to the order's account.
+
+### 4.3 Who sees what
+
+| User | How they get access |
 |---|---|
-| Account | Private |
-| Contact | Private |
-| Order | Private |
-| Return_Request__c | Private (Controlled by parent for lines) |
-| QBO_Sync_Log__c | Private (internal only) |
-| Product2 / Pricebook | Visible via pricebook and product access settings only **[VERIFY]** |
+| **Direct customer** (Customer Community licence) | Implicit Read on their own Account, so their Orders follow through Controlled by Parent. Optionally add an Account Sharing Set (it also covers OrderItem) |
+| **Partner** (Customer Community Plus or Partner licence) | Partner users need access to the **end-customer Accounts** they represent. **Option A (configuration only, recommended for the POC):** a criteria-based **Account sharing rule** per partner (for example `Partner_Account__c` equals that partner) sharing Read with a **public group** containing that partner's users. **Option B (code):** insert `AccountShare` rows (Manual, Read) for the partner's users when a customer is linked. Orders then follow through Controlled by Parent. Option A does not scale to many partners, Option B does |
+| **Returns** (`Return_Request__c`) | A Sharing Set that maps the user's Account to `Placed_By_Account__c` works for Customer Community users; confirm it is offered for your partner licence **[VERIFY]**, otherwise use a sharing rule or Apex managed sharing, which is allowed for custom objects |
 
-### 4.2 Choose the visibility mechanism by licence
+Side effects to design for:
+- Sharing a customer **Account** with a partner also exposes that Account's **Contacts** (default Controlled by Parent). Hide anything private with field-level security.
+- Do **not** put financial history on the Account. The requirement says a partner must not see a customer's full financial history, and the Account is now visible to them. Keep payment fields on the Order only.
+- `Placed_By_Account__c` is still set on every order (the customer itself for direct orders). It now drives the Return sharing and the audit trail, not Order visibility.
 
-| Your licence | Approach |
-|---|---|
-| **Customer Community** (high-volume) | **Sharing Sets** map user's Contact→Account to the object's account lookups. Create two: one for `Order.AccountId` (customer sees their own orders), one for `Order.Placed_By_Account__c` (partner sees orders it placed). Same for `Return_Request__c.Placed_By_Account__c`. **[VERIFY]** whether one set can map two lookups on one object; otherwise use two sets |
-| **Customer Community Plus / Partner Community** | Use portal roles and **sharing rules**; if the end customers are child accounts of the partner, role-hierarchy access can grant the partner visibility over them **[VERIFY]** |
-| Anything not covered | **Apex managed sharing:** after creating an Order, insert an `OrderShare` row for the partner's users/role group |
+### 4.4 Fallback: code-scoped access
+Use this **only if** your Sharing Settings do not offer Controlled by Parent for Order.
+- Portal users get no direct Order access; a reviewed Apex controller returns only orders whose `Placed_By_Account__c` matches the caller's Account, derived on the server from `UserInfo.getUserId()`. Never trust an Account Id sent from the browser.
+- Order detail queries must filter by Id **and** by the caller's account.
+- Return a small wrapper object with only the fields the portal should show. Never include `QBO_*` fields.
+- `without sharing` is needed in these methods, so keep them small and test with `System.runAs` for every persona.
 
-Pick one approach for the whole build and test it with the matrix in §12.
-
-### 4.3 Permission sets
+### 4.5 Permission sets
 - `Portal_Customer_Access`: create/read Orders, read Product2/PricebookEntry, create Return_Request + lines.
 - `Portal_Partner_Access`: same, plus the fields partners may see.
 - `Integration_Admin`: edit QBO fields, view logs, run retry actions.
 - **Field-level security:** hide `QBO_*` internals from portal users; expose only `Invoice_Status__c`, `Payment_Status__c`, `Invoice_Balance__c`, `Invoice_Due_Date__c` at the order level. Do **not** expose Account-level financial summaries.
 
-### 4.4 Portal-side gotchas **[VERIFY]**
-- Portal licences may lack "Activate Orders". If so, the submission service (a `without sharing` Apex class that you write carefully) creates and activates orders after checking the caller's identity.
+### 4.6 Portal-side gotchas **[VERIFY]**
+- Portal licences may lack "Activate Orders". If so, the submission service (a `without sharing` Apex class written carefully) creates and activates orders after checking the caller's identity.
 - Order lines can only be added while the Order is **Draft**; activate after inserting all lines.
 - Don't let the browser send an Account Id for "for whom": validate server-side that the target account is one this user is allowed to order for.
-
----
+- Test creating an Order as a portal user: with Controlled by Parent, create access depends on the user's access to the Account.
 
 ## 5. Experience Cloud site
 
@@ -175,7 +204,8 @@ Write these yourself; each row is a unit you can paste for review.
 
 | Component | Responsibility |
 |---|---|
-| `OrderPortalController` (with sharing) | `@AuraEnabled` methods for the LWCs: get catalog, submit order, list orders, order detail |
+| `OrderPortalController` (with sharing) | `@AuraEnabled` methods for the LWCs: get catalog, submit order, list orders, order detail. Platform sharing (§4) does the scoping, so keep this class `with sharing` |
+| `PartnerAccountSharingService` *(only for §4.3 Option B)* | Insert/remove `AccountShare` rows (Manual, Read) so partner users can see their customers' Accounts. **Not** `OrderShare`: that object rejects inserts |
 | `OrderSubmissionService` | Validate caller and target account; upsert on `Submission_Key__c`; create Draft Order + lines; activate; publish `Order_Invoice_Request__e`; return quickly |
 | `OrderInvoiceRequestTrigger` | Collect Order Ids from event batches; enqueue jobs in chunks (about 10 orders per job) |
 | `QboInvoiceJob` (Queueable, AllowsCallouts) | Skip if `QBO_Invoice_Id__c` exists; ensure customer; build and POST invoice with `requestid`; update Order; log; on retryable error re-enqueue or leave Pending |
@@ -249,7 +279,7 @@ Expose components in the site builder; test each as every persona.
 | Storage | ~2,500 records total; each order with lines and logs consumes ~10 records. Purge logs |
 | Callouts | 100 per transaction; 120 s total; long-running concurrent callout limit org-wide |
 | Platform events | Callouts not allowed in the trigger; use Queueable |
-| Sharing | Portal users' access is only as good as your OWD + sharing mechanism; test negative cases |
+| Sharing | Order has no Apex managed sharing and no Sharing Set support; use Controlled by Parent plus Account access (§4). Test negative cases |
 | Order activation | Lines only while Draft |
 | Guest user | Minimal class access; no object permissions |
 | Secrets | Verifier token in metadata is POC-only |
@@ -293,3 +323,14 @@ Expose components in the site builder; test each as every persona.
 - Create an SFDX project; retrieve all metadata; commit early and often.
 - One branch per phase; tag at each checkpoint.
 - Keep a `README` with: setup steps, licence assumptions, how to re-authenticate QuickBooks, how to reset test data.
+
+---
+
+## 14. Corrections log
+
+| Date | Change | Reason |
+|---|---|---|
+| 2026-09-29 | Removed the `OrderShare`-based Apex sharing option | Deployment failed: *DML operation Insert not allowed on OrderShare*; Apex Developer Guide limits Apex managed sharing to custom objects |
+| 2026-09-29 | Sharing Sets no longer proposed for Order | Order is not in the Sharing Set object list in this org; documentation lists Account (with OrderItem), not Order |
+| 2026-09-29 | Order external default changed to Controlled by Parent, partner access via Account sharing | Salesforce Help documents Controlled by Parent for orders; partners need access to their customers' Accounts |
+| 2026-09-29 | Code-scoped Apex access demoted to fallback | It requires `without sharing` and manual enforcement; use only if Controlled by Parent is not offered |
