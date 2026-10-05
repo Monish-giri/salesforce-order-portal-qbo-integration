@@ -44,7 +44,12 @@ export default class PortalCatalog extends LightningElement {
                 pageSize: PAGE_SIZE
             });
 
-            this.products = response?.products ?? [];
+            this.products = (response?.products ?? []).map((product) => ({
+                ...product,
+                isSelectingQuantity: false,
+                selectedQuantity: 1,
+                quantityInputId: `quantity-${product.pricebookEntryId}`
+            }));
             this.hasMore = response?.hasMore ?? false;
         } catch (error) {
             this.products = [];
@@ -56,12 +61,54 @@ export default class PortalCatalog extends LightningElement {
     }
 
     handleAddToCart(event) {
+        this.setQuantitySelectorState(event.currentTarget.dataset.id, true);
+    }
+
+    handleIncreaseQuantity(event) {
+        const pricebookEntryId = event.currentTarget.dataset.id;
+
+        this.products = this.products.map((product) =>
+            product.pricebookEntryId === pricebookEntryId
+                ? {
+                    ...product,
+                    selectedQuantity: product.selectedQuantity + 1
+                }
+                : product
+        );
+    }
+
+    handleDecreaseQuantity(event) {
+        const pricebookEntryId = event.currentTarget.dataset.id;
+
+        this.products = this.products.map((product) =>
+            product.pricebookEntryId === pricebookEntryId
+                ? {
+                    ...product,
+                    selectedQuantity: Math.max(1, product.selectedQuantity - 1)
+                }
+                : product
+        );
+    }
+
+    handleQuantityInput(event) {
+        const pricebookEntryId = event.target.dataset.id;
+        const value = Number(event.target.value);
+
+        if (!Number.isInteger(value) || value < 1) {
+            this.updateSelectedQuantity(pricebookEntryId, 1);
+            return;
+        }
+
+        this.updateSelectedQuantity(pricebookEntryId, value);
+    }
+
+    handleConfirmAddToCart(event) {
         const pricebookEntryId = event.currentTarget.dataset.id;
         const product = this.products.find(
             item => item.pricebookEntryId === pricebookEntryId
         );
 
-        if (!product) {
+        if (!product || !Number.isInteger(product.selectedQuantity) || product.selectedQuantity < 1) {
             return;
         }
 
@@ -71,9 +118,32 @@ export default class PortalCatalog extends LightningElement {
                     productId: product.productId,
                     pricebookEntryId: product.pricebookEntryId,
                     name: product.name,
-                    unitPrice: product.unitPrice
+                    unitPrice: product.unitPrice,
+                    quantity: product.selectedQuantity
                 }
             })
+        );
+
+        this.setQuantitySelectorState(pricebookEntryId, false);
+    }
+
+    setQuantitySelectorState(pricebookEntryId, isSelectingQuantity) {
+        this.products = this.products.map((product) =>
+            product.pricebookEntryId === pricebookEntryId
+                ? {
+                    ...product,
+                    isSelectingQuantity,
+                    selectedQuantity: isSelectingQuantity ? 1 : product.selectedQuantity
+                }
+                : product
+        );
+    }
+
+    updateSelectedQuantity(pricebookEntryId, selectedQuantity) {
+        this.products = this.products.map((product) =>
+            product.pricebookEntryId === pricebookEntryId
+                ? { ...product, selectedQuantity }
+                : product
         );
     }
 
