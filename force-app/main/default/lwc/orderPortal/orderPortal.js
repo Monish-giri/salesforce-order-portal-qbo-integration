@@ -9,6 +9,8 @@ export default class OrderPortal extends LightningElement {
     activeSection = 'catalog';
     cartItems = [];
     showCart = false;
+    showCheckout = false;
+    orderConfirmation;
 
     @wire(getRecord, { recordId: USER_ID, fields: USER_FIELDS })
     userRecord;
@@ -37,7 +39,19 @@ export default class OrderPortal extends LightningElement {
     }
 
     get isCart() {
-        return this.showCart;
+        return this.showCart && !this.showCheckout;
+    }
+
+    get isCheckout() {
+        return this.showCheckout;
+    }
+
+    get isOrderConfirmation() {
+        return !!this.orderConfirmation;
+    }
+
+    get isComingSoon() {
+        return !this.isCatalog && !this.isCart && !this.isCheckout && !this.isOrderConfirmation;
     }
 
     get sectionTitle() {
@@ -74,10 +88,36 @@ export default class OrderPortal extends LightningElement {
     }
 
     openCart() {
+        this.orderConfirmation = undefined;
+        this.showCheckout = false;
         this.showCart = true;
     }
 
     showCatalog() {
+        this.orderConfirmation = undefined;
+        this.showCheckout = false;
+        this.showCart = false;
+        this.activeSection = 'catalog';
+    }
+
+    openCheckout() {
+        if (!this.hasCartItems) {
+            return;
+        }
+
+        this.showCheckout = true;
+        this.showCart = true;
+    }
+
+    handleCheckoutBack() {
+        this.showCheckout = false;
+        this.showCart = true;
+    }
+
+    handleOrderSubmitted(event) {
+        this.orderConfirmation = event.detail;
+        this.cartItems = [];
+        this.showCheckout = false;
         this.showCart = false;
         this.activeSection = 'catalog';
     }
