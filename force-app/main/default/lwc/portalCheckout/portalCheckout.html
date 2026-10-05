@@ -1,0 +1,127 @@
+<template>
+    <section class="checkout-section">
+        <div class="checkout-heading">
+            <div>
+                <p class="eyebrow">CHECKOUT</p>
+                <h1>Review your order</h1>
+                <p class="subtitle">Confirm the customer, quantities, and total before placing the order.</p>
+            </div>
+        </div>
+
+        <template if:true={isLoading}>
+            <div class="state-panel">
+                <lightning-spinner alternative-text="Loading checkout" size="medium"></lightning-spinner>
+                <p>Preparing checkout...</p>
+            </div>
+        </template>
+
+        <template if:true={errorMessage}>
+            <div class="state-panel error-panel" role="alert">
+                <lightning-icon icon-name="utility:error" size="small" alternative-text="Error"></lightning-icon>
+                <div>
+                    <h2>We couldn't prepare your checkout</h2>
+                    <p>{errorMessage}</p>
+                    <button class="secondary-button" type="button" onclick={handleBack}>Back to Cart</button>
+                </div>
+            </div>
+        </template>
+
+        <template if:false={isLoading}>
+            <template if:false={errorMessage}>
+                <div class="checkout-layout">
+                    <div class="checkout-main">
+                        <div class="checkout-card">
+                            <div class="card-heading">
+                                <div>
+                                    <p class="card-kicker">ORDER FOR</p>
+                                    <h2>{orderAccountName}</h2>
+                                </div>
+                            </div>
+
+                            <template if:true={isPartner}>
+                                <lightning-combobox
+                                    label="Customer account"
+                                    value={selectedAccountId}
+                                    options={customerOptions}
+                                    onchange={handleAccountChange}
+                                    required>
+                                </lightning-combobox>
+                            </template>
+
+                            <template if:false={isPartner}>
+                                <p class="account-note">This order will be placed for your account.</p>
+                            </template>
+                        </div>
+
+                        <div class="checkout-card">
+                            <div class="card-heading">
+                                <div>
+                                    <p class="card-kicker">ORDER ITEMS</p>
+                                    <h2>{itemCount} items</h2>
+                                </div>
+                            </div>
+
+                            <div class="review-list">
+                                <template for:each={cartItems} for:item="item">
+                                    <article class="review-item" key={item.pricebookEntryId}>
+                                        <div class="review-icon">
+                                            <lightning-icon icon-name="standard:product" size="small" alternative-text=""></lightning-icon>
+                                        </div>
+                                        <div class="review-info">
+                                            <h3>{item.name}</h3>
+                                            <p>{item.quantity} × <lightning-formatted-number value={item.unitPrice} format-style="currency" currency-code="INR" maximum-fraction-digits="0"></lightning-formatted-number></p>
+                                        </div>
+                                        <lightning-formatted-number
+                                            class="review-total"
+                                            value={item.lineTotal}
+                                            format-style="currency"
+                                            currency-code="INR"
+                                            maximum-fraction-digits="0">
+                                        </lightning-formatted-number>
+                                    </article>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+
+                    <aside class="checkout-summary">
+                        <p class="summary-label">ORDER SUMMARY</p>
+                        <div class="summary-row">
+                            <span>Items</span>
+                            <span>{itemCount}</span>
+                        </div>
+                        <div class="summary-divider"></div>
+                        <div class="summary-total">
+                            <span>Subtotal</span>
+                            <lightning-formatted-number
+                                value={cartSubtotal}
+                                format-style="currency"
+                                currency-code="INR"
+                                maximum-fraction-digits="0">
+                            </lightning-formatted-number>
+                        </div>
+
+                        <button
+                            class="place-order-button"
+                            type="button"
+                            onclick={handlePlaceOrder}
+                            disabled={isSubmitting}>
+                            <template if:true={isSubmitting}>Placing order...</template>
+                            <template if:false={isSubmitting}>Place Order</template>
+                        </button>
+
+                        <button
+                            class="back-button"
+                            type="button"
+                            onclick={handleBack}
+                            disabled={isSubmitting}>
+                            Back to Cart
+                        </button>
+
+                        <p class="summary-note">Your order will be saved in Salesforce first. QuickBooks invoicing will be connected in the next phase.</p>
+                    </aside>
+                </div>
+            </template>
+        </template>
+    </section>
+</template>
