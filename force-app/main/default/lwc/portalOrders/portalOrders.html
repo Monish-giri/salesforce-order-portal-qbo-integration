@@ -1,0 +1,114 @@
+<template>
+    <section class="orders-page">
+        <div class="view-heading">
+            <div>
+                <p class="section-kicker">ORDER HISTORY</p>
+                <h1>My Orders</h1>
+                <p>View orders available to your portal account.</p>
+            </div>
+        </div>
+
+        <template if:true={errorMessage}>
+            <div class="message error">{errorMessage}</div>
+        </template>
+
+        <template if:true={isLoading}>
+            <div class="loading-state">
+                <lightning-spinner alternative-text="Loading orders" size="medium"></lightning-spinner>
+            </div>
+        </template>
+
+        <template if:true={showList}>
+            <div class="order-list">
+                <template for:each={orders} for:item="order">
+                    <button class="order-card" type="button" key={order.id} data-id={order.id} onclick={handleOrderClick}>
+                        <div class="order-card-main">
+                            <span class="order-number">Order #{order.orderNumber}</span>
+                            <span class="order-account">{order.accountName}</span>
+                        </div>
+                        <div class="order-card-meta">
+                            <span>{order.status}</span>
+                            <span>{order.effectiveDate}</span>
+                            <lightning-formatted-number
+                                value={order.totalAmount}
+                                format-style="currency"
+                                currency-code="INR"
+                                maximum-fraction-digits="0">
+                            </lightning-formatted-number>
+                        </div>
+                    </button>
+                </template>
+            </div>
+        </template>
+
+        <template if:true={showEmpty}>
+            <div class="empty-state">
+                <lightning-icon icon-name="utility:orders" size="medium" alternative-text=""></lightning-icon>
+                <h2>No orders yet</h2>
+                <p>Your submitted orders will appear here.</p>
+            </div>
+        </template>
+
+        <template if:true={showDetail}>
+            <article class="order-detail-card">
+                <div class="detail-header">
+                    <div>
+                        <p class="section-kicker">ORDER DETAILS</p>
+                        <h2>Order #{selectedOrder.orderNumber}</h2>
+                        <p>{selectedOrder.accountName}</p>
+                    </div>
+                    <button class="back-button" type="button" onclick={backToList}>Back to Orders</button>
+                </div>
+
+                <div class="detail-summary">
+                    <div>
+                        <span>Status</span>
+                        <strong>{selectedOrder.status}</strong>
+                    </div>
+                    <div>
+                        <span>Order Date</span>
+                        <strong>{selectedOrder.effectiveDate}</strong>
+                    </div>
+                    <div>
+                        <span>Total</span>
+                        <strong>
+                            <lightning-formatted-number
+                                value={selectedOrder.totalAmount}
+                                format-style="currency"
+                                currency-code="INR"
+                                maximum-fraction-digits="0">
+                            </lightning-formatted-number>
+                        </strong>
+                    </div>
+                </div>
+
+                <div class="line-list">
+                    <div class="line-heading">
+                        <span>Product</span>
+                        <span>Quantity</span>
+                        <span>Unit Price</span>
+                        <span>Total</span>
+                    </div>
+                    <template for:each={selectedOrder.lines} for:item="line">
+                        <div class="line-row" key={line.id}>
+                            <span>{line.productName}</span>
+                            <span>{line.quantity}</span>
+                            <lightning-formatted-number
+                                value={line.unitPrice}
+                                format-style="currency"
+                                currency-code="INR"
+                                maximum-fraction-digits="0">
+                            </lightning-formatted-number>
+                            <lightning-formatted-number
+                                value={line.totalPrice}
+                                format-style="currency"
+                                currency-code="INR"
+                                maximum-fraction-digits="0">
+                            </lightning-formatted-number>
+                        </div>
+                    </template>
+                </div>
+            </article>
+        </template>
+    </section>
+</template>
