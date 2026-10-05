@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomMetadata xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label>Partner Default</label>
+    <protected>false</protected>
+    <values>
+        <field>Audience__c</field>
+        <value>
+            <stringValue>Partner</stringValue>
+        </value>
+    </values>
+    <values>
+        <field>Pricebook__c</field>
+        <value>
+            <stringValue>Standard</stringValue>
+        </value>
+    </values>
+    <values>
+        <field>Active__c</field>
+        <value>
+            <booleanValue>true</booleanValue>
+        </value>
+    </values>
+</CustomMetadata>
