@@ -8,6 +8,7 @@ const USER_FIELDS = [USER_NAME];
 export default class OrderPortal extends LightningElement {
     activeSection = 'catalog';
     cartItems = [];
+    showCart = false;
 
     @wire(getRecord, { recordId: USER_ID, fields: USER_FIELDS })
     userRecord;
@@ -20,8 +21,23 @@ export default class OrderPortal extends LightningElement {
         return this.cartItems.reduce((total, item) => total + item.quantity, 0);
     }
 
+    get cartSubtotal() {
+        return this.cartItems.reduce(
+            (total, item) => total + (item.unitPrice * item.quantity),
+            0
+        );
+    }
+
+    get hasCartItems() {
+        return this.cartItems.length > 0;
+    }
+
     get isCatalog() {
-        return this.activeSection === 'catalog';
+        return this.activeSection === 'catalog' && !this.showCart;
+    }
+
+    get isCart() {
+        return this.showCart;
     }
 
     get sectionTitle() {
@@ -45,17 +61,24 @@ export default class OrderPortal extends LightningElement {
     }
 
     navClass(section) {
-        return 'nav-item ' + (this.activeSection === section ? 'active' : '');
+        return 'nav-item ' + (this.activeSection === section && !this.showCart ? 'active' : '');
     }
 
     handleNavigation(event) {
         const section = event.currentTarget.dataset.section;
+        this.showCart = false;
+
         if (section === 'catalog') {
             this.activeSection = section;
         }
     }
 
+    openCart() {
+        this.showCart = true;
+    }
+
     showCatalog() {
+        this.showCart = false;
         this.activeSection = 'catalog';
     }
 
@@ -72,7 +95,37 @@ export default class OrderPortal extends LightningElement {
                     : item
             );
         } else {
-            this.cartItems = [...this.cartItems, { ...product, quantity: 1 }];
+            this.cartItems = [
+                ...this.cartItems,
+                { ...product, quantity: 1 }
+            ];
         }
+    }
+
+    increaseQuantity(event) {
+        const id = event.currentTarget.dataset.id;
+        this.cartItems = this.cartItems.map(item =>
+            item.pricebookEntryId === id
+                ? { ...item, quantity: item.quantity + 1 }
+                : item
+        );
+    }
+
+    decreaseQuantity(event) {
+        const id = event.currentTarget.dataset.id;
+        this.cartItems = this.cartItems
+            .map(item =>
+                item.pricebookEntryId === id
+                    ? { ...item, quantity: item.quantity - 1 }
+                    : item
+            )
+            .filter(item => item.quantity > 0);
+    }
+
+    removeItem(event) {
+        const id = event.currentTarget.dataset.id;
+        this.cartItems = this.cartItems.filter(
+            item => item.pricebookEntryId !== id
+        );
     }
 }
