@@ -44,7 +44,6 @@
                     <button class={ordersNavClass} type="button" data-section="orders" onclick={handleNavigation}>
                         <lightning-icon icon-name="utility:orders" size="x-small" alternative-text=""></lightning-icon>
                         <span>My Orders</span>
-                        <span class="nav-soon">Soon</span>
                     </button>
                     <button class={returnsNavClass} type="button" data-section="returns" onclick={handleNavigation}>
                         <lightning-icon icon-name="utility:replace" size="x-small" alternative-text=""></lightning-icon>
@@ -178,6 +177,10 @@
                         <p class="confirmation-note">QuickBooks invoicing will be connected in the next integration phase.</p>
                         <button class="back-button primary" type="button" onclick={showCatalog}>Back to Catalog</button>
                     </section>
+                </template>
+
+                <template if:true={isOrders}>
+                    <c-portal-orders></c-portal-orders>
                 </template>
 
                 <template if:true={isComingSoon}>
