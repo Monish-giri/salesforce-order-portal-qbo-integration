@@ -9,7 +9,7 @@ global without sharing class QboWebhookResource {
         RestResponse response = RestContext.response;
 
         Blob body = request == null ? null : request.requestBody;
-        String signature = request == null ? null : request.getHeader('intuit-signature');
+        String signature = request == null ? null : request.headers == null ? null : request.headers.get('intuit-signature');
 
         if (body == null) {
             setResponse(response, 400, '{"error":"Missing request body"}');
