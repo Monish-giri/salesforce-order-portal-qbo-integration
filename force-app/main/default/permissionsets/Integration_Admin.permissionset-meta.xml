@@ -7,6 +7,10 @@
         <apexClass>QboCompanyInfoSmokeTest</apexClass>
         <enabled>true</enabled>
     </classAccesses>
+    <classAccesses>
+        <apexClass>QboCustomerService</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
     <objectPermissions>
         <allowCreate>true</allowCreate><allowDelete>false</allowDelete><allowEdit>true</allowEdit><allowRead>true</allowRead>
         <modifyAllRecords>false</modifyAllRecords><object>QBO_Sync_Log__c</object><viewAllRecords>true</viewAllRecords>
