@@ -39,8 +39,8 @@ public without sharing class QboCustomerService {
     }
 
     public class CustomerResolution {
-        String qboId;
-        List<Account> updates = new List<Account>();
+        public String qboId;
+        public List<Account> updates = new List<Account>();
     }
 
     private static CustomerResolution resolveCustomer(Id accountId) {
