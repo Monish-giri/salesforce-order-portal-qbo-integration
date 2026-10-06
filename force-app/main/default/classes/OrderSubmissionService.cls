@@ -235,9 +235,18 @@ public with sharing class OrderSubmissionService {
             throw new AuraHandledException(activationResult.getErrors()[0].getMessage());
         }
 
-        EventBus.publish(new Order_Invoice_Request__e(
-            Order_Id__c = String.valueOf(newOrder.Id)
-        ));
+        Database.SaveResult eventResult = EventBus.publish(
+            new Order_Invoice_Request__e(
+                Order_Id__c = String.valueOf(newOrder.Id)
+            )
+        );
+
+        if (!eventResult.isSuccess()) {
+            throw new AuraHandledException(
+                'Failed to publish invoice request event: ' +
+                eventResult.getErrors()[0].getMessage()
+            );
+        }
 
         SubmissionResult result = new SubmissionResult();
         result.orderId = newOrder.Id;
