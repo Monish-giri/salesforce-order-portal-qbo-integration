@@ -46,6 +46,7 @@ private class OrderInvoiceRequestTriggerTest {
         EventBus.publish(new Order_Invoice_Request__e(
             Order_Id__c = String.valueOf(order.Id)
         ));
+        Test.getEventBus().deliver();
         Test.stopTest();
 
         Order refreshed = [
