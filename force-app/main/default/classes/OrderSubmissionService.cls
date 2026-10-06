@@ -235,6 +235,10 @@ public with sharing class OrderSubmissionService {
             throw new AuraHandledException(activationResult.getErrors()[0].getMessage());
         }
 
+        EventBus.publish(new Order_Invoice_Request__e(
+            Order_Id__c = String.valueOf(newOrder.Id)
+        ));
+
         SubmissionResult result = new SubmissionResult();
         result.orderId = newOrder.Id;
         result.orderNumber = newOrder.OrderNumber;
