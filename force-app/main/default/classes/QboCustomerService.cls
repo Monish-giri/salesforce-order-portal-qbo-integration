@@ -6,6 +6,36 @@ public without sharing class QboCustomerService {
     public class QboCustomerException extends Exception {}
 
     public static String ensureCustomer(Id accountId) {
+        CustomerResolution resolution = resolveCustomer(accountId);
+
+        if (!resolution.updates.isEmpty()) {
+            Database.SaveResult[] saveResults = Database.update(
+                resolution.updates,
+                AccessLevel.SYSTEM_MODE
+            );
+
+            for (Database.SaveResult saveResult : saveResults) {
+                if (!saveResult.isSuccess()) {
+                    throw new QboCustomerException(
+                        saveResult.getErrors()[0].getMessage()
+                    );
+                }
+            }
+        }
+
+        return resolution.qboId;
+    }
+
+    public static String resolveCustomerId(Id accountId) {
+        return resolveCustomer(accountId).qboId;
+    }
+
+    private class CustomerResolution {
+        String qboId;
+        List<Account> updates = new List<Account>();
+    }
+
+    private static CustomerResolution resolveCustomer(Id accountId) {
         if (accountId == null) {
             throw new QboCustomerException('Account Id is required.');
         }
@@ -31,7 +61,7 @@ public without sharing class QboCustomerService {
 
         QBO_Config__mdt config = getConfig();
         Map<Id, String> resolvedQboIds = new Map<Id, String>();
-        List<Account> updates = new List<Account>();
+        CustomerResolution resolution = new CustomerResolution();
 
         for (Integer index = chain.size() - 1; index >= 0; index--) {
             Account account = chain[index];
@@ -54,28 +84,14 @@ public without sharing class QboCustomerService {
             }
 
             resolvedQboIds.put(account.Id, qboId);
-            updates.add(new Account(
+            resolution.updates.add(new Account(
                 Id = account.Id,
                 QBO_Customer_Id__c = qboId
             ));
         }
 
-        if (!updates.isEmpty()) {
-            Database.SaveResult[] saveResults = Database.update(
-                updates,
-                AccessLevel.SYSTEM_MODE
-            );
-
-            for (Database.SaveResult saveResult : saveResults) {
-                if (!saveResult.isSuccess()) {
-                    throw new QboCustomerException(
-                        saveResult.getErrors()[0].getMessage()
-                    );
-                }
-            }
-        }
-
-        return resolvedQboIds.get(accountId);
+        resolution.qboId = resolvedQboIds.get(accountId);
+        return resolution;
     }
 
     @TestVisible
