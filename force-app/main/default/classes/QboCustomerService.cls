@@ -10,46 +10,72 @@ public without sharing class QboCustomerService {
             throw new QboCustomerException('Account Id is required.');
         }
 
-        Account account = [
-            SELECT Id, Name, QBO_Customer_Id__c, Partner_Account__c
-            FROM Account
-            WHERE Id = :accountId
-            WITH SYSTEM_MODE
-            LIMIT 1
-        ];
+        List<Account> chain = new List<Account>();
+        Id currentAccountId = accountId;
+        Set<Id> visited = new Set<Id>();
 
-        if (String.isNotBlank(account.QBO_Customer_Id__c)) {
-            return account.QBO_Customer_Id__c;
-        }
+        while (currentAccountId != null && !visited.contains(currentAccountId)) {
+            visited.add(currentAccountId);
 
-        String parentQboId;
-        if (account.Partner_Account__c != null) {
-            parentQboId = ensureCustomer(account.Partner_Account__c);
+            Account account = [
+                SELECT Id, Name, QBO_Customer_Id__c, Partner_Account__c
+                FROM Account
+                WHERE Id = :currentAccountId
+                WITH SYSTEM_MODE
+                LIMIT 1
+            ];
+
+            chain.add(account);
+            currentAccountId = account.Partner_Account__c;
         }
 
         QBO_Config__mdt config = getConfig();
-        String displayName = buildDisplayName(account);
+        Map<Id, String> resolvedQboIds = new Map<Id, String>();
+        List<Account> updates = new List<Account>();
 
-        String existingId = findCustomerId(config, displayName);
-        if (String.isBlank(existingId)) {
-            existingId = createCustomer(config, account, displayName, parentQboId);
+        for (Integer index = chain.size() - 1; index >= 0; index--) {
+            Account account = chain[index];
+
+            if (String.isNotBlank(account.QBO_Customer_Id__c)) {
+                resolvedQboIds.put(account.Id, account.QBO_Customer_Id__c);
+                continue;
+            }
+
+            String parentQboId;
+            if (account.Partner_Account__c != null) {
+                parentQboId = resolvedQboIds.get(account.Partner_Account__c);
+            }
+
+            String displayName = buildDisplayName(account);
+            String qboId = findCustomerId(config, displayName);
+
+            if (String.isBlank(qboId)) {
+                qboId = createCustomer(config, account, displayName, parentQboId);
+            }
+
+            resolvedQboIds.put(account.Id, qboId);
+            updates.add(new Account(
+                Id = account.Id,
+                QBO_Customer_Id__c = qboId
+            ));
         }
 
-        Account updateAccount = new Account(
-            Id = account.Id,
-            QBO_Customer_Id__c = existingId
-        );
+        if (!updates.isEmpty()) {
+            Database.SaveResult[] saveResults = Database.update(
+                updates,
+                AccessLevel.SYSTEM_MODE
+            );
 
-        Database.SaveResult saveResult = Database.update(
-            updateAccount,
-            AccessLevel.SYSTEM_MODE
-        );
-
-        if (!saveResult.isSuccess()) {
-            throw new QboCustomerException(saveResult.getErrors()[0].getMessage());
+            for (Database.SaveResult saveResult : saveResults) {
+                if (!saveResult.isSuccess()) {
+                    throw new QboCustomerException(
+                        saveResult.getErrors()[0].getMessage()
+                    );
+                }
+            }
         }
 
-        return existingId;
+        return resolvedQboIds.get(accountId);
     }
 
     @TestVisible
