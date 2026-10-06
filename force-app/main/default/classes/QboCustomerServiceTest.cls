@@ -78,7 +78,24 @@ private class QboCustomerServiceTest {
     }
 
     private class CustomerCreateMock implements HttpCalloutMock {
+        private Integer requestCount = 0;
+
         public HttpResponse respond(HttpRequest request) {
+            requestCount++;
+
+            if (requestCount == 1) {
+                System.assertEquals('GET', request.getMethod());
+                System.assert(request.getEndpoint().contains('/query?'));
+                System.assert(request.getEndpoint().contains('DisplayName'));
+
+                return response(
+                    200,
+                    'OK',
+                    '{"QueryResponse":{}}'
+                );
+            }
+
+            System.assertEquals(2, requestCount);
             System.assertEquals('POST', request.getMethod());
             System.assert(request.getEndpoint().contains('/customer?'));
             Map<String, Object> body =
