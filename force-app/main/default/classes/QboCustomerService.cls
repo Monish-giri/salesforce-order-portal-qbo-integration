@@ -83,7 +83,7 @@ public without sharing class QboCustomerService {
     private static String findCustomerId(QBO_Config__mdt config, String displayName) {
         String realmId = config.Realm_Id__c.trim();
         String query = 'select Id, DisplayName from Customer where DisplayName = \''
-            + escapeQueryValue(displayName)
+            + String.escapeSingleQuotes(displayName)
             + '\' maxresults 1';
 
         HttpRequest request = new HttpRequest();
@@ -173,10 +173,6 @@ public without sharing class QboCustomerService {
         }
 
         return String.valueOf(customer.get('Id'));
-    }
-
-    private static String escapeQueryValue(String value) {
-        return value.replace('\\', '\\\\').replace('''', '\\''');
     }
 
     private static Map<String, Object> parseObject(String body) {
