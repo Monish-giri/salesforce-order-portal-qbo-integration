@@ -7,22 +7,7 @@ public without sharing class QboCustomerService {
 
     public static String ensureCustomer(Id accountId) {
         CustomerResolution resolution = resolveCustomer(accountId);
-
-        if (!resolution.updates.isEmpty()) {
-            Database.SaveResult[] saveResults = Database.update(
-                resolution.updates,
-                AccessLevel.SYSTEM_MODE
-            );
-
-            for (Database.SaveResult saveResult : saveResults) {
-                if (!saveResult.isSuccess()) {
-                    throw new QboCustomerException(
-                        saveResult.getErrors()[0].getMessage()
-                    );
-                }
-            }
-        }
-
+        persistCustomerResolution(resolution);
         return resolution.qboId;
     }
 
@@ -30,7 +15,30 @@ public without sharing class QboCustomerService {
         return resolveCustomer(accountId).qboId;
     }
 
-    private class CustomerResolution {
+    public static CustomerResolution resolveCustomerForInvoice(Id accountId) {
+        return resolveCustomer(accountId);
+    }
+
+    public static void persistCustomerResolution(CustomerResolution resolution) {
+        if (resolution == null || resolution.updates.isEmpty()) {
+            return;
+        }
+
+        Database.SaveResult[] saveResults = Database.update(
+            resolution.updates,
+            AccessLevel.SYSTEM_MODE
+        );
+
+        for (Database.SaveResult saveResult : saveResults) {
+            if (!saveResult.isSuccess()) {
+                throw new QboCustomerException(
+                    saveResult.getErrors()[0].getMessage()
+                );
+            }
+        }
+    }
+
+    public class CustomerResolution {
         String qboId;
         List<Account> updates = new List<Account>();
     }
