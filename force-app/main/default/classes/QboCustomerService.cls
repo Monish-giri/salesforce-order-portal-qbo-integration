@@ -82,9 +82,9 @@ public without sharing class QboCustomerService {
 
     private static String findCustomerId(QBO_Config__mdt config, String displayName) {
         String realmId = config.Realm_Id__c.trim();
-        String query = 'select Id, DisplayName from Customer where DisplayName = '''
+        String query = 'select Id, DisplayName from Customer where DisplayName = \''
             + escapeQueryValue(displayName)
-            + ''' maxresults 1';
+            + '\' maxresults 1';
 
         HttpRequest request = new HttpRequest();
         request.setEndpoint(
