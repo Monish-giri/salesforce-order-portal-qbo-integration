@@ -1,7 +1,12 @@
 @IsTest
 private class QboCreditMemoJobTest {
     private class ReturnMock implements HttpCalloutMock {
+        private final Decimal invoiceBalance;
         private Integer callNumber = 0;
+
+        ReturnMock(Decimal invoiceBalance) {
+            this.invoiceBalance = invoiceBalance;
+        }
 
         public HttpResponse respond(HttpRequest request) {
             callNumber++;
@@ -10,27 +15,29 @@ private class QboCreditMemoJobTest {
             response.setHeader('Content-Type', 'application/json');
             String endpoint = request.getEndpoint();
 
-            if (endpoint.contains('/query?query=') && endpoint.contains('CreditMemo')) {
+            if (endpoint.contains('/query?') && endpoint.contains('CreditMemo')) {
                 response.setBody('{"QueryResponse":{}}');
-            } else if (endpoint.contains('/creditmemo')) {
-                response.setBody('{"CreditMemo":{"Id":"501","DocNumber":"CM-RET-00001"}}');
-            } else if (endpoint.contains('/payment')) {
-                response.setBody('{"Payment":{"Id":"601","TotalAmt":0}}');
             } else if (endpoint.contains('/refundreceipt')) {
                 response.setBody('{"RefundReceipt":{"Id":"701","TotalAmt":100}}');
+            } else if (endpoint.contains('/payment')) {
+                response.setBody('{"Payment":{"Id":"601","TotalAmt":0}}');
+            } else if (endpoint.contains('/creditmemo')) {
+                response.setBody('{"CreditMemo":{"Id":"501","DocNumber":"CM-RET-00001"}}');
             } else if (endpoint.contains('/invoice/145')) {
-                response.setBody(callNumber <= 3
-                    ? '{"Invoice":{"Id":"145","TotalAmt":500,"Balance":300,"DueDate":"2026-11-05"}}'
-                    : '{"Invoice":{"Id":"145","TotalAmt":500,"Balance":100,"DueDate":"2026-11-05"}}'
+                response.setBody(
+                    '{"Invoice":{"Id":"145","TotalAmt":500,"Balance":'
+                    + String.valueOf(invoiceBalance)
+                    + ',"DueDate":"2026-11-05"}}'
                 );
             } else {
-                response.setBody('{}');
+                response.setStatusCode(404);
+                response.setBody('{"error":"Unexpected test endpoint: ' + endpoint + '"}');
             }
             return response;
         }
     }
 
-    private static Order createOrder(Decimal balance) {
+    private static Id createReturnRequest(Decimal invoiceBalance, String resolutionType) {
         Account account = new Account(Name = 'QBO Credit Memo Test Customer', QBO_Customer_Id__c = '62');
         insert account;
         Id standardPricebookId = Test.getStandardPricebookId();
@@ -46,8 +53,8 @@ private class QboCreditMemoJobTest {
             QBO_Invoice_Id__c = '145',
             Invoice_Status__c = 'Invoiced',
             Invoice_Total__c = 500,
-            Invoice_Balance__c = balance,
-            Payment_Status__c = balance == 0 ? 'Paid' : 'Partially Paid'
+            Invoice_Balance__c = invoiceBalance,
+            Payment_Status__c = invoiceBalance == 0 ? 'Paid' : 'Partially Paid'
         );
         insert orderRecord;
         OrderItem item = new OrderItem(OrderId = orderRecord.Id, PricebookEntryId = entry.Id, Quantity = 2, UnitPrice = 100);
@@ -56,8 +63,9 @@ private class QboCreditMemoJobTest {
             Order__c = orderRecord.Id,
             Status__c = 'Approved',
             Current_Step__c = 'Pending',
-            Resolution_Type__c = balance == 0 ? 'Refunded' : 'Applied to Invoice'
+            Resolution_Type__c = resolutionType
         );
+        // Avoid the approval trigger enqueueing a second job in test setup.
         insert request;
         insert new Return_Request_Line__c(
             Return_Request__c = request.Id,
@@ -66,21 +74,26 @@ private class QboCreditMemoJobTest {
             Unit_Price__c = 100,
             Tax_Amount__c = 0
         );
-        return orderRecord;
+        return request.Id;
     }
 
     @IsTest
     static void appliesCreditMemoToOpenInvoice() {
-        Order orderRecord = createOrder(300);
-        Return_Request__c request = [SELECT Id FROM Return_Request__c WHERE Order__c = :orderRecord.Id LIMIT 1];
-        Test.setMock(HttpCalloutMock.class, new ReturnMock());
+        Id requestId = createReturnRequest(300, 'Applied to Invoice');
+        Test.setMock(HttpCalloutMock.class, new ReturnMock(300));
 
         Test.startTest();
-        System.enqueueJob(new QboCreditMemoJob(request.Id));
+        System.enqueueJob(new QboCreditMemoJob(requestId));
         Test.stopTest();
 
-        Return_Request__c refreshed = [SELECT Status__c, Current_Step__c, QBO_CreditMemo_Id__c, QBO_Payment_Id__c FROM Return_Request__c WHERE Id = :request.Id];
-        System.assertEquals('Credited', refreshed.Status__c);
+        Return_Request__c refreshed = [
+            SELECT Status__c, Current_Step__c, QBO_CreditMemo_Id__c, QBO_Payment_Id__c
+            FROM Return_Request__c WHERE Id = :requestId
+        ];
+        System.assertEquals(
+            'Credited', refreshed.Status__c,
+            'Failure log: ' + getFailureMessage(requestId)
+        );
         System.assertEquals('Done', refreshed.Current_Step__c);
         System.assertEquals('501', refreshed.QBO_CreditMemo_Id__c);
         System.assertEquals('601', refreshed.QBO_Payment_Id__c);
@@ -88,18 +101,36 @@ private class QboCreditMemoJobTest {
 
     @IsTest
     static void fullyPaidInvoiceUsesRefundPath() {
-        Order orderRecord = createOrder(0);
-        Return_Request__c request = [SELECT Id FROM Return_Request__c WHERE Order__c = :orderRecord.Id LIMIT 1];
-        Test.setMock(HttpCalloutMock.class, new ReturnMock());
+        Id requestId = createReturnRequest(0, 'Refunded');
+        Test.setMock(HttpCalloutMock.class, new ReturnMock(0));
 
         Test.startTest();
-        System.enqueueJob(new QboCreditMemoJob(request.Id));
+        System.enqueueJob(new QboCreditMemoJob(requestId));
         Test.stopTest();
 
-        Return_Request__c refreshed = [SELECT Status__c, Current_Step__c, QBO_CreditMemo_Id__c, QBO_Refund_Id__c FROM Return_Request__c WHERE Id = :request.Id];
-        System.assertEquals('Refunded', refreshed.Status__c);
+        Return_Request__c refreshed = [
+            SELECT Status__c, Current_Step__c, QBO_CreditMemo_Id__c, QBO_Refund_Id__c
+            FROM Return_Request__c WHERE Id = :requestId
+        ];
+        System.assertEquals(
+            'Refunded', refreshed.Status__c,
+            'Failure log: ' + getFailureMessage(requestId)
+        );
         System.assertEquals('Done', refreshed.Current_Step__c);
         System.assertEquals('501', refreshed.QBO_CreditMemo_Id__c);
         System.assertEquals('701', refreshed.QBO_Refund_Id__c);
+    }
+
+    private static String getFailureMessage(Id requestId) {
+        List<QBO_Sync_Log__c> logs = [
+            SELECT Error_Message__c
+            FROM QBO_Sync_Log__c
+            WHERE Related_Record_Id__c = :String.valueOf(requestId)
+            AND Operation__c = 'Return Processing'
+            AND Status__c = 'Failed'
+            ORDER BY CreatedDate DESC
+            LIMIT 1
+        ];
+        return logs.isEmpty() ? 'No QBO failure log was created.' : logs[0].Error_Message__c;
     }
 }
