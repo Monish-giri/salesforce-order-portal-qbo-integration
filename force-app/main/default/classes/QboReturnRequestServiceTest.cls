@@ -4,11 +4,11 @@ private class QboReturnRequestServiceTest {
         Account account = new Account(Name = 'QBO Return Test Customer');
         insert account;
 
-        Pricebook2 standardBook = [SELECT Id FROM Pricebook2 WHERE IsStandard = true LIMIT 1];
+        Id standardPricebookId = Test.getStandardPricebookId();
         Product2 product = new Product2(Name = 'QBO Return Test Item', IsActive = true, QBO_Item_Id__c = '1');
         insert product;
         PricebookEntry entry = new PricebookEntry(
-            Pricebook2Id = standardBook.Id,
+            Pricebook2Id = standardPricebookId,
             Product2Id = product.Id,
             UnitPrice = 100,
             IsActive = true
@@ -19,7 +19,7 @@ private class QboReturnRequestServiceTest {
             AccountId = account.Id,
             EffectiveDate = Date.today(),
             Status = 'Draft',
-            Pricebook2Id = standardBook.Id,
+            Pricebook2Id = standardPricebookId,
             QBO_Invoice_Id__c = '145',
             Invoice_Status__c = 'Invoiced'
         );
