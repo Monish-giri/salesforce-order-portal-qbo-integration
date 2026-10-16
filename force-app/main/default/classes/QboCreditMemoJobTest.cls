@@ -64,7 +64,6 @@ private class QboCreditMemoJobTest {
             Order_Item__c = item.Id,
             Quantity__c = 1,
             Unit_Price__c = 100,
-            Line_Amount__c = 100,
             Tax_Amount__c = 0
         );
         return orderRecord;
