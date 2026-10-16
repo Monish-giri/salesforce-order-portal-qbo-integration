@@ -52,7 +52,7 @@ private class PartnerCustomerAccountSharingServiceTest {
 
         System.assertEquals(customerAccount.Id, share.AccountId);
         System.assertEquals(UserInfo.getUserId(), share.UserOrGroupId);
-        System.assertEquals('Read', share.AccountAccessLevel);
+        System.assertEquals('Edit', share.AccountAccessLevel);
         System.assertEquals('Manual', String.valueOf(share.RowCause));
     }
 
@@ -107,9 +107,10 @@ private class PartnerCustomerAccountSharingServiceTest {
         insert new AccountShare(
             AccountId = customerAccount.Id,
             UserOrGroupId = legacyRoleGroup.Id,
-            AccountAccessLevel = 'Read',
-            CaseAccessLevel = 'None',
-            OpportunityAccessLevel = 'None',
+            AccountAccessLevel = 'Edit',
+            CaseAccessLevel = 'Read',
+            OpportunityAccessLevel = 'Edit',
+            ContactAccessLevel = 'Read',
             RowCause = 'Manual'
         );
 
