@@ -35,7 +35,6 @@ public with sharing class QboReturnRequestService {
                 Order_Item__c = item.Id,
                 Quantity__c = requested,
                 Unit_Price__c = unitPrice,
-                Line_Amount__c = requested * unitPrice,
                 Tax_Amount__c = 0
             ));
         }
