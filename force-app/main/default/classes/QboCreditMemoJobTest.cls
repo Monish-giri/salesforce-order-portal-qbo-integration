@@ -33,16 +33,16 @@ private class QboCreditMemoJobTest {
     private static Order createOrder(Decimal balance) {
         Account account = new Account(Name = 'QBO Credit Memo Test Customer', QBO_Customer_Id__c = '62');
         insert account;
-        Pricebook2 standardBook = [SELECT Id FROM Pricebook2 WHERE IsStandard = true LIMIT 1];
+        Id standardPricebookId = Test.getStandardPricebookId();
         Product2 product = new Product2(Name = 'QBO Credit Memo Item', IsActive = true, QBO_Item_Id__c = '1');
         insert product;
-        PricebookEntry entry = new PricebookEntry(Pricebook2Id = standardBook.Id, Product2Id = product.Id, UnitPrice = 100, IsActive = true);
+        PricebookEntry entry = new PricebookEntry(Pricebook2Id = standardPricebookId, Product2Id = product.Id, UnitPrice = 100, IsActive = true);
         insert entry;
         Order orderRecord = new Order(
             AccountId = account.Id,
             EffectiveDate = Date.today(),
             Status = 'Draft',
-            Pricebook2Id = standardBook.Id,
+            Pricebook2Id = standardPricebookId,
             QBO_Invoice_Id__c = '145',
             Invoice_Status__c = 'Invoiced',
             Invoice_Total__c = 500,
