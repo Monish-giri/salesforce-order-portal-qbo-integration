@@ -196,6 +196,48 @@
     font-weight: 700;
 }
 
+.discount-card {
+    border-color: #d8e7f6;
+    background: #f8fbff;
+}
+
+.card-description {
+    margin: 0.3rem 0 0;
+    color: #667085;
+    font-size: 0.72rem;
+    line-height: 1.45;
+}
+
+.discount-schedule {
+    display: grid;
+    gap: 0.45rem;
+}
+
+.discount-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.65rem 0.75rem;
+    border: 1px solid #e4edf7;
+    border-radius: 0.65rem;
+    background: #ffffff;
+    color: #475467;
+    font-size: 0.7rem;
+}
+
+.discount-row strong {
+    color: #0b5cab;
+    font-size: 0.75rem;
+}
+
+.discount-note {
+    margin: 0.65rem 0 0;
+    color: #98a2b3;
+    font-size: 0.62rem;
+    line-height: 1.45;
+}
+
 .summary-label {
     margin-bottom: 0.9rem;
 }
@@ -327,5 +369,11 @@
 
     .review-total {
         grid-column: 2;
+    }
+
+    .discount-row {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 0.2rem;
     }
 }
