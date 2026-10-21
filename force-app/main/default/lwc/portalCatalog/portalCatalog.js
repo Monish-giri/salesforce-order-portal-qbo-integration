@@ -10,6 +10,8 @@ export default class PortalCatalog extends LightningElement {
     isLoading = true;
     errorMessage;
     hasMore = false;
+    audience = 'Customer';
+    isPartner = false;
 
     searchTimer;
 
@@ -23,6 +25,16 @@ export default class PortalCatalog extends LightningElement {
 
     get hasProducts() {
         return this.products.length > 0;
+    }
+
+    get catalogTitle() {
+        return this.isPartner ? 'Partner Product Catalog' : 'Product Catalog';
+    }
+
+    get catalogSubtitle() {
+        return this.isPartner
+            ? 'View partner pricing and estimated resale margin for available products.'
+            : 'Choose the products and services available to your account.';
     }
 
     handleSearchInput(event) {
@@ -43,6 +55,9 @@ export default class PortalCatalog extends LightningElement {
                 searchTerm: this.searchTerm,
                 pageSize: PAGE_SIZE
             });
+
+            this.audience = response?.audience ?? 'Customer';
+            this.isPartner = response?.isPartner === true;
 
             this.products = (response?.products ?? []).map((product) => ({
                 ...product,
