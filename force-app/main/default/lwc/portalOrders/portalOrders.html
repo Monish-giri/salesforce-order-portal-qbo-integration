@@ -29,12 +29,7 @@
                         <div class="order-card-meta">
                             <span>{order.status}</span>
                             <span>{order.effectiveDate}</span>
-                            <lightning-formatted-number
-                                value={order.totalAmount}
-                                format-style="currency"
-                                currency-code="INR"
-                                maximum-fraction-digits="0">
-                            </lightning-formatted-number>
+                            <lightning-formatted-number value={order.totalAmount} format-style="currency" currency-code="INR" maximum-fraction-digits="0"></lightning-formatted-number>
                         </div>
                     </button>
                 </template>
@@ -61,24 +56,11 @@
                 </div>
 
                 <div class="detail-summary">
-                    <div>
-                        <span>Status</span>
-                        <strong>{selectedOrder.status}</strong>
-                    </div>
-                    <div>
-                        <span>Order Date</span>
-                        <strong>{selectedOrder.effectiveDate}</strong>
-                    </div>
+                    <div><span>Status</span><strong>{selectedOrder.status}</strong></div>
+                    <div><span>Order Date</span><strong>{selectedOrder.effectiveDate}</strong></div>
                     <div>
                         <span>Total</span>
-                        <strong>
-                            <lightning-formatted-number
-                                value={selectedOrder.totalAmount}
-                                format-style="currency"
-                                currency-code="INR"
-                                maximum-fraction-digits="0">
-                            </lightning-formatted-number>
-                        </strong>
+                        <strong><lightning-formatted-number value={selectedOrder.totalAmount} format-style="currency" currency-code="INR" maximum-fraction-digits="0"></lightning-formatted-number></strong>
                     </div>
                 </div>
 
@@ -94,37 +76,15 @@
                         </div>
 
                         <div class="invoice-grid">
-                            <div>
-                                <span>Invoice Status</span>
-                                <strong>{selectedOrder.invoiceStatus}</strong>
-                            </div>
-                            <div>
-                                <span>Payment Status</span>
-                                <strong>{selectedOrder.paymentStatus}</strong>
-                            </div>
-                            <div>
-                                <span>Invoice Number</span>
-                                <strong>{selectedOrder.qboInvoiceNumber}</strong>
-                            </div>
-                            <div>
-                                <span>Issue Date</span>
-                                <strong>{selectedOrder.invoiceIssueDate}</strong>
-                            </div>
-                            <div>
-                                <span>Due Date</span>
-                                <strong>{selectedOrder.invoiceDueDate}</strong>
-                            </div>
+                            <div><span>Invoice Status</span><strong>{selectedOrder.invoiceStatus}</strong></div>
+                            <div><span>Payment Status</span><strong>{selectedOrder.paymentStatus}</strong></div>
+                            <div><span>Invoice Number</span><strong>{selectedOrder.qboInvoiceNumber}</strong></div>
+                            <div><span>Issue Date</span><strong>{selectedOrder.invoiceIssueDate}</strong></div>
+                            <div><span>Due Date</span><strong>{selectedOrder.invoiceDueDate}</strong></div>
                             <template if:true={hasInvoiceBalance}>
                                 <div>
                                     <span>Outstanding Balance</span>
-                                    <strong>
-                                        <lightning-formatted-number
-                                            value={selectedOrder.invoiceBalance}
-                                            format-style="currency"
-                                            currency-code="INR"
-                                            maximum-fraction-digits="2">
-                                        </lightning-formatted-number>
-                                    </strong>
+                                    <strong><lightning-formatted-number value={selectedOrder.invoiceBalance} format-style="currency" currency-code="INR" maximum-fraction-digits="2"></lightning-formatted-number></strong>
                                 </div>
                             </template>
                         </div>
@@ -142,35 +102,15 @@
 
                             <template if:true={hasCurrentDiscount}>
                                 <div class="discount-current">
-                                    <div>
-                                        <span>Current offer</span>
-                                        <strong>{currentDiscountMessage}</strong>
-                                    </div>
-                                    <div>
-                                        <span>Discount</span>
-                                        <strong>{currentDiscountPercent}%</strong>
-                                    </div>
+                                    <div><span>Current offer</span><strong>{currentDiscountMessage}</strong></div>
+                                    <div><span>Discount</span><strong>{currentDiscountPercent}%</strong></div>
                                     <div>
                                         <span>You save</span>
-                                        <strong>
-                                            <lightning-formatted-number
-                                                value={selectedOrder.currentDiscount.discountAmount}
-                                                format-style="currency"
-                                                currency-code="INR"
-                                                maximum-fraction-digits="2">
-                                            </lightning-formatted-number>
-                                        </strong>
+                                        <strong><lightning-formatted-number value={selectedOrder.currentDiscount.discountAmount} format-style="currency" currency-code="INR" maximum-fraction-digits="2"></lightning-formatted-number></strong>
                                     </div>
                                     <div>
                                         <span>Payable now</span>
-                                        <strong>
-                                            <lightning-formatted-number
-                                                value={selectedOrder.currentDiscount.payableAmount}
-                                                format-style="currency"
-                                                currency-code="INR"
-                                                maximum-fraction-digits="2">
-                                            </lightning-formatted-number>
-                                        </strong>
+                                        <strong><lightning-formatted-number value={selectedOrder.currentDiscount.payableAmount} format-style="currency" currency-code="INR" maximum-fraction-digits="2"></lightning-formatted-number></strong>
                                     </div>
                                 </div>
                             </template>
@@ -179,13 +119,10 @@
                             </template>
 
                             <div class="discount-schedule">
-                                <div class="schedule-heading">
-                                    <span>Payment window</span>
-                                    <span>Discount</span>
-                                </div>
+                                <div class="schedule-heading"><span>Payment window</span><span>Discount</span></div>
                                 <template for:each={selectedOrder.discountSchedule} for:item="rule">
-                                    <div class="schedule-row" key={rule.priority}>
-                                        <span>{rule.dayFrom}–{rule.dayTo}</span>
+                                    <div class="schedule-row" key={rule.dayFrom}>
+                                        <span>{rule.rangeLabel}</span>
                                         <strong>{rule.discountPercent}%</strong>
                                     </div>
                                 </template>
@@ -206,28 +143,13 @@
                 </template>
 
                 <div class="line-list">
-                    <div class="line-heading">
-                        <span>Product</span>
-                        <span>Quantity</span>
-                        <span>Unit Price</span>
-                        <span>Total</span>
-                    </div>
+                    <div class="line-heading"><span>Product</span><span>Quantity</span><span>Unit Price</span><span>Total</span></div>
                     <template for:each={selectedOrder.lines} for:item="line">
                         <div class="line-row" key={line.id}>
                             <span>{line.productName}</span>
                             <span>{line.quantity}</span>
-                            <lightning-formatted-number
-                                value={line.unitPrice}
-                                format-style="currency"
-                                currency-code="INR"
-                                maximum-fraction-digits="0">
-                            </lightning-formatted-number>
-                            <lightning-formatted-number
-                                value={line.totalPrice}
-                                format-style="currency"
-                                currency-code="INR"
-                                maximum-fraction-digits="0">
-                            </lightning-formatted-number>
+                            <lightning-formatted-number value={line.unitPrice} format-style="currency" currency-code="INR" maximum-fraction-digits="0"></lightning-formatted-number>
+                            <lightning-formatted-number value={line.totalPrice} format-style="currency" currency-code="INR" maximum-fraction-digits="0"></lightning-formatted-number>
                         </div>
                     </template>
                 </div>
