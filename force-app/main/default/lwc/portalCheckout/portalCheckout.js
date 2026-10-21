@@ -21,6 +21,12 @@ export default class PortalCheckout extends LightningElement {
     }
 
     get paymentOptions() {
+        if (this.isPartner) {
+            return [
+                { label: 'B2B Invoice / Credit Terms', value: 'Invoice' }
+            ];
+        }
+
         return [
             { label: 'Pay Online', value: 'Online' },
             { label: 'Cash on Delivery', value: 'Cash on Delivery' }
@@ -28,7 +34,7 @@ export default class PortalCheckout extends LightningElement {
     }
 
     get paymentHeading() {
-        return this.isPartner ? 'Invoice payment terms' : 'Choose your payment method';
+        return this.isPartner ? 'B2B payment terms' : 'Choose your payment method';
     }
 
     get orderAccountName() {
@@ -60,7 +66,9 @@ export default class PortalCheckout extends LightningElement {
     get hasB2BMarginData() { return this.isPartner && this.b2bRecommendedRetailTotal > 0; }
 
     get paymentSummary() {
-        if (this.isPartner) return 'Your order will be invoiced with the configured B2B payment terms.';
+        if (this.isPartner) {
+            return 'Your order will be invoiced with the configured B2B payment terms. Early-payment discounts will be shown on the invoice when applicable.';
+        }
         if (this.selectedPaymentMethod === 'Cash on Delivery') return 'Pay the full order amount when your order is delivered.';
         return 'Pay the full order amount online. Razorpay will be connected in the payment integration phase.';
     }
@@ -87,7 +95,7 @@ export default class PortalCheckout extends LightningElement {
             this.errorMessage = 'Select a customer account before placing the order.';
             return;
         }
-        if (!this.isPartner && !this.selectedPaymentMethod) {
+        if (!this.selectedPaymentMethod) {
             this.errorMessage = 'Select a payment method before placing the order.';
             return;
         }
