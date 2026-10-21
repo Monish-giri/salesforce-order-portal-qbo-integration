@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomMetadata xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label>First Week</label>
+    <protected>false</protected>
+    <values>
+        <field>Audience__c</field>
+        <value><stringValue>Partner</stringValue></value>
+    </values>
+    <values>
+        <field>Day_From__c</field>
+        <value><doubleValue>1.0</doubleValue></value>
+    </values>
+    <values>
+        <field>Day_To__c</field>
+        <value><doubleValue>7.0</doubleValue></value>
+    </values>
+    <values>
+        <field>Discount_Percentage__c</field>
+        <value><doubleValue>7.0</doubleValue></value>
+    </values>
+    <values>
+        <field>Active__c</field>
+        <value><booleanValue>true</booleanValue></value>
+    </values>
+    <values>
+        <field>Priority__c</field>
+        <value><doubleValue>1.0</doubleValue></value>
+    </values>
+</CustomMetadata>
