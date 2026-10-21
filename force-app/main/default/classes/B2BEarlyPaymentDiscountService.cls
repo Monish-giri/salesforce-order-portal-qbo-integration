@@ -16,6 +16,42 @@ public with sharing class B2BEarlyPaymentDiscountService {
         }
     }
 
+    public class DiscountRule {
+        @AuraEnabled public Integer dayFrom { get; set; }
+        @AuraEnabled public Integer dayTo { get; set; }
+        @AuraEnabled public Decimal discountPercent { get; set; }
+        @AuraEnabled public Integer priority { get; set; }
+
+        public DiscountRule(Integer dayFrom, Integer dayTo, Decimal discountPercent, Integer priority) {
+            this.dayFrom = dayFrom;
+            this.dayTo = dayTo;
+            this.discountPercent = discountPercent == null ? 0 : discountPercent;
+            this.priority = priority;
+        }
+    }
+
+    @AuraEnabled(cacheable=true)
+    public static List<DiscountRule> getActiveSchedule() {
+        List<DiscountRule> schedule = new List<DiscountRule>();
+
+        for (B2B_Early_Payment_Discount__mdt rule : [
+            SELECT Day_From__c, Day_To__c, Discount_Percentage__c, Priority__c
+            FROM B2B_Early_Payment_Discount__mdt
+            WHERE Audience__c = 'Partner'
+              AND Active__c = true
+            ORDER BY Day_From__c ASC, Priority__c ASC
+        ]) {
+            schedule.add(new DiscountRule(
+                Integer.valueOf(rule.Day_From__c),
+                Integer.valueOf(rule.Day_To__c),
+                rule.Discount_Percentage__c,
+                Integer.valueOf(rule.Priority__c)
+            ));
+        }
+
+        return schedule;
+    }
+
     public static DiscountResult calculate(Date invoiceDate, Date dueDate, Decimal invoiceBalance, Date paymentDate) {
         DiscountResult result = new DiscountResult();
 
