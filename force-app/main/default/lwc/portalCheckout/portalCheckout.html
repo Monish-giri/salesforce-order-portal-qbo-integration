@@ -4,7 +4,7 @@
             <div>
                 <p class="eyebrow">CHECKOUT</p>
                 <h1>Review your order</h1>
-                <p class="subtitle">Confirm the customer, quantities, and total before placing the order.</p>
+                <p class="subtitle">Confirm the customer, quantities, and payment method before placing the order.</p>
             </div>
         </div>
 
@@ -112,6 +112,40 @@
                             </div>
                         </div>
 
+                        <div class="checkout-card payment-card">
+                            <div class="card-heading">
+                                <div>
+                                    <p class="card-kicker">PAYMENT</p>
+                                    <h2>{paymentHeading}</h2>
+                                </div>
+                            </div>
+
+                            <template if:true={isPartner}>
+                                <div class="payment-option payment-option-static">
+                                    <div class="payment-option-icon">
+                                        <lightning-icon icon-name="utility:invoice" size="small" alternative-text="Invoice"></lightning-icon>
+                                    </div>
+                                    <div>
+                                        <h3>B2B Invoice / Credit Terms</h3>
+                                        <p>Your order will be invoiced according to the configured B2B payment terms.</p>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <template if:false={isPartner}>
+                                <lightning-radio-group
+                                    name="paymentMethod"
+                                    label="Payment method"
+                                    options={paymentOptions}
+                                    value={selectedPaymentMethod}
+                                    type="radio"
+                                    onchange={handlePaymentMethodChange}>
+                                </lightning-radio-group>
+                            </template>
+
+                            <p class="payment-summary">{paymentSummary}</p>
+                        </div>
+
                         <template if:true={hasB2BMarginData}>
                             <div class="commercial-card">
                                 <div class="commercial-heading">
@@ -217,7 +251,7 @@
                             Back to Cart
                         </button>
 
-                        <p class="summary-note">Your order will be saved in Salesforce first. QuickBooks invoicing will be connected in the next phase.</p>
+                        <p class="summary-note">Your order will be saved in Salesforce first. The invoice will be handled by the existing QuickBooks flow.</p>
                     </aside>
                 </div>
             </template>
