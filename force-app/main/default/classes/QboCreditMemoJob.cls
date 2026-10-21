@@ -33,8 +33,6 @@ public with sharing class QboCreditMemoJob implements Queueable, Database.Allows
                 throw new QboCreditMemoException('Return Request has no lines.');
             }
 
-            update new Return_Request__c(Id = request.Id, Status__c = 'Processing', Current_Step__c = 'Pending');
-
             Decimal creditAmount = 0;
             List<Object> lines = new List<Object>();
             for (Return_Request_Line__c line : request.Return_Request_Lines__r) {
@@ -66,34 +64,60 @@ public with sharing class QboCreditMemoJob implements Queueable, Database.Allows
             if (String.isBlank(creditMemoId)) {
                 creditMemoId = createCreditMemo(config, customerId, request.Name, lines);
             }
-            if (request.QBO_CreditMemo_Id__c != creditMemoId) {
-                update new Return_Request__c(Id = request.Id, QBO_CreditMemo_Id__c = creditMemoId, Current_Step__c = 'CreditMemoCreated');
-            }
+
+            String paymentId = request.QBO_Payment_Id__c;
+            String refundId = request.QBO_Refund_Id__c;
+            String finalStatus;
+            InvoiceState refreshedInvoice;
 
             if (request.Resolution_Type__c == 'Customer Credit') {
-                finish(request.Id, 'Credited');
+                finalStatus = 'Credited';
             } else {
                 InvoiceState invoice = readInvoice(config, invoiceId);
                 Decimal balance = invoice.balance == null ? 0 : invoice.balance;
                 if (balance > 0) {
                     Decimal applyAmount = Math.min(creditAmount, balance);
-                    if (String.isBlank(request.QBO_Payment_Id__c)) {
-                        String paymentId = applyCredit(config, customerId, invoiceId, creditMemoId, applyAmount, request.Name);
-                        update new Return_Request__c(Id = request.Id, QBO_Payment_Id__c = paymentId, Current_Step__c = 'Applied/Refunded');
+                    if (String.isBlank(paymentId)) {
+                        paymentId = applyCredit(config, customerId, invoiceId, creditMemoId, applyAmount, request.Name);
                     }
-                    finish(request.Id, 'Credited');
+                    finalStatus = 'Credited';
                 } else if (request.Resolution_Type__c == 'Refunded') {
-                    if (String.isBlank(request.QBO_Refund_Id__c)) {
-                        String refundId = createRefundReceipt(config, customerId, creditMemoId, creditAmount, request.Name);
-                        update new Return_Request__c(Id = request.Id, QBO_Refund_Id__c = refundId, Current_Step__c = 'Applied/Refunded');
+                    if (String.isBlank(refundId)) {
+                        refundId = createRefundReceipt(config, customerId, creditMemoId, creditAmount, request.Name);
                     }
-                    finish(request.Id, 'Refunded');
+                    finalStatus = 'Refunded';
                 } else {
                     throw new QboCreditMemoException('A fully paid invoice requires Refunded or Customer Credit resolution.');
                 }
             }
 
-            refreshOrder(config, request.Order__c, invoiceId);
+            // All QBO callouts must complete before any DML in this transaction.
+            refreshedInvoice = readInvoice(config, invoiceId);
+
+            Return_Request__c requestUpdate = new Return_Request__c(
+                Id = request.Id,
+                Status__c = finalStatus,
+                Current_Step__c = 'Done'
+            );
+            if (request.QBO_CreditMemo_Id__c != creditMemoId) {
+                requestUpdate.QBO_CreditMemo_Id__c = creditMemoId;
+            }
+            if (request.QBO_Payment_Id__c != paymentId) {
+                requestUpdate.QBO_Payment_Id__c = paymentId;
+            }
+            if (request.QBO_Refund_Id__c != refundId) {
+                requestUpdate.QBO_Refund_Id__c = refundId;
+            }
+            update requestUpdate;
+
+            Database.update(new Order(
+                Id = request.Order__c,
+                Invoice_Total__c = refreshedInvoice.total,
+                Invoice_Balance__c = refreshedInvoice.balance,
+                Invoice_Due_Date__c = refreshedInvoice.dueDate,
+                Payment_Status__c = derivePaymentStatus(refreshedInvoice.total, refreshedInvoice.balance, refreshedInvoice.dueDate),
+                Last_QBO_Sync__c = System.now()
+            ), AccessLevel.SYSTEM_MODE);
         } catch (Exception ex) {
             update new Return_Request__c(Id = request.Id, Status__c = 'Failed');
             insert new QBO_Sync_Log__c(
@@ -103,10 +127,6 @@ public with sharing class QboCreditMemoJob implements Queueable, Database.Allows
                 Error_Message__c = truncate(ex.getMessage(), 255)
             );
         }
-    }
-
-    private static void finish(Id requestId, String status) {
-        update new Return_Request__c(Id = requestId, Status__c = status, Current_Step__c = 'Done');
     }
 
     private static String findExistingCreditMemo(QBO_Config__mdt config, String returnName) {
@@ -188,11 +208,6 @@ public with sharing class QboCreditMemoJob implements Queueable, Database.Allows
         state.balance = decimalValue(invoice.get('Balance'));
         state.dueDate = dateValue(invoice.get('DueDate'));
         return state;
-    }
-
-    private static void refreshOrder(QBO_Config__mdt config, Id orderId, String invoiceId) {
-        InvoiceState state = readInvoice(config, invoiceId);
-        Database.update(new Order(Id = orderId, Invoice_Total__c = state.total, Invoice_Balance__c = state.balance, Invoice_Due_Date__c = state.dueDate, Payment_Status__c = derivePaymentStatus(state.total, state.balance, state.dueDate), Last_QBO_Sync__c = System.now()), AccessLevel.SYSTEM_MODE);
     }
 
     private static HttpResponse send(QBO_Config__mdt config, String method, String resource, String body, String query, String requestId) {
