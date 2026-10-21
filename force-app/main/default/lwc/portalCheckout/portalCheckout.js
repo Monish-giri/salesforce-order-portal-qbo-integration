@@ -45,6 +45,40 @@ export default class PortalCheckout extends LightningElement {
         );
     }
 
+    get b2bRecommendedRetailTotal() {
+        if (!this.isPartner) {
+            return 0;
+        }
+
+        return this.cartItems.reduce(
+            (total, item) => total + ((item.recommendedRetailPrice || 0) * item.quantity),
+            0
+        );
+    }
+
+    get b2bEstimatedMarginTotal() {
+        if (!this.isPartner) {
+            return 0;
+        }
+
+        return this.cartItems.reduce(
+            (total, item) => total + ((item.estimatedMarginAmount || 0) * item.quantity),
+            0
+        );
+    }
+
+    get b2bEstimatedMarginPercent() {
+        if (!this.isPartner || !this.b2bRecommendedRetailTotal) {
+            return 0;
+        }
+
+        return (this.b2bEstimatedMarginTotal / this.b2bRecommendedRetailTotal) * 100;
+    }
+
+    get hasB2BMarginData() {
+        return this.isPartner && this.b2bRecommendedRetailTotal > 0;
+    }
+
     async loadCheckoutContext() {
         this.isLoading = true;
         this.errorMessage = undefined;
