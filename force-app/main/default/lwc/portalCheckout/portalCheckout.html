@@ -70,6 +70,35 @@
                                         <div class="review-info">
                                             <h3>{item.name}</h3>
                                             <p>{item.quantity} × <lightning-formatted-number value={item.unitPrice} format-style="currency" currency-code="INR" maximum-fraction-digits="0"></lightning-formatted-number></p>
+
+                                            <template if:true={isPartner}>
+                                                <template if:true={item.recommendedRetailPrice}>
+                                                    <div class="item-commercials">
+                                                        <span>
+                                                            Retail opportunity:
+                                                            <lightning-formatted-number
+                                                                value={item.recommendedRetailPrice}
+                                                                format-style="currency"
+                                                                currency-code="INR"
+                                                                maximum-fraction-digits="0">
+                                                            </lightning-formatted-number>
+                                                        </span>
+                                                        <span>
+                                                            Margin:
+                                                            <lightning-formatted-number
+                                                                value={item.estimatedMarginAmount}
+                                                                format-style="currency"
+                                                                currency-code="INR"
+                                                                maximum-fraction-digits="0">
+                                                            </lightning-formatted-number>
+                                                            (<lightning-formatted-number
+                                                                value={item.estimatedMarginPercent}
+                                                                maximum-fraction-digits="1">
+                                                            </lightning-formatted-number>%)
+                                                        </span>
+                                                    </div>
+                                                </template>
+                                            </template>
                                         </div>
                                         <lightning-formatted-number
                                             class="review-total"
@@ -82,6 +111,56 @@
                                 </template>
                             </div>
                         </div>
+
+                        <template if:true={hasB2BMarginData}>
+                            <div class="commercial-card">
+                                <div class="commercial-heading">
+                                    <div>
+                                        <p class="card-kicker">PARTNER ECONOMICS</p>
+                                        <h2>Your estimated resale opportunity</h2>
+                                        <p>Based on the recommended retail prices configured for these products.</p>
+                                    </div>
+                                </div>
+
+                                <div class="commercial-grid">
+                                    <div class="commercial-metric">
+                                        <span>Partner purchase total</span>
+                                        <lightning-formatted-number
+                                            value={cartSubtotal}
+                                            format-style="currency"
+                                            currency-code="INR"
+                                            maximum-fraction-digits="0">
+                                        </lightning-formatted-number>
+                                    </div>
+                                    <div class="commercial-metric">
+                                        <span>Recommended retail total</span>
+                                        <lightning-formatted-number
+                                            value={b2bRecommendedRetailTotal}
+                                            format-style="currency"
+                                            currency-code="INR"
+                                            maximum-fraction-digits="0">
+                                        </lightning-formatted-number>
+                                    </div>
+                                    <div class="commercial-metric commercial-highlight">
+                                        <span>Estimated margin</span>
+                                        <div>
+                                            <lightning-formatted-number
+                                                value={b2bEstimatedMarginTotal}
+                                                format-style="currency"
+                                                currency-code="INR"
+                                                maximum-fraction-digits="0">
+                                            </lightning-formatted-number>
+                                            <span class="commercial-percent">
+                                                (<lightning-formatted-number
+                                                    value={b2bEstimatedMarginPercent}
+                                                    maximum-fraction-digits="1">
+                                                </lightning-formatted-number>%)
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
                     </div>
 
                     <aside class="checkout-summary">
@@ -100,6 +179,26 @@
                                 maximum-fraction-digits="0">
                             </lightning-formatted-number>
                         </div>
+
+                        <template if:true={hasB2BMarginData}>
+                            <div class="summary-opportunity">
+                                <span>Estimated margin</span>
+                                <div>
+                                    <lightning-formatted-number
+                                        value={b2bEstimatedMarginTotal}
+                                        format-style="currency"
+                                        currency-code="INR"
+                                        maximum-fraction-digits="0">
+                                    </lightning-formatted-number>
+                                    <span class="commercial-percent">
+                                        (<lightning-formatted-number
+                                            value={b2bEstimatedMarginPercent}
+                                            maximum-fraction-digits="1">
+                                        </lightning-formatted-number>%)
+                                    </span>
+                                </div>
+                            </div>
+                        </template>
 
                         <button
                             class="place-order-button"
