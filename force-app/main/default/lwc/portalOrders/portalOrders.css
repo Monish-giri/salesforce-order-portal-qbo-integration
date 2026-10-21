@@ -169,6 +169,143 @@
     color: #182230;
 }
 
+.invoice-panel,
+.payment-panel {
+    margin-bottom: 1.25rem;
+    padding: 1.25rem;
+    border: 1px solid #dbe7f3;
+    border-radius: 14px;
+    background: #f8fbff;
+}
+
+.panel-header,
+.discount-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.panel-header h3,
+.discount-title h3,
+.payment-panel h3 {
+    margin: 0.25rem 0;
+    color: #182230;
+}
+
+.panel-header p:not(.section-kicker),
+.discount-pending {
+    margin: 0;
+    color: #667085;
+    font-size: 0.84rem;
+    line-height: 1.5;
+}
+
+.invoice-badge,
+.discount-badge {
+    white-space: nowrap;
+    border-radius: 999px;
+    padding: 0.35rem 0.65rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    background: #e8f1fb;
+    color: #175cd3;
+}
+
+.invoice-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.invoice-grid > div,
+.discount-current > div {
+    background: #fff;
+    border: 1px solid #e6edf5;
+    border-radius: 10px;
+    padding: 0.8rem 0.9rem;
+}
+
+.invoice-grid span,
+.discount-current span,
+.payment-status-row span {
+    display: block;
+    margin-bottom: 0.25rem;
+    color: #667085;
+    font-size: 0.76rem;
+}
+
+.invoice-grid strong,
+.discount-current strong,
+.payment-status-row strong {
+    color: #182230;
+}
+
+.discount-panel {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #dbe7f3;
+}
+
+.discount-current {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1.2fr;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.discount-current > div:last-child {
+    border-color: #b8d5f2;
+    background: #f5faff;
+}
+
+.discount-schedule {
+    margin-top: 1rem;
+    border: 1px solid #e6edf5;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #fff;
+}
+
+.schedule-heading,
+.schedule-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    padding: 0.7rem 0.9rem;
+}
+
+.schedule-heading {
+    background: #f8fafc;
+    color: #667085;
+    font-size: 0.76rem;
+    font-weight: 600;
+}
+
+.schedule-row {
+    border-top: 1px solid #eef2f6;
+    color: #344054;
+    font-size: 0.82rem;
+}
+
+.schedule-row strong {
+    color: #175cd3;
+}
+
+.payment-panel {
+    background: #fff;
+    border-color: #e5e7eb;
+}
+
+.payment-status-row {
+    margin-top: 1rem;
+    padding: 0.8rem 0.9rem;
+    border-radius: 10px;
+    background: #f8fafc;
+}
+
 .line-list {
     border-top: 1px solid #eef2f6;
 }
@@ -203,8 +340,15 @@
         min-width: 0;
     }
 
-    .detail-summary {
+    .detail-summary,
+    .invoice-grid,
+    .discount-current {
         grid-template-columns: 1fr;
+    }
+
+    .panel-header,
+    .discount-title {
+        flex-direction: column;
     }
 
     .line-heading,
