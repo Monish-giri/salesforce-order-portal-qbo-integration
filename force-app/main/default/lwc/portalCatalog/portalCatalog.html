@@ -2,9 +2,9 @@
     <section class="catalog-section">
         <div class="catalog-heading">
             <div>
-                <p class="eyebrow">PRODUCT CATALOG</p>
-                <h2>Browse available products</h2>
-                <p class="subtitle">Choose the products and services available to your account.</p>
+                <p class="eyebrow">{audience} CATALOG</p>
+                <h2>{catalogTitle}</h2>
+                <p class="subtitle">{catalogSubtitle}</p>
             </div>
             <div class="result-badge">
                 <span>{products.length}</span>
@@ -69,7 +69,7 @@
 
                                 <div class="product-footer">
                                     <div>
-                                        <span class="price-label">Starting at</span>
+                                        <span class="price-label">{isPartner ? 'Partner price' : 'Starting at'}</span>
                                         <lightning-formatted-number
                                             class="price"
                                             value={product.unitPrice}
@@ -78,6 +78,34 @@
                                             maximum-fraction-digits="0">
                                         </lightning-formatted-number>
                                     </div>
+
+                                    <template if:true={isPartner}>
+                                        <template if:true={product.recommendedRetailPrice}>
+                                            <div class="partner-margin">
+                                                <span class="price-label">Recommended retail</span>
+                                                <lightning-formatted-number
+                                                    class="retail-price"
+                                                    value={product.recommendedRetailPrice}
+                                                    format-style="currency"
+                                                    currency-code="INR"
+                                                    maximum-fraction-digits="0">
+                                                </lightning-formatted-number>
+                                                <span class="margin-detail">
+                                                    Estimated margin:
+                                                    <lightning-formatted-number
+                                                        value={product.estimatedMarginAmount}
+                                                        format-style="currency"
+                                                        currency-code="INR"
+                                                        maximum-fraction-digits="0">
+                                                    </lightning-formatted-number>
+                                                    (<lightning-formatted-number
+                                                        value={product.estimatedMarginPercent}
+                                                        maximum-fraction-digits="1">
+                                                    </lightning-formatted-number>%)
+                                                </span>
+                                            </div>
+                                        </template>
+                                    </template>
 
                                     <template if:false={product.isSelectingQuantity}>
                                         <lightning-button
