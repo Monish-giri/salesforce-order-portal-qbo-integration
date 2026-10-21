@@ -1,0 +1,65 @@
+@IsTest
+private class B2BEarlyPaymentDiscountServiceTest {
+    @IsTest
+    static void firstWeekGetsSevenPercent() {
+        Date invoiceDate = Date.newInstance(2026, 10, 1);
+        Date paymentDate = Date.newInstance(2026, 10, 1);
+
+        B2BEarlyPaymentDiscountService.DiscountResult result =
+            B2BEarlyPaymentDiscountService.calculate(invoiceDate, Date.newInstance(2026, 10, 30), 10000, paymentDate);
+
+        System.assertEquals(true, result.eligible);
+        System.assertEquals(7, result.discountPercent);
+        System.assertEquals(700, result.discountAmount);
+        System.assertEquals(9300, result.payableAmount);
+    }
+
+    @IsTest
+    static void secondWeekGetsFivePercent() {
+        Date invoiceDate = Date.newInstance(2026, 10, 1);
+        Date paymentDate = Date.newInstance(2026, 10, 8);
+
+        B2BEarlyPaymentDiscountService.DiscountResult result =
+            B2BEarlyPaymentDiscountService.calculate(invoiceDate, Date.newInstance(2026, 10, 30), 10000, paymentDate);
+
+        System.assertEquals(5, result.discountPercent);
+        System.assertEquals(500, result.discountAmount);
+        System.assertEquals(9500, result.payableAmount);
+    }
+
+    @IsTest
+    static void thirdWeekToDueGetsTwoPercent() {
+        Date invoiceDate = Date.newInstance(2026, 10, 1);
+        Date paymentDate = Date.newInstance(2026, 10, 15);
+
+        B2BEarlyPaymentDiscountService.DiscountResult result =
+            B2BEarlyPaymentDiscountService.calculate(invoiceDate, Date.newInstance(2026, 10, 30), 10000, paymentDate);
+
+        System.assertEquals(2, result.discountPercent);
+        System.assertEquals(200, result.discountAmount);
+        System.assertEquals(9800, result.payableAmount);
+    }
+
+    @IsTest
+    static void afterDueDateGetsNoDiscount() {
+        Date invoiceDate = Date.newInstance(2026, 10, 1);
+        Date dueDate = Date.newInstance(2026, 10, 30);
+        Date paymentDate = Date.newInstance(2026, 10, 31);
+
+        B2BEarlyPaymentDiscountService.DiscountResult result =
+            B2BEarlyPaymentDiscountService.calculate(invoiceDate, dueDate, 10000, paymentDate);
+
+        System.assertEquals(false, result.eligible);
+        System.assertEquals(0, result.discountPercent);
+        System.assertEquals(10000, result.payableAmount);
+    }
+
+    @IsTest
+    static void invalidDatesReturnNoDiscount() {
+        B2BEarlyPaymentDiscountService.DiscountResult result =
+            B2BEarlyPaymentDiscountService.calculate(null, null, 10000, Date.today());
+
+        System.assertEquals(false, result.eligible);
+        System.assertEquals(0, result.discountPercent);
+    }
+}
