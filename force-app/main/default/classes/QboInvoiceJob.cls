@@ -53,6 +53,7 @@ public with sharing class QboInvoiceJob implements Queueable, Database.AllowsCal
                     Id = order.Id,
                     QBO_Invoice_Id__c = invoiceData.id,
                     QBO_Invoice_Number__c = invoiceData.docNumber,
+                    Invoice_Issue_Date__c = invoiceData.invoiceDate,
                     Invoice_Total__c = invoiceData.totalAmount,
                     Invoice_Balance__c = invoiceData.balance,
                     Invoice_Due_Date__c = invoiceData.dueDate,
@@ -99,6 +100,7 @@ public with sharing class QboInvoiceJob implements Queueable, Database.AllowsCal
         String id;
         String docNumber;
         String syncToken;
+        Date invoiceDate;
         Decimal totalAmount;
         Decimal balance;
         Date dueDate;
@@ -118,7 +120,7 @@ public with sharing class QboInvoiceJob implements Queueable, Database.AllowsCal
     }
 
     private static InvoiceData findExistingInvoice(QBO_Config__mdt config, String docNumber) {
-        String query = 'select Id, DocNumber, SyncToken, TotalAmt, Balance, DueDate from Invoice where DocNumber = \''
+        String query = 'select Id, DocNumber, SyncToken, TxnDate, TotalAmt, Balance, DueDate from Invoice where DocNumber = \''
             + String.escapeSingleQuotes(docNumber)
             + '\' maxresults 1';
 
@@ -241,6 +243,7 @@ public with sharing class QboInvoiceJob implements Queueable, Database.AllowsCal
         data.id = invoice.containsKey('Id') ? String.valueOf(invoice.get('Id')) : null;
         data.docNumber = invoice.containsKey('DocNumber') ? String.valueOf(invoice.get('DocNumber')) : null;
         data.syncToken = invoice.containsKey('SyncToken') ? String.valueOf(invoice.get('SyncToken')) : null;
+        data.invoiceDate = dateValue(invoice.get('TxnDate'));
         data.totalAmount = decimalValue(invoice.get('TotalAmt'));
         data.balance = decimalValue(invoice.get('Balance'));
         data.dueDate = dateValue(invoice.get('DueDate'));
