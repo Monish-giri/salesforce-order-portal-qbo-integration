@@ -42,10 +42,10 @@ public with sharing class B2BEarlyPaymentDiscountService {
             ORDER BY Day_From__c ASC, Priority__c ASC
         ]) {
             schedule.add(new DiscountRule(
-                Integer.valueOf(rule.Day_From__c),
-                Integer.valueOf(rule.Day_To__c),
+                rule.Day_From__c == null ? null : rule.Day_From__c.intValue(),
+                rule.Day_To__c == null ? null : rule.Day_To__c.intValue(),
                 rule.Discount_Percentage__c,
-                Integer.valueOf(rule.Priority__c)
+                rule.Priority__c == null ? null : rule.Priority__c.intValue()
             ));
         }
 
