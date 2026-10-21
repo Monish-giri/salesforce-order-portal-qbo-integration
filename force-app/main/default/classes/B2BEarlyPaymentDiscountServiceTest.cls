@@ -62,4 +62,21 @@ private class B2BEarlyPaymentDiscountServiceTest {
         System.assertEquals(false, result.eligible);
         System.assertEquals(0, result.discountPercent);
     }
+
+    @IsTest
+    static void activeScheduleComesFromMetadata() {
+        List<B2BEarlyPaymentDiscountService.DiscountRule> schedule =
+            B2BEarlyPaymentDiscountService.getActiveSchedule();
+
+        System.assertEquals(3, schedule.size());
+        System.assertEquals(1, schedule[0].dayFrom);
+        System.assertEquals(7, schedule[0].dayTo);
+        System.assertEquals(7, schedule[0].discountPercent);
+        System.assertEquals(8, schedule[1].dayFrom);
+        System.assertEquals(14, schedule[1].dayTo);
+        System.assertEquals(5, schedule[1].discountPercent);
+        System.assertEquals(15, schedule[2].dayFrom);
+        System.assertEquals(30, schedule[2].dayTo);
+        System.assertEquals(2, schedule[2].discountPercent);
+    }
 }
