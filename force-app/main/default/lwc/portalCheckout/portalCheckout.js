@@ -11,6 +11,7 @@ export default class PortalCheckout extends LightningElement {
 
     context;
     selectedAccountId;
+    selectedPaymentMethod = 'Online';
 
     connectedCallback() {
         this.loadCheckoutContext();
@@ -25,6 +26,13 @@ export default class PortalCheckout extends LightningElement {
             label: account.name,
             value: account.id
         }));
+    }
+
+    get paymentOptions() {
+        return [
+            { label: 'Pay Online', value: 'Online' },
+            { label: 'Cash on Delivery', value: 'Cash on Delivery' }
+        ];
     }
 
     get orderAccountName() {
@@ -46,10 +54,7 @@ export default class PortalCheckout extends LightningElement {
     }
 
     get b2bRecommendedRetailTotal() {
-        if (!this.isPartner) {
-            return 0;
-        }
-
+        if (!this.isPartner) return 0;
         return this.cartItems.reduce(
             (total, item) => total + ((item.recommendedRetailPrice || 0) * item.quantity),
             0
@@ -57,10 +62,7 @@ export default class PortalCheckout extends LightningElement {
     }
 
     get b2bEstimatedMarginTotal() {
-        if (!this.isPartner) {
-            return 0;
-        }
-
+        if (!this.isPartner) return 0;
         return this.cartItems.reduce(
             (total, item) => total + ((item.estimatedMarginAmount || 0) * item.quantity),
             0
@@ -68,10 +70,7 @@ export default class PortalCheckout extends LightningElement {
     }
 
     get b2bEstimatedMarginPercent() {
-        if (!this.isPartner || !this.b2bRecommendedRetailTotal) {
-            return 0;
-        }
-
+        if (!this.isPartner || !this.b2bRecommendedRetailTotal) return 0;
         return (this.b2bEstimatedMarginTotal / this.b2bRecommendedRetailTotal) * 100;
     }
 
@@ -79,13 +78,23 @@ export default class PortalCheckout extends LightningElement {
         return this.isPartner && this.b2bRecommendedRetailTotal > 0;
     }
 
+    get paymentSummary() {
+        if (this.isPartner) {
+            return 'Your order will be invoiced with the configured B2B payment terms.';
+        }
+        if (this.selectedPaymentMethod === 'Cash on Delivery') {
+            return 'Pay the full order amount when your order is delivered.';
+        }
+        return 'Pay the full order amount online. Razorpay will be connected in the payment integration phase.';
+    }
+
     async loadCheckoutContext() {
         this.isLoading = true;
         this.errorMessage = undefined;
-
         try {
             this.context = await getCheckoutContext();
             this.selectedAccountId = this.context?.defaultOrderAccountId;
+            this.selectedPaymentMethod = this.context?.isPartner ? 'Invoice' : 'Online';
         } catch (error) {
             this.errorMessage = this.reduceError(error);
         } finally {
@@ -97,15 +106,22 @@ export default class PortalCheckout extends LightningElement {
         this.selectedAccountId = event.detail.value;
     }
 
+    handlePaymentMethodChange(event) {
+        this.selectedPaymentMethod = event.detail.value;
+    }
+
     async handlePlaceOrder() {
         if (!this.cartItems.length || !this.selectedAccountId) {
             this.errorMessage = 'Select a customer account before placing the order.';
             return;
         }
+        if (!this.isPartner && !this.selectedPaymentMethod) {
+            this.errorMessage = 'Select a payment method before placing the order.';
+            return;
+        }
 
         this.isSubmitting = true;
         this.errorMessage = undefined;
-
         try {
             const result = await submitOrder({
                 cartJson: JSON.stringify(
@@ -115,14 +131,11 @@ export default class PortalCheckout extends LightningElement {
                     }))
                 ),
                 submissionKey: this.createSubmissionKey(),
-                orderForAccountId: this.selectedAccountId
+                orderForAccountId: this.selectedAccountId,
+                paymentMethod: this.selectedPaymentMethod
             });
 
-            this.dispatchEvent(
-                new CustomEvent('ordersubmitted', {
-                    detail: result
-                })
-            );
+            this.dispatchEvent(new CustomEvent('ordersubmitted', { detail: result }));
         } catch (error) {
             this.errorMessage = this.reduceError(error);
         } finally {
@@ -139,14 +152,10 @@ export default class PortalCheckout extends LightningElement {
     }
 
     reduceError(error) {
-        if (error?.body?.message) {
-            return error.body.message;
-        }
-
+        if (error?.body?.message) return error.body.message;
         if (Array.isArray(error?.body) && error.body.length > 0) {
             return error.body.map(item => item.message).join(', ');
         }
-
         return 'An unexpected error occurred while processing the order.';
     }
 }
