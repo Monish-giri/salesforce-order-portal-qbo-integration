@@ -68,44 +68,52 @@
                                 </div>
 
                                 <div class="product-footer">
-                                    <div>
-                                        <span class="price-label">{isPartner ? 'Partner price' : 'Starting at'}</span>
-                                        <lightning-formatted-number
-                                            class="price"
-                                            value={product.unitPrice}
-                                            format-style="currency"
-                                            currency-code="INR"
-                                            maximum-fraction-digits="0">
-                                        </lightning-formatted-number>
-                                    </div>
+                                    <div class="pricing-stack">
+                                        <div class="primary-price">
+                                            <span class="price-label">{isPartner ? 'Partner price' : 'Starting at'}</span>
+                                            <lightning-formatted-number
+                                                class="price"
+                                                value={product.unitPrice}
+                                                format-style="currency"
+                                                currency-code="INR"
+                                                maximum-fraction-digits="0">
+                                            </lightning-formatted-number>
+                                        </div>
 
-                                    <template if:true={isPartner}>
-                                        <template if:true={product.recommendedRetailPrice}>
-                                            <div class="partner-margin">
-                                                <span class="price-label">Recommended retail</span>
-                                                <lightning-formatted-number
-                                                    class="retail-price"
-                                                    value={product.recommendedRetailPrice}
-                                                    format-style="currency"
-                                                    currency-code="INR"
-                                                    maximum-fraction-digits="0">
-                                                </lightning-formatted-number>
-                                                <span class="margin-detail">
-                                                    Estimated margin:
-                                                    <lightning-formatted-number
-                                                        value={product.estimatedMarginAmount}
-                                                        format-style="currency"
-                                                        currency-code="INR"
-                                                        maximum-fraction-digits="0">
-                                                    </lightning-formatted-number>
-                                                    (<lightning-formatted-number
-                                                        value={product.estimatedMarginPercent}
-                                                        maximum-fraction-digits="1">
-                                                    </lightning-formatted-number>%)
-                                                </span>
-                                            </div>
+                                        <template if:true={isPartner}>
+                                            <template if:true={product.recommendedRetailPrice}>
+                                                <div class="partner-margin">
+                                                    <div class="margin-row">
+                                                        <span class="price-label">Recommended retail</span>
+                                                        <lightning-formatted-number
+                                                            class="retail-price"
+                                                            value={product.recommendedRetailPrice}
+                                                            format-style="currency"
+                                                            currency-code="INR"
+                                                            maximum-fraction-digits="0">
+                                                        </lightning-formatted-number>
+                                                    </div>
+                                                    <div class="margin-row margin-highlight">
+                                                        <span class="price-label">Estimated margin</span>
+                                                        <div class="margin-value">
+                                                            <lightning-formatted-number
+                                                                value={product.estimatedMarginAmount}
+                                                                format-style="currency"
+                                                                currency-code="INR"
+                                                                maximum-fraction-digits="0">
+                                                            </lightning-formatted-number>
+                                                            <span class="margin-percent">
+                                                                (<lightning-formatted-number
+                                                                    value={product.estimatedMarginPercent}
+                                                                    maximum-fraction-digits="1">
+                                                                </lightning-formatted-number>%)
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </template>
                                         </template>
-                                    </template>
+                                    </div>
 
                                     <template if:false={product.isSelectingQuantity}>
                                         <lightning-button
