@@ -11,8 +11,11 @@ public with sharing class PortalCatalogService {
         @AuraEnabled public String description;
         @AuraEnabled public String family;
         @AuraEnabled public Decimal unitPrice;
+        @AuraEnabled public Decimal recommendedRetailPrice;
+        @AuraEnabled public Decimal estimatedMarginAmount;
+        @AuraEnabled public Decimal estimatedMarginPercent;
 
-        public CatalogProduct(PricebookEntry entry) {
+        public CatalogProduct(PricebookEntry entry, Boolean isPartner) {
             productId = entry.Product2Id;
             pricebookEntryId = entry.Id;
             name = entry.Product2.Name;
@@ -20,6 +23,14 @@ public with sharing class PortalCatalogService {
             description = entry.Product2.Description;
             family = entry.Product2.Family;
             unitPrice = entry.UnitPrice;
+
+            if (isPartner && entry.Product2.Recommended_Retail_Price__c != null) {
+                recommendedRetailPrice = entry.Product2.Recommended_Retail_Price__c;
+                estimatedMarginAmount = recommendedRetailPrice - unitPrice;
+                estimatedMarginPercent = recommendedRetailPrice == 0
+                    ? null
+                    : (estimatedMarginAmount / recommendedRetailPrice) * 100;
+            }
         }
     }
 
@@ -43,6 +54,7 @@ public with sharing class PortalCatalogService {
         Integer requestedPageSize = pageSize == null ? DEFAULT_PAGE_SIZE : pageSize;
         Integer effectivePageSize = Math.max(1, Math.min(requestedPageSize, MAX_PAGE_SIZE));
         String audience = resolveAudience();
+        Boolean isPartner = audience == 'Partner';
         String pricebookName = Test.isRunningTest() && testPricebookName != null
             ? testPricebookName
             : resolvePricebookName(audience);
@@ -64,7 +76,8 @@ public with sharing class PortalCatalogService {
             entries = [
                 SELECT Id, Product2Id, UnitPrice,
                        Product2.Name, Product2.ProductCode,
-                       Product2.Description, Product2.Family
+                       Product2.Description, Product2.Family,
+                       Product2.Recommended_Retail_Price__c
                 FROM PricebookEntry
                 WHERE Pricebook2Id = :configuredPricebook.Id
                   AND IsActive = true
@@ -77,7 +90,8 @@ public with sharing class PortalCatalogService {
             entries = [
                 SELECT Id, Product2Id, UnitPrice,
                        Product2.Name, Product2.ProductCode,
-                       Product2.Description, Product2.Family
+                       Product2.Description, Product2.Family,
+                       Product2.Recommended_Retail_Price__c
                 FROM PricebookEntry
                 WHERE Pricebook2Id = :configuredPricebook.Id
                   AND IsActive = true
@@ -94,7 +108,7 @@ public with sharing class PortalCatalogService {
 
         List<CatalogProduct> products = new List<CatalogProduct>();
         for (PricebookEntry entry : entries) {
-            products.add(new CatalogProduct(entry));
+            products.add(new CatalogProduct(entry, isPartner));
         }
 
         return new CatalogResponse(products, effectivePageSize, entries.size() == effectivePageSize);
