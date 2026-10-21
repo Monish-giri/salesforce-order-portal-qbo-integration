@@ -82,6 +82,129 @@
                     </div>
                 </div>
 
+                <template if:true={isB2BInvoice}>
+                    <section class="invoice-panel">
+                        <div class="panel-header">
+                            <div>
+                                <p class="section-kicker">PAYMENT &amp; INVOICE</p>
+                                <h3>B2B Invoice / Credit Terms</h3>
+                                <p>Pay within the applicable window to receive the configured early-payment discount.</p>
+                            </div>
+                            <span class="invoice-badge">B2B INVOICE</span>
+                        </div>
+
+                        <div class="invoice-grid">
+                            <div>
+                                <span>Invoice Status</span>
+                                <strong>{selectedOrder.invoiceStatus}</strong>
+                            </div>
+                            <div>
+                                <span>Payment Status</span>
+                                <strong>{selectedOrder.paymentStatus}</strong>
+                            </div>
+                            <div>
+                                <span>Invoice Number</span>
+                                <strong>{selectedOrder.qboInvoiceNumber}</strong>
+                            </div>
+                            <div>
+                                <span>Issue Date</span>
+                                <strong>{selectedOrder.invoiceIssueDate}</strong>
+                            </div>
+                            <div>
+                                <span>Due Date</span>
+                                <strong>{selectedOrder.invoiceDueDate}</strong>
+                            </div>
+                            <template if:true={hasInvoiceBalance}>
+                                <div>
+                                    <span>Outstanding Balance</span>
+                                    <strong>
+                                        <lightning-formatted-number
+                                            value={selectedOrder.invoiceBalance}
+                                            format-style="currency"
+                                            currency-code="INR"
+                                            maximum-fraction-digits="2">
+                                        </lightning-formatted-number>
+                                    </strong>
+                                </div>
+                            </template>
+                        </div>
+
+                        <div class="discount-panel">
+                            <div class="discount-title">
+                                <div>
+                                    <span class="section-kicker">EARLY PAYMENT DISCOUNT</span>
+                                    <h3>Save by paying early</h3>
+                                </div>
+                                <template if:true={hasCurrentDiscount}>
+                                    <span class="discount-badge">{currentDiscountLabel}</span>
+                                </template>
+                            </div>
+
+                            <template if:true={hasCurrentDiscount}>
+                                <div class="discount-current">
+                                    <div>
+                                        <span>Current offer</span>
+                                        <strong>{currentDiscountMessage}</strong>
+                                    </div>
+                                    <div>
+                                        <span>Discount</span>
+                                        <strong>{currentDiscountPercent}%</strong>
+                                    </div>
+                                    <div>
+                                        <span>You save</span>
+                                        <strong>
+                                            <lightning-formatted-number
+                                                value={selectedOrder.currentDiscount.discountAmount}
+                                                format-style="currency"
+                                                currency-code="INR"
+                                                maximum-fraction-digits="2">
+                                            </lightning-formatted-number>
+                                        </strong>
+                                    </div>
+                                    <div>
+                                        <span>Payable now</span>
+                                        <strong>
+                                            <lightning-formatted-number
+                                                value={selectedOrder.currentDiscount.payableAmount}
+                                                format-style="currency"
+                                                currency-code="INR"
+                                                maximum-fraction-digits="2">
+                                            </lightning-formatted-number>
+                                        </strong>
+                                    </div>
+                                </div>
+                            </template>
+                            <template if:false={hasCurrentDiscount}>
+                                <p class="discount-pending">The invoice dates or balance are not available yet. The discount schedule will appear below once the invoice is available.</p>
+                            </template>
+
+                            <div class="discount-schedule">
+                                <div class="schedule-heading">
+                                    <span>Payment window</span>
+                                    <span>Discount</span>
+                                </div>
+                                <template for:each={selectedOrder.discountSchedule} for:item="rule">
+                                    <div class="schedule-row" key={rule.priority}>
+                                        <span>{rule.dayFrom}–{rule.dayTo}</span>
+                                        <strong>{rule.discountPercent}%</strong>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </section>
+                </template>
+
+                <template if:false={isB2BInvoice}>
+                    <section class="payment-panel">
+                        <p class="section-kicker">PAYMENT</p>
+                        <h3>{paymentMethodLabel}</h3>
+                        <div class="payment-status-row">
+                            <span>Payment Status</span>
+                            <strong>{selectedOrder.paymentStatus}</strong>
+                        </div>
+                    </section>
+                </template>
+
                 <div class="line-list">
                     <div class="line-heading">
                         <span>Product</span>
