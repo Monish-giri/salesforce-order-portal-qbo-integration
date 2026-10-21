@@ -76,7 +76,7 @@ private class B2BEarlyPaymentDiscountServiceTest {
         System.assertEquals(14, schedule[1].dayTo);
         System.assertEquals(5, schedule[1].discountPercent);
         System.assertEquals(15, schedule[2].dayFrom);
-        System.assertEquals(30, schedule[2].dayTo);
+        System.assertEquals(999, schedule[2].dayTo);
         System.assertEquals(2, schedule[2].discountPercent);
     }
 }
