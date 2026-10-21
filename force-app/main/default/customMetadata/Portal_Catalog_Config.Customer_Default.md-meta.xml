@@ -10,7 +10,7 @@
     </values>
     <values>
         <field>Pricebook__c</field>
-        <value xsi:type="xsd:string">Standard</value>
+        <value xsi:type="xsd:string">B2C Retail Pricebook</value>
     </values>
     <values>
         <field>Active__c</field>
