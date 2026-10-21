@@ -38,11 +38,15 @@ public with sharing class PortalCatalogService {
         @AuraEnabled public List<CatalogProduct> products;
         @AuraEnabled public Integer pageSize;
         @AuraEnabled public Boolean hasMore;
+        @AuraEnabled public String audience;
+        @AuraEnabled public Boolean isPartner;
 
-        public CatalogResponse(List<CatalogProduct> products, Integer pageSize, Boolean hasMore) {
+        public CatalogResponse(List<CatalogProduct> products, Integer pageSize, Boolean hasMore, String audience) {
             this.products = products;
             this.pageSize = pageSize;
             this.hasMore = hasMore;
+            this.audience = audience;
+            this.isPartner = audience == 'Partner';
         }
     }
 
@@ -111,7 +115,7 @@ public with sharing class PortalCatalogService {
             products.add(new CatalogProduct(entry, isPartner));
         }
 
-        return new CatalogResponse(products, effectivePageSize, entries.size() == effectivePageSize);
+        return new CatalogResponse(products, effectivePageSize, entries.size() == effectivePageSize, audience);
     }
 
     private static String resolveAudience() {
