@@ -33,7 +33,7 @@ export default class PortalCatalog extends LightningElement {
 
     get catalogSubtitle() {
         return this.isPartner
-            ? 'View partner pricing and estimated resale margin for available products.'
+            ? 'View partner pricing and choose the products for your order.'
             : 'Choose the products and services available to your account.';
     }
 
@@ -134,6 +134,9 @@ export default class PortalCatalog extends LightningElement {
                     pricebookEntryId: product.pricebookEntryId,
                     name: product.name,
                     unitPrice: product.unitPrice,
+                    recommendedRetailPrice: this.isPartner ? product.recommendedRetailPrice : undefined,
+                    estimatedMarginAmount: this.isPartner ? product.estimatedMarginAmount : undefined,
+                    estimatedMarginPercent: this.isPartner ? product.estimatedMarginPercent : undefined,
                     quantity: product.selectedQuantity
                 }
             })
