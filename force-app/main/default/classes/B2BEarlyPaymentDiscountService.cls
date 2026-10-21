@@ -21,12 +21,16 @@ public with sharing class B2BEarlyPaymentDiscountService {
         @AuraEnabled public Integer dayTo { get; set; }
         @AuraEnabled public Decimal discountPercent { get; set; }
         @AuraEnabled public Integer priority { get; set; }
+        @AuraEnabled public String rangeLabel { get; set; }
 
         public DiscountRule(Integer dayFrom, Integer dayTo, Decimal discountPercent, Integer priority) {
             this.dayFrom = dayFrom;
             this.dayTo = dayTo;
             this.discountPercent = discountPercent == null ? 0 : discountPercent;
             this.priority = priority;
+            this.rangeLabel = dayFrom == null
+                ? 'Before invoice window'
+                : (dayTo == null || dayTo >= 999 ? dayFrom + '–Due Date' : dayFrom + '–' + dayTo);
         }
     }
 
