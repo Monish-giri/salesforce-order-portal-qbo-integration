@@ -146,13 +146,24 @@
 }
 
 .product-footer {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 0.7rem;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 0.8rem;
     margin-top: 1rem;
-    padding-top: 0.8rem;
+    padding-top: 0.85rem;
     border-top: 1px solid #edf0f4;
+}
+
+.pricing-stack {
+    min-width: 0;
+}
+
+.primary-price {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    flex-wrap: wrap;
 }
 
 .price-label {
@@ -169,11 +180,57 @@
     font-weight: 800;
 }
 
+.partner-margin {
+    display: grid;
+    gap: 0.35rem;
+    margin-top: 0.65rem;
+    padding: 0.55rem 0.65rem;
+    border: 1px solid #dbeafe;
+    border-radius: 0.55rem;
+    background: #f8fbff;
+}
+
+.margin-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.margin-row .price-label {
+    margin: 0;
+}
+
+.retail-price {
+    color: #344054;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.margin-highlight {
+    padding-top: 0.35rem;
+    border-top: 1px solid #e5eef9;
+}
+
+.margin-value {
+    color: #0b5cab;
+    font-size: 0.82rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.margin-percent {
+    color: #475467;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
 .quantity-panel {
     display: flex;
     min-width: 11rem;
     flex-direction: column;
     gap: 0.4rem;
+    grid-column: 1 / -1;
 }
 
 .quantity-label {
@@ -288,6 +345,14 @@
 
     .catalog-grid {
         grid-template-columns: 1fr;
+    }
+
+    .product-footer {
+        grid-template-columns: 1fr;
+    }
+
+    .product-footer > lightning-button {
+        width: 100%;
     }
 
     .quantity-panel {
