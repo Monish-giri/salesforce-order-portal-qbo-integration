@@ -12,6 +12,10 @@
             <div class="message error">{errorMessage}</div>
         </template>
 
+        <template if:true={successMessage}>
+            <div class="message success">{successMessage}</div>
+        </template>
+
         <template if:true={isLoading}>
             <div class="loading-state">
                 <lightning-spinner alternative-text="Loading orders" size="medium"></lightning-spinner>
@@ -52,7 +56,10 @@
                         <h2>Order #{selectedOrder.orderNumber}</h2>
                         <p>{selectedOrder.accountName}</p>
                     </div>
-                    <button class="back-button" type="button" onclick={backToList}>Back to Orders</button>
+                    <div class="detail-actions">
+                        <button class="return-button" type="button" onclick={openReturnModal}>Request Return</button>
+                        <button class="back-button" type="button" onclick={backToList}>Back to Orders</button>
+                    </div>
                 </div>
 
                 <div class="detail-summary">
@@ -154,6 +161,65 @@
                     </template>
                 </div>
             </article>
+        </template>
+
+        <template if:true={showReturnModal}>
+            <section class="modal-backdrop" role="presentation">
+                <div class="return-modal" role="dialog" aria-modal="true" aria-labelledby="return-title">
+                    <div class="modal-header">
+                        <div>
+                            <p class="section-kicker">RETURN REQUEST</p>
+                            <h2 id="return-title">Request a return</h2>
+                            <p>Choose the items and quantities you want to return.</p>
+                        </div>
+                        <button class="modal-close" type="button" onclick={closeReturnModal} disabled={returnSubmitting} aria-label="Close">×</button>
+                    </div>
+
+                    <div class="return-items">
+                        <div class="return-items-heading"><span>Product</span><span>Ordered</span><span>Return Qty</span></div>
+                        <template for:each={returnLines} for:item="line">
+                            <div class="return-item" key={line.id}>
+                                <span>{line.productName}</span>
+                                <span>{line.returnableQuantity}</span>
+                                <lightning-input
+                                    type="number"
+                                    variant="label-hidden"
+                                    min="0"
+                                    max={line.returnableQuantity}
+                                    step="1"
+                                    value={line.requestedQuantity}
+                                    data-id={line.id}
+                                    onchange={handleQuantityChange}
+                                    placeholder="0">
+                                </lightning-input>
+                            </div>
+                        </template>
+                    </div>
+
+                    <div class="return-form">
+                        <lightning-combobox
+                            label="Resolution"
+                            value={resolutionType}
+                            options={resolutionOptions}
+                            onchange={handleResolutionChange}
+                            disabled={returnSubmitting}>
+                        </lightning-combobox>
+
+                        <lightning-textarea
+                            label="Reason"
+                            value={returnReason}
+                            onchange={handleReasonChange}
+                            disabled={returnSubmitting}
+                            placeholder="Tell us why you are returning the item.">
+                        </lightning-textarea>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button class="cancel-button" type="button" onclick={closeReturnModal} disabled={returnSubmitting}>Cancel</button>
+                        <button class="submit-return-button" type="button" onclick={submitReturnRequest} disabled={returnSubmitting}>{returnSubmitting ? 'Submitting...' : 'Submit Return Request'}</button>
+                    </div>
+                </div>
+            </section>
         </template>
     </section>
 </template>
