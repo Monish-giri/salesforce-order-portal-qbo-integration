@@ -31,6 +31,7 @@ public with sharing class PortalOrderService {
         @AuraEnabled public String qboInvoiceNumber;
         @AuraEnabled public Date invoiceIssueDate;
         @AuraEnabled public Date invoiceDueDate;
+        @AuraEnabled public Decimal invoiceBalance;
         @AuraEnabled public List<B2BEarlyPaymentDiscountService.DiscountRule> discountSchedule = new List<B2BEarlyPaymentDiscountService.DiscountRule>();
         @AuraEnabled public B2BEarlyPaymentDiscountService.DiscountResult currentDiscount;
         @AuraEnabled public List<OrderLine> lines = new List<OrderLine>();
@@ -72,7 +73,7 @@ public with sharing class PortalOrderService {
             SELECT Id, OrderNumber, Account.Name, Status, EffectiveDate, TotalAmount,
                    Payment_Method__c, Payment_Status__c, Invoice_Status__c,
                    QBO_Invoice_Id__c, QBO_Invoice_Number__c,
-                   Invoice_Issue_Date__c, Invoice_Due_Date__c
+                   Invoice_Issue_Date__c, Invoice_Due_Date__c, Invoice_Balance__c
             FROM Order
             WHERE Id = :orderId
             WITH USER_MODE
@@ -107,6 +108,7 @@ public with sharing class PortalOrderService {
         detail.qboInvoiceNumber = orderRecord.QBO_Invoice_Number__c;
         detail.invoiceIssueDate = orderRecord.Invoice_Issue_Date__c;
         detail.invoiceDueDate = orderRecord.Invoice_Due_Date__c;
+        detail.invoiceBalance = orderRecord.Invoice_Balance__c;
 
         if (orderRecord.Payment_Method__c == 'Invoice') {
             detail.discountSchedule = B2BEarlyPaymentDiscountService.getActiveSchedule();
