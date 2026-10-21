@@ -146,6 +146,34 @@
                             <p class="payment-summary">{paymentSummary}</p>
                         </div>
 
+                        <template if:true={hasB2BDiscountSchedule}>
+                            <div class="checkout-card discount-card">
+                                <div class="card-heading">
+                                    <div>
+                                        <p class="card-kicker">EARLY PAYMENT BENEFIT</p>
+                                        <h2>Pay earlier, save more</h2>
+                                        <p class="card-description">Your discount is calculated from the invoice issue date and configured B2B payment terms.</p>
+                                    </div>
+                                </div>
+
+                                <div class="discount-schedule">
+                                    <template for:each={discountSchedule} for:item="rule">
+                                        <div class="discount-row" key={rule.dayFrom}>
+                                            <span>Days {rule.dayFrom}–{rule.dayTo}</span>
+                                            <strong>
+                                                <lightning-formatted-number
+                                                    value={rule.discountPercent}
+                                                    maximum-fraction-digits="2">
+                                                </lightning-formatted-number>% discount
+                                            </strong>
+                                        </div>
+                                    </template>
+                                </div>
+
+                                <p class="discount-note">The applicable discount is determined when payment is made. The invoice remains the source for the amount due and due date.</p>
+                            </div>
+                        </template>
+
                         <template if:true={hasB2BMarginData}>
                             <div class="commercial-card">
                                 <div class="commercial-heading">
