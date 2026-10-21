@@ -45,7 +45,7 @@ private class QboInvoiceJobTest {
 
         Order refreshed = [
             SELECT QBO_Invoice_Id__c, QBO_Invoice_Number__c,
-                   Invoice_Total__c, Invoice_Balance__c,
+                   Invoice_Issue_Date__c, Invoice_Total__c, Invoice_Balance__c,
                    Invoice_Due_Date__c, Invoice_Status__c,
                    Payment_Status__c
             FROM Order
@@ -54,6 +54,7 @@ private class QboInvoiceJobTest {
 
         System.assertEquals('101', refreshed.QBO_Invoice_Id__c);
         System.assertEquals('SO-00000102', refreshed.QBO_Invoice_Number__c);
+        System.assertEquals(Date.newInstance(2026, 10, 6), refreshed.Invoice_Issue_Date__c);
         System.assertEquals(10000, refreshed.Invoice_Total__c);
         System.assertEquals(10000, refreshed.Invoice_Balance__c);
         System.assertEquals(Date.newInstance(2026, 11, 5), refreshed.Invoice_Due_Date__c);
@@ -98,6 +99,7 @@ private class QboInvoiceJobTest {
             System.assert(
                 String.valueOf(body.get('DocNumber')).startsWith('SO-')
             );
+            System.assertEquals('2026-10-06', String.valueOf(body.get('TxnDate')));
 
             List<Object> lines = (List<Object>) body.get('Line');
             System.assertEquals(1, lines.size());
