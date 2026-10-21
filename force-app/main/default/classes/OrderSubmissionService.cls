@@ -27,6 +27,7 @@ public with sharing class OrderSubmissionService {
         @AuraEnabled public String orderNumber;
         @AuraEnabled public String accountName;
         @AuraEnabled public Decimal totalAmount;
+        @AuraEnabled public String paymentMethod;
         @AuraEnabled public Boolean alreadySubmitted;
     }
 
@@ -74,6 +75,16 @@ public with sharing class OrderSubmissionService {
         String submissionKey,
         Id orderForAccountId
     ) {
+        return submitOrder(cartJson, submissionKey, orderForAccountId, 'Online');
+    }
+
+    @AuraEnabled
+    public static SubmissionResult submitOrder(
+        String cartJson,
+        String submissionKey,
+        Id orderForAccountId,
+        String paymentMethod
+    ) {
         if (String.isBlank(cartJson)) {
             throw new AuraHandledException('Your cart is empty.');
         }
@@ -97,9 +108,10 @@ public with sharing class OrderSubmissionService {
 
         ActorContext actor = resolveActor();
         String audience = actor.account.IsPartner ? 'Partner' : 'Customer';
+        String normalizedPaymentMethod = normalizePaymentMethod(paymentMethod, audience);
 
         List<Order> existingOrders = [
-            SELECT Id, OrderNumber, Account.Name, TotalAmount, Status
+            SELECT Id, OrderNumber, Account.Name, TotalAmount, Status, Payment_Method__c
             FROM Order
             WHERE Submission_Key__c = :submissionKey
             WITH SYSTEM_MODE
@@ -113,6 +125,7 @@ public with sharing class OrderSubmissionService {
             result.orderNumber = existing.OrderNumber;
             result.accountName = existing.Account.Name;
             result.totalAmount = existing.TotalAmount;
+            result.paymentMethod = existing.Payment_Method__c;
             result.alreadySubmitted = true;
             return result;
         }
@@ -184,7 +197,8 @@ public with sharing class OrderSubmissionService {
             Pricebook2Id = pricebook.Id,
             Submission_Key__c = submissionKey,
             Placed_By_Account__c = actor.account.Id,
-            Placed_By_Contact__c = actor.contactId
+            Placed_By_Contact__c = actor.contactId,
+            Payment_Method__c = normalizedPaymentMethod
         );
 
         Database.SaveResult orderResult = Database.insert(
@@ -253,8 +267,26 @@ public with sharing class OrderSubmissionService {
         result.orderNumber = newOrder.OrderNumber;
         result.accountName = orderAccount.Name;
         result.totalAmount = expectedTotal;
+        result.paymentMethod = normalizedPaymentMethod;
         result.alreadySubmitted = false;
         return result;
+    }
+
+    private static String normalizePaymentMethod(String paymentMethod, String audience) {
+        String value = String.isBlank(paymentMethod) ? 'Online' : paymentMethod.trim();
+
+        if (audience == 'Partner') {
+            if (value != 'Invoice') {
+                throw new AuraHandledException('B2B orders use invoice payment terms.');
+            }
+            return value;
+        }
+
+        if (value != 'Online' && value != 'Cash on Delivery') {
+            throw new AuraHandledException('B2C orders can only use Online payment or Cash on Delivery.');
+        }
+
+        return value;
     }
 
     private static ActorContext resolveActor() {
