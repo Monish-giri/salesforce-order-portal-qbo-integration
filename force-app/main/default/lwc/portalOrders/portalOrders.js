@@ -58,6 +58,37 @@ export default class PortalOrders extends LightningElement {
         return !!this.selectedOrder && !this.isLoading;
     }
 
+    get isB2BInvoice() {
+        return this.selectedOrder?.paymentMethod === 'Invoice';
+    }
+
+    get hasInvoiceBalance() {
+        return this.selectedOrder?.invoiceBalance !== null && this.selectedOrder?.invoiceBalance !== undefined;
+    }
+
+    get hasCurrentDiscount() {
+        return !!this.selectedOrder?.currentDiscount && this.selectedOrder.currentDiscount.eligible;
+    }
+
+    get currentDiscountPercent() {
+        return this.selectedOrder?.currentDiscount?.discountPercent || 0;
+    }
+
+    get currentDiscountLabel() {
+        return `${this.currentDiscountPercent}% available now`;
+    }
+
+    get currentDiscountMessage() {
+        return this.selectedOrder?.currentDiscount?.message || 'Early-payment discount available.';
+    }
+
+    get paymentMethodLabel() {
+        const method = this.selectedOrder?.paymentMethod;
+        if (method === 'Cash on Delivery') return 'Cash on Delivery';
+        if (method === 'Online') return 'Online Payment';
+        return method || 'Payment';
+    }
+
     getErrorMessage(error) {
         return error?.body?.message || error?.message || 'Unable to load orders.';
     }
