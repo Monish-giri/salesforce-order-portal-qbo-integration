@@ -71,6 +71,11 @@
     color: #b42318;
 }
 
+.message.success {
+    background: #ecfdf3;
+    color: #027a48;
+}
+
 .loading-state {
     min-height: 180px;
     position: relative;
@@ -118,11 +123,18 @@
     color: #182230;
 }
 
-.detail-header .back-button {
-    border: 1px solid #d0d5dd;
+.detail-actions {
+    display: flex;
+    gap: 0.65rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.detail-header .back-button,
+.return-button,
+.cancel-button,
+.submit-return-button {
     border-radius: 10px;
-    background: #fff;
-    color: #344054;
     padding: 0.65rem 1rem;
     font-weight: 600;
     font-size: 0.85rem;
@@ -130,16 +142,50 @@
     transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.detail-header .back-button:hover {
+.detail-header .back-button,
+.cancel-button {
+    border: 1px solid #d0d5dd;
+    background: #fff;
+    color: #344054;
+}
+
+.detail-header .back-button:hover,
+.cancel-button:hover {
     background: #f8fafc;
     border-color: #98a2b3;
     color: #182230;
     box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
 }
 
-.detail-header .back-button:focus-visible {
+.return-button,
+.submit-return-button {
+    border: 1px solid #1570ef;
+    background: #1570ef;
+    color: #fff;
+}
+
+.return-button:hover,
+.submit-return-button:hover:not(:disabled) {
+    background: #175cd3;
+    border-color: #175cd3;
+    box-shadow: 0 4px 12px rgba(21, 112, 239, 0.2);
+}
+
+.detail-header .back-button:focus-visible,
+.return-button:focus-visible,
+.cancel-button:focus-visible,
+.submit-return-button:focus-visible,
+.modal-close:focus-visible {
     outline: 2px solid #1570ef;
     outline-offset: 2px;
+}
+
+.detail-header .back-button:disabled,
+.return-button:disabled,
+.cancel-button:disabled,
+.submit-return-button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
 }
 
 .detail-header p:last-child {
@@ -329,6 +375,100 @@
     border-bottom: 1px solid #f2f4f7;
 }
 
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 9000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    background: rgba(16, 24, 40, 0.55);
+}
+
+.return-modal {
+    width: min(680px, 100%);
+    max-height: 90vh;
+    overflow-y: auto;
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 24px 60px rgba(16, 24, 40, 0.25);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.5rem;
+    border-bottom: 1px solid #eef2f6;
+}
+
+.modal-header h2 {
+    margin: 0.25rem 0;
+    color: #182230;
+}
+
+.modal-header p:last-child {
+    margin: 0;
+    color: #667085;
+    font-size: 0.84rem;
+}
+
+.modal-close {
+    border: 0;
+    background: transparent;
+    color: #667085;
+    font-size: 1.7rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0.1rem 0.3rem;
+}
+
+.return-items {
+    padding: 1.25rem 1.5rem 0;
+}
+
+.return-items-heading,
+.return-item {
+    display: grid;
+    grid-template-columns: 2fr 0.8fr 1fr;
+    gap: 1rem;
+    align-items: center;
+}
+
+.return-items-heading {
+    padding-bottom: 0.6rem;
+    color: #667085;
+    font-size: 0.76rem;
+    font-weight: 600;
+}
+
+.return-item {
+    padding: 0.75rem 0;
+    border-top: 1px solid #eef2f6;
+    color: #344054;
+}
+
+.return-item > span:first-child {
+    font-weight: 600;
+    color: #182230;
+}
+
+.return-form {
+    display: grid;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.65rem;
+    padding: 1rem 1.5rem 1.5rem;
+    border-top: 1px solid #eef2f6;
+}
+
 @media (max-width: 760px) {
     .order-card,
     .order-card-meta {
@@ -347,8 +487,14 @@
     }
 
     .panel-header,
-    .discount-title {
+    .discount-title,
+    .detail-header {
         flex-direction: column;
+    }
+
+    .detail-actions {
+        width: 100%;
+        justify-content: flex-start;
     }
 
     .line-heading,
@@ -356,5 +502,11 @@
         grid-template-columns: 1.5fr 0.7fr 1fr 1fr;
         gap: 0.5rem;
         font-size: 0.82rem;
+    }
+
+    .return-items-heading,
+    .return-item {
+        grid-template-columns: 1.5fr 0.7fr 1fr;
+        gap: 0.5rem;
     }
 }
