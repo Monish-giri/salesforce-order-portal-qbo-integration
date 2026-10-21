@@ -47,7 +47,8 @@
 }
 
 .checkout-card,
-.checkout-summary {
+.checkout-summary,
+.commercial-card {
     padding: 1rem;
     border: 1px solid #e0e6ee;
     border-radius: 0.9rem;
@@ -55,7 +56,8 @@
     box-shadow: 0 4px 12px rgba(16, 24, 40, 0.035);
 }
 
-.card-heading {
+.card-heading,
+.commercial-heading {
     margin-bottom: 0.9rem;
 }
 
@@ -68,10 +70,18 @@
     letter-spacing: 0.12em;
 }
 
-.card-heading h2 {
+.card-heading h2,
+.commercial-heading h2 {
     margin: 0;
     color: #172033;
     font-size: 0.95rem;
+}
+
+.commercial-heading p:not(.card-kicker) {
+    margin: 0.3rem 0 0;
+    color: #667085;
+    font-size: 0.72rem;
+    line-height: 1.45;
 }
 
 .account-note {
@@ -116,9 +126,74 @@
     font-size: 0.68rem;
 }
 
+.item-commercials {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1rem;
+    margin-top: 0.45rem;
+    color: #667085;
+    font-size: 0.66rem;
+}
+
+.item-commercials span:last-child {
+    font-weight: 700;
+    color: #344054;
+}
+
 .review-total {
     font-size: 0.8rem;
     font-weight: 800;
+}
+
+.commercial-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.65rem;
+}
+
+.commercial-metric {
+    display: flex;
+    min-height: 4.2rem;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.3rem;
+    padding: 0.75rem;
+    border: 1px solid #edf0f4;
+    border-radius: 0.7rem;
+    background: #fbfcfe;
+}
+
+.commercial-metric span:first-child {
+    color: #667085;
+    font-size: 0.65rem;
+}
+
+.commercial-metric lightning-formatted-number {
+    color: #172033;
+    font-size: 0.95rem;
+    font-weight: 800;
+}
+
+.commercial-highlight {
+    border-color: #cfe2f5;
+    background: #f4f9fe;
+}
+
+.commercial-highlight lightning-formatted-number {
+    color: #0b5cab;
+}
+
+.commercial-highlight > div,
+.summary-opportunity > div {
+    display: flex;
+    align-items: baseline;
+    gap: 0.25rem;
+}
+
+.commercial-percent {
+    color: #667085;
+    font-size: 0.68rem;
+    font-weight: 700;
 }
 
 .summary-label {
@@ -126,7 +201,8 @@
 }
 
 .summary-row,
-.summary-total {
+.summary-total,
+.summary-opportunity {
     display: flex;
     justify-content: space-between;
     gap: 1rem;
@@ -148,6 +224,20 @@
 
 .summary-total lightning-formatted-number {
     font-size: 1.05rem;
+}
+
+.summary-opportunity {
+    align-items: baseline;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #edf0f4;
+    color: #344054;
+    font-weight: 700;
+}
+
+.summary-opportunity lightning-formatted-number {
+    color: #0b5cab;
+    font-weight: 800;
 }
 
 .place-order-button,
@@ -222,6 +312,10 @@
 
 @media (max-width: 900px) {
     .checkout-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .commercial-grid {
         grid-template-columns: 1fr;
     }
 }
