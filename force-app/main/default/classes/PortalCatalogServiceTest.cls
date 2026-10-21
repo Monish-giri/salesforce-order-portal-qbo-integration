@@ -6,7 +6,8 @@ private class PortalCatalogServiceTest {
             Name = 'Test Portal Product',
             ProductCode = 'TEST-001',
             Description = 'Catalog test product',
-            IsActive = true
+            IsActive = true,
+            Recommended_Retail_Price__c = 150
         );
         insert product;
 
@@ -102,5 +103,27 @@ private class PortalCatalogServiceTest {
         Test.stopTest();
 
         System.assertEquals(48, response.pageSize);
+    }
+
+    @IsTest
+    static void doesNotExposeB2BMarginToCustomerContext() {
+        Pricebook2 portalPricebook = [
+            SELECT Name
+            FROM Pricebook2
+            WHERE Name = 'Test Portal Catalog'
+            LIMIT 1
+        ];
+
+        PortalCatalogService.testPricebookName = portalPricebook.Name;
+
+        Test.startTest();
+        PortalCatalogService.CatalogResponse response =
+            PortalCatalogService.getProducts(null, 24);
+        Test.stopTest();
+
+        System.assertEquals(1, response.products.size());
+        System.assertEquals(null, response.products[0].recommendedRetailPrice);
+        System.assertEquals(null, response.products[0].estimatedMarginAmount);
+        System.assertEquals(null, response.products[0].estimatedMarginPercent);
     }
 }
