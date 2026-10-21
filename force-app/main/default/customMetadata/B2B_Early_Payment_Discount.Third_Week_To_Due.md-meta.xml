@@ -16,7 +16,7 @@
     </values>
     <values>
         <field>Discount_Percentage__c</field>
-        <value><doubleValue>2.0</doubleValue></vզalue>
+        <value><doubleValue>2.0</doubleValue></value>
     </values>
     <values>
         <field>Active__c</field>
