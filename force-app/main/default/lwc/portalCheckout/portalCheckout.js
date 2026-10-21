@@ -1,6 +1,7 @@
 import { LightningElement, api } from 'lwc';
 import getCheckoutContext from '@salesforce/apex/OrderSubmissionService.getCheckoutContext';
 import submitOrder from '@salesforce/apex/OrderSubmissionService.submitOrder';
+import getActiveSchedule from '@salesforce/apex/B2BEarlyPaymentDiscountService.getActiveSchedule';
 
 export default class PortalCheckout extends LightningElement {
     @api cartItems = [];
@@ -8,10 +9,13 @@ export default class PortalCheckout extends LightningElement {
     isSubmitting = false;
     errorMessage;
     context;
+    discountSchedule = [];
     selectedAccountId;
     selectedPaymentMethod = 'Online';
 
-    connectedCallback() { this.loadCheckoutContext(); }
+    connectedCallback() {
+        this.loadCheckoutContext();
+    }
 
     get isPartner() { return this.context?.isPartner === true; }
     get isCustomer() { return this.context?.isPartner === false; }
@@ -65,9 +69,13 @@ export default class PortalCheckout extends LightningElement {
 
     get hasB2BMarginData() { return this.isPartner && this.b2bRecommendedRetailTotal > 0; }
 
+    get hasB2BDiscountSchedule() {
+        return this.isPartner && this.discountSchedule.length > 0;
+    }
+
     get paymentSummary() {
         if (this.isPartner) {
-            return 'Your order will be invoiced with the configured B2B payment terms. Early-payment discounts will be shown on the invoice when applicable.';
+            return 'Your order will be invoiced with the configured B2B payment terms. Pay earlier to receive the highest available discount.';
         }
         if (this.selectedPaymentMethod === 'Cash on Delivery') return 'Pay the full order amount when your order is delivered.';
         return 'Pay the full order amount online. Razorpay will be connected in the payment integration phase.';
@@ -80,10 +88,23 @@ export default class PortalCheckout extends LightningElement {
             this.context = await getCheckoutContext();
             this.selectedAccountId = this.context?.defaultOrderAccountId;
             this.selectedPaymentMethod = this.context?.isPartner ? 'Invoice' : 'Online';
+
+            if (this.context?.isPartner) {
+                await this.loadDiscountSchedule();
+            }
         } catch (error) {
             this.errorMessage = this.reduceError(error);
         } finally {
             this.isLoading = false;
+        }
+    }
+
+    async loadDiscountSchedule() {
+        try {
+            this.discountSchedule = await getActiveSchedule();
+        } catch (error) {
+            // The discount schedule is informational at checkout. Do not block order placement if it cannot load.
+            this.discountSchedule = [];
         }
     }
 
