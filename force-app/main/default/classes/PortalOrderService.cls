@@ -24,6 +24,15 @@ public with sharing class PortalOrderService {
         @AuraEnabled public String status;
         @AuraEnabled public Date effectiveDate;
         @AuraEnabled public Decimal totalAmount;
+        @AuraEnabled public String paymentMethod;
+        @AuraEnabled public String paymentStatus;
+        @AuraEnabled public String invoiceStatus;
+        @AuraEnabled public String qboInvoiceId;
+        @AuraEnabled public String qboInvoiceNumber;
+        @AuraEnabled public Date invoiceIssueDate;
+        @AuraEnabled public Date invoiceDueDate;
+        @AuraEnabled public List<B2BEarlyPaymentDiscountService.DiscountRule> discountSchedule = new List<B2BEarlyPaymentDiscountService.DiscountRule>();
+        @AuraEnabled public B2BEarlyPaymentDiscountService.DiscountResult currentDiscount;
         @AuraEnabled public List<OrderLine> lines = new List<OrderLine>();
     }
 
@@ -60,7 +69,10 @@ public with sharing class PortalOrderService {
         }
 
         List<Order> orders = [
-            SELECT Id, OrderNumber, Account.Name, Status, EffectiveDate, TotalAmount
+            SELECT Id, OrderNumber, Account.Name, Status, EffectiveDate, TotalAmount,
+                   Payment_Method__c, Payment_Status__c, Invoice_Status__c,
+                   QBO_Invoice_Id__c, QBO_Invoice_Number__c,
+                   Invoice_Issue_Date__c, Invoice_Due_Date__c
             FROM Order
             WHERE Id = :orderId
             WITH USER_MODE
@@ -88,6 +100,28 @@ public with sharing class PortalOrderService {
         detail.status = orderRecord.Status;
         detail.effectiveDate = orderRecord.EffectiveDate;
         detail.totalAmount = orderRecord.TotalAmount;
+        detail.paymentMethod = orderRecord.Payment_Method__c;
+        detail.paymentStatus = orderRecord.Payment_Status__c;
+        detail.invoiceStatus = orderRecord.Invoice_Status__c;
+        detail.qboInvoiceId = orderRecord.QBO_Invoice_Id__c;
+        detail.qboInvoiceNumber = orderRecord.QBO_Invoice_Number__c;
+        detail.invoiceIssueDate = orderRecord.Invoice_Issue_Date__c;
+        detail.invoiceDueDate = orderRecord.Invoice_Due_Date__c;
+
+        if (orderRecord.Payment_Method__c == 'Invoice') {
+            detail.discountSchedule = B2BEarlyPaymentDiscountService.getActiveSchedule();
+
+            if (orderRecord.Invoice_Issue_Date__c != null &&
+                orderRecord.Invoice_Due_Date__c != null &&
+                orderRecord.Invoice_Balance__c != null) {
+                detail.currentDiscount = B2BEarlyPaymentDiscountService.calculate(
+                    orderRecord.Invoice_Issue_Date__c,
+                    orderRecord.Invoice_Due_Date__c,
+                    orderRecord.Invoice_Balance__c,
+                    Date.today()
+                );
+            }
+        }
 
         for (OrderItem item : items) {
             OrderLine line = new OrderLine();
