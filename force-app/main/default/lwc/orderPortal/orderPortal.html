@@ -48,7 +48,6 @@
                     <button class={returnsNavClass} type="button" data-section="returns" onclick={handleNavigation}>
                         <lightning-icon icon-name="utility:replace" size="x-small" alternative-text=""></lightning-icon>
                         <span>Returns</span>
-                        <span class="nav-soon">Soon</span>
                     </button>
                 </nav>
                 <div class="sidebar-footer">
@@ -183,16 +182,20 @@
                     <c-portal-orders></c-portal-orders>
                 </template>
 
+                <template if:true={isReturns}>
+                    <c-portal-returns></c-portal-returns>
+                </template>
+
                 <template if:true={isComingSoon}>
-                        <section class="coming-soon">
-                            <div class="coming-icon">
-                                <lightning-icon icon-name="utility:construction" size="medium" alternative-text=""></lightning-icon>
-                            </div>
-                            <p class="section-kicker">COMING NEXT</p>
-                            <h1>{sectionTitle}</h1>
-                            <p>This section will be connected to the portal flow next.</p>
-                            <button class="back-button" type="button" onclick={showCatalog}>Back to Catalog</button>
-                        </section>
+                    <section class="coming-soon">
+                        <div class="coming-icon">
+                            <lightning-icon icon-name="utility:construction" size="medium" alternative-text=""></lightning-icon>
+                        </div>
+                        <p class="section-kicker">COMING NEXT</p>
+                        <h1>{sectionTitle}</h1>
+                        <p>This section will be connected to the portal flow next.</p>
+                        <button class="back-button" type="button" onclick={showCatalog}>Back to Catalog</button>
+                    </section>
                 </template>
             </main>
         </div>
