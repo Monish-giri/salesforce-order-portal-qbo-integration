@@ -3,6 +3,10 @@
     <label>Portal Partner Access</label>
     <description>Baseline object access for partner portal users. Record visibility is controlled separately by external sharing.</description>
     <hasActivationRequired>false</hasActivationRequired>
+    <externalCredentialPrincipalAccesses>
+        <enabled>true</enabled>
+        <externalCredentialPrincipal>Razorpay_API-Razorpay_Named_Principal</externalCredentialPrincipal>
+    </externalCredentialPrincipalAccesses>
     <customMetadataTypeAccesses>
         <enabled>true</enabled>
         <name>Portal_Catalog_Config__mdt</name>
@@ -17,6 +21,10 @@
     </classAccesses>
     <classAccesses>
         <apexClass>PortalOrderService</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>RazorpayPaymentService</apexClass>
         <enabled>true</enabled>
     </classAccesses>
     <objectPermissions>
