@@ -62,9 +62,18 @@
                             </div>
                         </div>
 
-                        <div class="return-step">
-                            <span>Processing step</span>
-                            <strong>{returnRecord.currentStep}</strong>
+                        <div class="return-footer">
+                            <div class="return-step">
+                                <span>Processing step</span>
+                                <strong>{returnRecord.currentStep}</strong>
+                            </div>
+                            <button
+                                class="details-button"
+                                type="button"
+                                data-id={returnRecord.id}
+                                onclick={openReturn}>
+                                View details
+                            </button>
                         </div>
                     </article>
                 </template>
@@ -82,4 +91,116 @@
             </div>
         </template>
     </section>
+
+    <template if:true={showDetail}>
+        <section class="detail-backdrop" role="presentation" onclick={closeDetail}>
+            <div class="detail-modal" role="dialog" aria-modal="true" aria-label="Return details" onclick={stopPropagation}>
+                <div class="detail-header">
+                    <div>
+                        <p class="section-kicker">RETURN DETAILS</p>
+                        <template if:true={selectedReturn}>
+                            <div class="detail-title-row">
+                                <h2>{selectedReturn.returnNumber}</h2>
+                                <span class={selectedReturn.statusClass}>{selectedReturn.status}</span>
+                            </div>
+                        </template>
+                    </div>
+                    <button class="close-button" type="button" onclick={closeDetail} aria-label="Close">×</button>
+                </div>
+
+                <template if:true={isDetailLoading}>
+                    <div class="detail-loading">
+                        <lightning-spinner alternative-text="Loading return details" size="small"></lightning-spinner>
+                        <span>Loading return details...</span>
+                    </div>
+                </template>
+
+                <template if:true={detailError}>
+                    <div class="message error" role="alert">{detailError}</div>
+                </template>
+
+                <template if:true={selectedReturn}>
+                    <div class="detail-summary">
+                        <div>
+                            <span class="meta-label">Order</span>
+                            <strong>#{selectedReturn.orderNumber}</strong>
+                        </div>
+                        <div>
+                            <span class="meta-label">Requested</span>
+                            <strong>{selectedReturn.createdDate}</strong>
+                        </div>
+                        <div>
+                            <span class="meta-label">Resolution</span>
+                            <strong>{selectedReturn.resolutionLabel}</strong>
+                        </div>
+                        <div>
+                            <span class="meta-label">Return amount</span>
+                            <strong>
+                                <lightning-formatted-number
+                                    value={selectedReturn.amountLabel}
+                                    format-style="currency"
+                                    currency-code="INR"
+                                    maximum-fraction-digits="0">
+                                </lightning-formatted-number>
+                            </strong>
+                        </div>
+                    </div>
+
+                    <div class="detail-section">
+                        <h3>Returned items</h3>
+                        <template if:true={selectedReturn.lines.length}>
+                            <div class="line-table">
+                                <div class="line-row line-header">
+                                    <span>Product</span>
+                                    <span>Quantity</span>
+                                    <span>Unit price</span>
+                                    <span>Amount</span>
+                                </div>
+                                <template for:each={selectedReturn.lines} for:item="line">
+                                    <div class="line-row" key={line.id}>
+                                        <span>{line.productName}</span>
+                                        <span>{line.quantityLabel}</span>
+                                        <span>
+                                            <lightning-formatted-number
+                                                value={line.unitPriceLabel}
+                                                format-style="currency"
+                                                currency-code="INR"
+                                                maximum-fraction-digits="0">
+                                            </lightning-formatted-number>
+                                        </span>
+                                        <span>
+                                            <lightning-formatted-number
+                                                value={line.lineAmountLabel}
+                                                format-style="currency"
+                                                currency-code="INR"
+                                                maximum-fraction-digits="0">
+                                            </lightning-formatted-number>
+                                        </span>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+
+                    <div class="detail-grid">
+                        <div>
+                            <span class="meta-label">Reason</span>
+                            <p>{selectedReturn.reason}</p>
+                        </div>
+                        <div>
+                            <span class="meta-label">Processing step</span>
+                            <p>{selectedReturn.currentStep}</p>
+                        </div>
+                    </div>
+
+                    <template if:true={selectedReturn.creditMemoId}>
+                        <div class="integration-note">
+                            <span class="meta-label">Credit memo</span>
+                            <strong>QuickBooks ID {selectedReturn.creditMemoId}</strong>
+                        </div>
+                    </template>
+                </template>
+            </div>
+        </section>
+    </template>
 </template>
