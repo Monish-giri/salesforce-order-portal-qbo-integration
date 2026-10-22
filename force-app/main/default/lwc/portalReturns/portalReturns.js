@@ -78,6 +78,10 @@ export default class PortalReturns extends LightningElement {
         this.detailError = undefined;
     }
 
+    stopPropagation(event) {
+        event.stopPropagation();
+    }
+
     get hasReturns() {
         return this.returns.length > 0;
     }
@@ -88,6 +92,10 @@ export default class PortalReturns extends LightningElement {
 
     get showDetail() {
         return this.isDetailLoading || !!this.selectedReturn || !!this.detailError;
+    }
+
+    get hasDetailLines() {
+        return !!this.selectedReturn && this.selectedReturn.lines && this.selectedReturn.lines.length > 0;
     }
 
     getStatusClass(status) {
