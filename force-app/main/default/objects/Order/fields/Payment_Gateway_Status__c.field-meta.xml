@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Payment_Gateway_Status__c</fullName>
+    <label>Payment Gateway Status</label>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>Not Started</fullName><default>true</default><label>Not Started</label></value>
+            <value><fullName>Order Created</fullName><default>false</default><label>Order Created</label></value>
+            <value><fullName>Authorized</fullName><default>false</default><label>Authorized</label></value>
+            <value><fullName>Captured</fullName><default>false</default><label>Captured</label></value>
+            <value><fullName>Failed</fullName><default>false</default><label>Failed</label></value>
+            <value><fullName>Refunded</fullName><default>false</default><label>Refunded</label></value>
+            <value><fullName>Error</fullName><default>false</default><label>Error</label></value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>
