@@ -76,7 +76,7 @@
         <allowCreate>true</allowCreate>
         <allowDelete>false</allowDelete>
         <allowEdit>false</allowEdit>
-        <allowRead>false</allowRead>
+        <allowRead>true</allowRead>
         <modifyAllRecords>false</modifyAllRecords>
         <object>Order_Invoice_Request__e</object>
         <viewAllRecords>false</viewAllRecords>
