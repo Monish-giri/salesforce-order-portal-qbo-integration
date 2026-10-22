@@ -1,5 +1,6 @@
 import { LightningElement, wire } from 'lwc';
 import getReturns from '@salesforce/apex/PortalReturnService.getReturns';
+import getReturnDetail from '@salesforce/apex/PortalReturnService.getReturnDetail';
 import { refreshApex } from '@salesforce/apex';
 
 export default class PortalReturns extends LightningElement {
@@ -7,6 +8,9 @@ export default class PortalReturns extends LightningElement {
     errorMessage;
     wiredReturnsResult;
     isLoading = true;
+    selectedReturn;
+    isDetailLoading = false;
+    detailError;
 
     @wire(getReturns)
     wiredReturns(result) {
@@ -40,12 +44,50 @@ export default class PortalReturns extends LightningElement {
         }
     }
 
+    async openReturn(event) {
+        const returnId = event.currentTarget.dataset.id;
+        if (!returnId) return;
+
+        this.selectedReturn = undefined;
+        this.detailError = undefined;
+        this.isDetailLoading = true;
+
+        try {
+            const detail = await getReturnDetail({ returnId });
+            this.selectedReturn = {
+                ...detail,
+                statusClass: this.getStatusClass(detail.status),
+                resolutionLabel: detail.resolutionType || 'Pending business decision',
+                amountLabel: detail.totalAmount || 0,
+                lines: (detail.lines || []).map(line => ({
+                    ...line,
+                    quantityLabel: line.quantity || 0,
+                    unitPriceLabel: line.unitPrice || 0,
+                    lineAmountLabel: line.lineAmount || 0
+                }))
+            };
+        } catch (error) {
+            this.detailError = this.getErrorMessage(error);
+        } finally {
+            this.isDetailLoading = false;
+        }
+    }
+
+    closeDetail() {
+        this.selectedReturn = undefined;
+        this.detailError = undefined;
+    }
+
     get hasReturns() {
         return this.returns.length > 0;
     }
 
     get showEmpty() {
         return !this.isLoading && !this.errorMessage && !this.hasReturns;
+    }
+
+    get showDetail() {
+        return this.isDetailLoading || !!this.selectedReturn || !!this.detailError;
     }
 
     getStatusClass(status) {
