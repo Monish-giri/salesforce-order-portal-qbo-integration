@@ -7,7 +7,7 @@ public with sharing class RazorpayPaymentService {
         @AuraEnabled public String keyId;
         @AuraEnabled public Integer amountPaise;
         @AuraEnabled public Decimal amount;
-        @AuraEnabled public String currency;
+        @AuraEnabled public String currencyCode;
         @AuraEnabled public Decimal discountPercent;
         @AuraEnabled public Decimal discountAmount;
         @AuraEnabled public Decimal invoiceBalance;
@@ -115,7 +115,7 @@ public with sharing class RazorpayPaymentService {
             result.keyId = gatewayConfig.keyId;
             result.amountPaise = amountPaise;
             result.amount = payableAmount;
-            result.currency = 'INR';
+            result.currencyCode = 'INR';
             result.discountPercent = discount.discountPercent;
             result.discountAmount = discount.discountAmount;
             result.invoiceBalance = orderRecord.Invoice_Balance__c;
