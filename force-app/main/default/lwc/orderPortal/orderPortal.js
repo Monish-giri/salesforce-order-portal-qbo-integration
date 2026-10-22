@@ -54,8 +54,12 @@ export default class OrderPortal extends LightningElement {
         return this.activeSection === 'orders' && !this.showCart && !this.showCheckout && !this.isOrderConfirmation;
     }
 
+    get isReturns() {
+        return this.activeSection === 'returns' && !this.showCart && !this.showCheckout && !this.isOrderConfirmation;
+    }
+
     get isComingSoon() {
-        return !this.isCatalog && !this.isCart && !this.isCheckout && !this.isOrderConfirmation && !this.isOrders;
+        return !this.isCatalog && !this.isCart && !this.isCheckout && !this.isOrderConfirmation && !this.isOrders && !this.isReturns;
     }
 
     get sectionTitle() {
