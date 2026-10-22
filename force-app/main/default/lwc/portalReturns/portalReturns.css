@@ -1,0 +1,265 @@
+:host {
+    display: block;
+}
+
+.returns-view {
+    max-width: 1180px;
+    margin: 0 auto;
+}
+
+.view-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 28px;
+}
+
+.section-kicker {
+    margin: 0 0 8px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    color: #1769e0;
+}
+
+h1 {
+    margin: 0 0 8px;
+    font-size: 28px;
+    line-height: 1.2;
+    font-weight: 700;
+    color: #10213f;
+}
+
+.view-heading p:not(.section-kicker) {
+    margin: 0;
+    color: #65748b;
+    font-size: 14px;
+}
+
+.refresh-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border: 1px solid #d8e0eb;
+    border-radius: 8px;
+    background: #fff;
+    color: #18345e;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.refresh-button:hover:not(:disabled) {
+    background: #f6f9fc;
+}
+
+.refresh-button:disabled {
+    opacity: .55;
+    cursor: default;
+}
+
+.return-list {
+    display: grid;
+    gap: 14px;
+}
+
+.return-card {
+    padding: 22px 24px;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 4px 16px rgba(24, 52, 94, .05);
+}
+
+.return-main {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+}
+
+.return-icon {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: #edf5ff;
+}
+
+.return-copy {
+    min-width: 0;
+    flex: 1;
+}
+
+.return-title-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.return-title-row h2 {
+    margin: 0;
+    font-size: 18px;
+    color: #10213f;
+}
+
+.return-order {
+    margin: 5px 0 0;
+    color: #54708f;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.return-reason {
+    margin: 10px 0 0;
+    color: #65748b;
+    font-size: 13px;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.status-badge.pending {
+    background: #fff6dc;
+    color: #8a6500;
+}
+
+.status-badge.progress {
+    background: #e9f2ff;
+    color: #1769e0;
+}
+
+.status-badge.success {
+    background: #e7f7ed;
+    color: #187443;
+}
+
+.status-badge.danger {
+    background: #fdecec;
+    color: #b42318;
+}
+
+.return-meta {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    margin: 20px 0 16px 54px;
+    padding-top: 18px;
+    border-top: 1px solid #edf1f6;
+}
+
+.return-meta > div {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.meta-label {
+    color: #8996a8;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    font-weight: 700;
+}
+
+.meta-value {
+    color: #233a5e;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.return-step {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-left: 54px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    background: #f7f9fc;
+    color: #65748b;
+    font-size: 12px;
+}
+
+.return-step strong {
+    color: #233a5e;
+    font-size: 12px;
+}
+
+.message {
+    padding: 14px 16px;
+    margin-bottom: 18px;
+    border-radius: 8px;
+    font-size: 13px;
+}
+
+.message.error {
+    background: #fff0f0;
+    color: #b42318;
+}
+
+.loading-state {
+    min-height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: #65748b;
+    font-size: 13px;
+}
+
+.empty-state {
+    padding: 70px 30px;
+    text-align: center;
+    border: 1px dashed #d6deea;
+    border-radius: 14px;
+    background: #fbfcfe;
+}
+
+.empty-icon {
+    width: 54px;
+    height: 54px;
+    margin: 0 auto 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    background: #edf5ff;
+}
+
+.empty-state h2 {
+    margin: 0 0 8px;
+    color: #10213f;
+    font-size: 20px;
+}
+
+.empty-state p:last-child {
+    max-width: 500px;
+    margin: 0 auto;
+    color: #65748b;
+    font-size: 13px;
+}
+
+@media (max-width: 760px) {
+    .view-heading {
+        flex-direction: column;
+    }
+
+    .return-meta {
+        grid-template-columns: 1fr;
+        margin-left: 0;
+    }
+
+    .return-step {
+        margin-left: 0;
+    }
+}
