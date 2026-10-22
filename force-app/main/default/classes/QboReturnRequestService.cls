@@ -4,6 +4,14 @@ public with sharing class QboReturnRequestService {
     public static Id createReturnRequest(
         Id orderId,
         Map<Id, Decimal> requestedQuantities,
+        String reason
+    ) {
+        return createReturnRequest(orderId, requestedQuantities, reason, 'Applied to Invoice');
+    }
+
+    public static Id createReturnRequest(
+        Id orderId,
+        Map<Id, Decimal> requestedQuantities,
         String reason,
         String resolutionType
     ) {
