@@ -4,6 +4,7 @@ public with sharing class RazorpayPaymentService {
 
     public class PaymentOrderResult {
         @AuraEnabled public String razorpayOrderId;
+        @AuraEnabled public String keyId;
         @AuraEnabled public Integer amountPaise;
         @AuraEnabled public Decimal amount;
         @AuraEnabled public String currency;
@@ -21,8 +22,6 @@ public with sharing class RazorpayPaymentService {
             throw new AuraHandledException('Order is required.');
         }
 
-        // The portal user must be able to see the Order before we switch to
-        // system mode for the fields that are written by the integration.
         List<Order> visibleOrders = [
             SELECT Id
             FROM Order
@@ -59,6 +58,8 @@ public with sharing class RazorpayPaymentService {
             orderRecord.Payment_Gateway_Status__c == 'Captured') {
             throw new AuraHandledException('A payment has already been captured for this order.');
         }
+
+        PaymentGatewayConfig gatewayConfig = getGatewayConfig();
 
         B2BEarlyPaymentDiscountService.DiscountResult discount =
             B2BEarlyPaymentDiscountService.calculate(
@@ -99,9 +100,6 @@ public with sharing class RazorpayPaymentService {
                 throw new RazorpayPaymentException('Razorpay order creation returned no order id.');
             }
 
-            // Store the quote snapshot with the gateway order. The amount used
-            // by Checkout is therefore recoverable server-side and cannot be
-            // replaced by a client-supplied amount.
             Database.update(new Order(
                 Id = orderRecord.Id,
                 Razorpay_Order_Id__c = razorpayOrderId,
@@ -114,6 +112,7 @@ public with sharing class RazorpayPaymentService {
 
             PaymentOrderResult result = new PaymentOrderResult();
             result.razorpayOrderId = razorpayOrderId;
+            result.keyId = gatewayConfig.keyId;
             result.amountPaise = amountPaise;
             result.amount = payableAmount;
             result.currency = 'INR';
@@ -129,6 +128,28 @@ public with sharing class RazorpayPaymentService {
             markGatewayError(orderRecord.Id);
             throw new AuraHandledException('Unable to start the online payment. Please try again.');
         }
+    }
+
+    private class PaymentGatewayConfig {
+        String keyId;
+    }
+
+    private static PaymentGatewayConfig getGatewayConfig() {
+        List<Payment_Gateway_Config__mdt> configs = [
+            SELECT Key_Id__c
+            FROM Payment_Gateway_Config__mdt
+            WHERE Gateway__c = 'Razorpay'
+              AND Active__c = true
+            LIMIT 1
+        ];
+
+        if (configs.isEmpty() || String.isBlank(configs[0].Key_Id__c)) {
+            throw new AuraHandledException('Razorpay Test Mode is not configured yet.');
+        }
+
+        PaymentGatewayConfig config = new PaymentGatewayConfig();
+        config.keyId = configs[0].Key_Id__c.trim();
+        return config;
     }
 
     private static Map<String, Object> sendCreateOrder(Map<String, Object> payload) {
