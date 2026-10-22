@@ -10,7 +10,6 @@ export default class PortalOrders extends LightningElement {
     errorMessage;
     showReturnModal = false;
     returnReason = '';
-    resolutionType = 'Applied to Invoice';
     returnQuantities = {};
     returnSubmitting = false;
     successMessage;
@@ -58,7 +57,6 @@ export default class PortalOrders extends LightningElement {
 
     openReturnModal() {
         this.returnReason = '';
-        this.resolutionType = 'Applied to Invoice';
         this.returnQuantities = {};
         this.errorMessage = undefined;
         this.successMessage = undefined;
@@ -74,10 +72,6 @@ export default class PortalOrders extends LightningElement {
 
     handleReasonChange(event) {
         this.returnReason = event.target.value;
-    }
-
-    handleResolutionChange(event) {
-        this.resolutionType = event.target.value;
     }
 
     handleQuantityChange(event) {
@@ -110,14 +104,6 @@ export default class PortalOrders extends LightningElement {
         return Object.values(this.returnQuantities).every(quantity => Number(quantity) > 0);
     }
 
-    get resolutionOptions() {
-        return [
-            { label: 'Applied to Invoice', value: 'Applied to Invoice' },
-            { label: 'Refunded', value: 'Refunded' },
-            { label: 'Customer Credit', value: 'Customer Credit' }
-        ];
-    }
-
     async submitReturnRequest() {
         if (!this.canSubmitReturn) {
             this.errorMessage = 'Enter a return quantity greater than zero for at least one item.';
@@ -132,8 +118,7 @@ export default class PortalOrders extends LightningElement {
             await createReturnRequest({
                 orderId: this.selectedOrder.id,
                 requestedQuantities: this.returnQuantities,
-                reason: this.returnReason,
-                resolutionType: this.resolutionType
+                reason: this.returnReason
             });
 
             this.showReturnModal = false;

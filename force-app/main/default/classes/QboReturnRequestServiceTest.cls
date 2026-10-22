@@ -43,8 +43,7 @@ private class QboReturnRequestServiceTest {
         Id requestId = QboReturnRequestService.createReturnRequest(
             orderRecord.Id,
             new Map<Id, Decimal>{ item.Id => 2 },
-            'Customer returned two items',
-            'Applied to Invoice'
+            'Customer returned two items'
         );
         Test.stopTest();
 
@@ -55,7 +54,7 @@ private class QboReturnRequestServiceTest {
         System.assertEquals(orderRecord.Id, request.Order__c);
         System.assertEquals('Requested', request.Status__c);
         System.assertEquals('Pending', request.Current_Step__c);
-        System.assertEquals('Applied to Invoice', request.Resolution_Type__c);
+        System.assertEquals(null, request.Resolution_Type__c);
 
         Return_Request_Line__c line = [
             SELECT Quantity__c, Unit_Price__c, Line_Amount__c, Order_Item__c
@@ -77,8 +76,7 @@ private class QboReturnRequestServiceTest {
             QboReturnRequestService.createReturnRequest(
                 orderRecord.Id,
                 new Map<Id, Decimal>{ item.Id => 6 },
-                'Too many',
-                'Applied to Invoice'
+                'Too many'
             );
         } catch (QboReturnRequestService.ReturnRequestException ex) {
             failed = true;

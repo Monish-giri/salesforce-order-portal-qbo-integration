@@ -1,7 +1,7 @@
 public with sharing class QboReturnRequestService {
     public class ReturnRequestException extends Exception {}
 
-    public static Id createReturnRequest(Id orderId, Map<Id, Decimal> requestedQuantities, String reason, String resolutionType) {
+    public static Id createReturnRequest(Id orderId, Map<Id, Decimal> requestedQuantities, String reason) {
         if (orderId == null || requestedQuantities == null || requestedQuantities.isEmpty()) {
             throw new ReturnRequestException('Order and at least one return line are required.');
         }
@@ -13,10 +13,6 @@ public with sharing class QboReturnRequestService {
             FROM Order WHERE Id = :orderId WITH SYSTEM_MODE LIMIT 1
         ];
         if (String.isBlank(order.QBO_Invoice_Id__c)) throw new ReturnRequestException('The Order does not have a QBO Invoice Id.');
-        if (String.isBlank(resolutionType)) resolutionType = 'Applied to Invoice';
-        if (resolutionType != 'Applied to Invoice' && resolutionType != 'Refunded' && resolutionType != 'Customer Credit') {
-            throw new ReturnRequestException('Invalid resolution type.');
-        }
 
         Map<Id, OrderItem> items = new Map<Id, OrderItem>(order.OrderItems);
         List<Return_Request_Line__c> lines = new List<Return_Request_Line__c>();
@@ -44,7 +40,6 @@ public with sharing class QboReturnRequestService {
             Order__c = order.Id,
             Placed_By_Account__c = order.Placed_By_Account__c == null ? order.AccountId : order.Placed_By_Account__c,
             Reason__c = reason,
-            Resolution_Type__c = resolutionType,
             Status__c = 'Requested',
             Current_Step__c = 'Pending'
         );

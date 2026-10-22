@@ -3,8 +3,7 @@ public with sharing class PortalReturnRequestService {
     public static Id createReturnRequest(
         Id orderId,
         Map<Id, Decimal> requestedQuantities,
-        String reason,
-        String resolutionType
+        String reason
     ) {
         try {
             if (orderId == null) {
@@ -16,8 +15,7 @@ public with sharing class PortalReturnRequestService {
             return QboReturnRequestService.createReturnRequest(
                 orderId,
                 requestedQuantities,
-                reason,
-                resolutionType
+                reason
             );
         } catch (QboReturnRequestService.ReturnRequestException ex) {
             throw new AuraHandledException(ex.getMessage());
