@@ -1,0 +1,85 @@
+<template>
+    <section class="returns-view">
+        <div class="view-heading">
+            <div>
+                <p class="section-kicker">RETURN HISTORY</p>
+                <h1>My Returns</h1>
+                <p>Track return requests submitted from the portal and their processing status.</p>
+            </div>
+            <button class="refresh-button" type="button" onclick={refreshReturns} disabled={isLoading}>
+                <lightning-icon icon-name="utility:refresh" size="x-small" alternative-text="Refresh"></lightning-icon>
+                <span>Refresh</span>
+            </button>
+        </div>
+
+        <template if:true={errorMessage}>
+            <div class="message error" role="alert">{errorMessage}</div>
+        </template>
+
+        <template if:true={isLoading}>
+            <div class="loading-state">
+                <lightning-spinner alternative-text="Loading returns" size="small"></lightning-spinner>
+                <span>Loading your return history...</span>
+            </div>
+        </template>
+
+        <template if:true={hasReturns}>
+            <div class="return-list">
+                <template for:each={returns} for:item="returnRecord">
+                    <article class="return-card" key={returnRecord.id}>
+                        <div class="return-main">
+                            <div class="return-icon">
+                                <lightning-icon icon-name="utility:replace" size="small" alternative-text="Return"></lightning-icon>
+                            </div>
+                            <div class="return-copy">
+                                <div class="return-title-row">
+                                    <h2>{returnRecord.returnNumber}</h2>
+                                    <span class={returnRecord.statusClass}>{returnRecord.status}</span>
+                                </div>
+                                <p class="return-order">Order #{returnRecord.orderNumber}</p>
+                                <p class="return-reason">{returnRecord.reason}</p>
+                            </div>
+                        </div>
+
+                        <div class="return-meta">
+                            <div>
+                                <span class="meta-label">Requested</span>
+                                <span class="meta-value">{returnRecord.createdDate}</span>
+                            </div>
+                            <div>
+                                <span class="meta-label">Resolution</span>
+                                <span class="meta-value">{returnRecord.resolutionLabel}</span>
+                            </div>
+                            <div>
+                                <span class="meta-label">Return amount</span>
+                                <lightning-formatted-number
+                                    class="meta-value"
+                                    value={returnRecord.amountLabel}
+                                    format-style="currency"
+                                    currency-code="INR"
+                                    maximum-fraction-digits="0">
+                                </lightning-formatted-number>
+                            </div>
+                        </div>
+
+                        <div class="return-step">
+                            <span>Processing step</span>
+                            <strong>{returnRecord.currentStep}</strong>
+                        </div>
+                    </article>
+                </template>
+            </div>
+        </template>
+
+        <template if:true={showEmpty}>
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <lightning-icon icon-name="utility:replace" size="medium" alternative-text="Returns"></lightning-icon>
+                </div>
+                <p class="section-kicker">NO RETURNS YET</p>
+                <h2>Your return requests will appear here.</h2>
+                <p>Submit a return from an order to track its approval and processing progress.</p>
+            </div>
+        </template>
+    </section>
+</template>
