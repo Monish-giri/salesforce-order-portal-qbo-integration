@@ -2,11 +2,15 @@ import { LightningElement } from 'lwc';
 import getOrders from '@salesforce/apex/PortalOrderService.getOrders';
 import getOrderDetail from '@salesforce/apex/PortalOrderService.getOrderDetail';
 import createReturnRequest from '@salesforce/apex/PortalReturnRequestService.createReturnRequest';
+import createPaymentOrder from '@salesforce/apex/RazorpayPaymentService.createPaymentOrder';
+import verifyPayment from '@salesforce/apex/RazorpayPaymentService.verifyPayment';
 
 export default class PortalOrders extends LightningElement {
     orders = [];
     selectedOrder;
     isLoading = true;
+    isPaymentProcessing = false;
+    paymentWindow;
     errorMessage;
     showReturnModal = false;
     returnReason = '';
@@ -16,6 +20,11 @@ export default class PortalOrders extends LightningElement {
 
     connectedCallback() {
         this.loadOrders();
+        window.addEventListener('message', this.handlePaymentMessage);
+    }
+
+    disconnectedCallback() {
+        window.removeEventListener('message', this.handlePaymentMessage);
     }
 
     async loadOrders() {
@@ -64,7 +73,7 @@ export default class PortalOrders extends LightningElement {
     }
 
     closeReturnModal() {
-        if (this.returnSubmitting) return;
+        if (this.returnSubmitting || this.isPaymentProcessing) return;
         this.showReturnModal = false;
         this.returnReason = '';
         this.returnQuantities = {};
@@ -152,6 +161,19 @@ export default class PortalOrders extends LightningElement {
         return this.selectedOrder?.invoiceBalance !== null && this.selectedOrder?.invoiceBalance !== undefined;
     }
 
+    get canPayOnline() {
+        const order = this.selectedOrder;
+        if (!order || this.isPaymentProcessing) return false;
+        if (order.paymentStatus === 'Paid') return false;
+        if (!['Online', 'Invoice'].includes(order.paymentMethod)) return false;
+        if (order.invoiceStatus !== 'Invoiced') return false;
+        return Number(order.invoiceBalance) > 0;
+    }
+
+    get payButtonLabel() {
+        return this.isPaymentProcessing ? 'Opening Payment...' : 'Pay Now';
+    }
+
     get hasCurrentDiscount() {
         return !!this.selectedOrder?.currentDiscount && this.selectedOrder.currentDiscount.eligible;
     }
@@ -173,6 +195,118 @@ export default class PortalOrders extends LightningElement {
         if (method === 'Cash on Delivery') return 'Cash on Delivery';
         if (method === 'Online') return 'Online Payment';
         return method || 'Payment';
+    }
+
+    async handlePayNow() {
+        if (!this.canPayOnline) return;
+
+        this.errorMessage = undefined;
+        this.successMessage = undefined;
+        this.isPaymentProcessing = true;
+
+        this.paymentWindow = window.open(
+            'about:blank',
+            'razorpayCheckout',
+            'width=500,height=760,resizable=yes,scrollbars=yes'
+        );
+
+        if (!this.paymentWindow) {
+            this.isPaymentProcessing = false;
+            this.errorMessage = 'Your browser blocked the payment window. Please allow pop-ups for the Order Portal and try again.';
+            return;
+        }
+
+        try {
+            const paymentOrder = await createPaymentOrder({
+                orderId: this.selectedOrder.id
+            });
+
+            const checkoutUrl = this.buildRazorpayCheckoutUrl(paymentOrder);
+            this.paymentWindow.location.href = checkoutUrl;
+            this.paymentWindow.focus();
+        } catch (error) {
+            if (this.paymentWindow && !this.paymentWindow.closed) {
+                this.paymentWindow.close();
+            }
+            this.paymentWindow = undefined;
+            this.isPaymentProcessing = false;
+            this.errorMessage = this.getErrorMessage(error);
+        }
+    }
+
+    buildRazorpayCheckoutUrl(paymentOrder) {
+        const pathSegments = window.location.pathname.split('/').filter(Boolean);
+        const sitePrefix = pathSegments[0];
+        const visualforcePath = sitePrefix
+            ? `/${sitePrefix}/${sitePrefix}vforcesite/apex/RazorpayCheckoutBridge`
+            : '/vforcesite/apex/RazorpayCheckoutBridge';
+
+        const params = new URLSearchParams({
+            keyId: paymentOrder.keyId,
+            amount: String(paymentOrder.amountPaise),
+            currency: paymentOrder.currencyCode,
+            orderId: paymentOrder.razorpayOrderId,
+            receipt: paymentOrder.receipt,
+            parentOrigin: window.location.origin
+        });
+
+        return `${window.location.origin}${visualforcePath}?${params.toString()}`;
+    }
+
+    handlePaymentMessage = (event) => {
+        if (!this.paymentWindow || event.source !== this.paymentWindow) {
+            return;
+        }
+
+        const message = event.data || {};
+        if (!['razorpay-success', 'razorpay-error', 'razorpay-dismissed'].includes(message.type)) {
+            return;
+        }
+
+        if (message.type === 'razorpay-success') {
+            this.handleRazorpaySuccess({
+                razorpay_payment_id: message.payload?.razorpayPaymentId,
+                razorpay_order_id: message.payload?.razorpayOrderId,
+                razorpay_signature: message.payload?.razorpaySignature
+            });
+            return;
+        }
+
+        this.isPaymentProcessing = false;
+
+        if (message.type === 'razorpay-dismissed') {
+            this.errorMessage = 'Payment was not completed. Your order is saved and you can try again.';
+        } else {
+            this.errorMessage = message.payload?.message || 'Razorpay payment failed. Please try again.';
+        }
+
+        this.paymentWindow = undefined;
+    };
+
+    async handleRazorpaySuccess(response) {
+        try {
+            this.isPaymentProcessing = true;
+            this.errorMessage = undefined;
+
+            const verification = await verifyPayment({
+                orderId: this.selectedOrder.id,
+                razorpayPaymentId: response?.razorpay_payment_id,
+                razorpayOrderId: response?.razorpay_order_id,
+                razorpaySignature: response?.razorpay_signature
+            });
+
+            if (!verification?.success) {
+                throw new Error('Razorpay payment could not be verified.');
+            }
+
+            this.successMessage = 'Payment completed successfully.';
+            this.selectedOrder = await getOrderDetail({ orderId: this.selectedOrder.id });
+        } catch (error) {
+            this.errorMessage = this.getErrorMessage(error);
+        } finally {
+            this.isPaymentProcessing = false;
+            this.paymentWindow = undefined;
+        }
     }
 
     getErrorMessage(error) {
