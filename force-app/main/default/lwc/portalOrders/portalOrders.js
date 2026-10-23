@@ -241,9 +241,14 @@ export default class PortalOrders extends LightningElement {
     buildRazorpayCheckoutUrl(paymentOrder) {
         const pathSegments = window.location.pathname.split('/').filter(Boolean);
         const sitePrefix = pathSegments[0];
+
+        // LWR Experience Cloud sites expose Visualforce pages through the
+        // site's /vforcesite path. The previous implementation duplicated
+        // the site prefix and added /apex, which produced the "Invalid Page"
+        // screen when the payment window opened.
         const visualforcePath = sitePrefix
-            ? `/${sitePrefix}/${sitePrefix}vforcesite/apex/RazorpayCheckoutBridge`
-            : '/vforcesite/apex/RazorpayCheckoutBridge';
+            ? `/${sitePrefix}/vforcesite/RazorpayCheckoutBridge`
+            : '/vforcesite/RazorpayCheckoutBridge';
 
         const params = new URLSearchParams({
             keyId: paymentOrder.keyId,
