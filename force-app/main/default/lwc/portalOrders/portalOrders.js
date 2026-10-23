@@ -113,6 +113,10 @@ export default class PortalOrders extends LightningElement {
         return Object.values(this.returnQuantities).every(quantity => Number(quantity) > 0);
     }
 
+    get isReturnSubmitDisabled() {
+        return !this.canSubmitReturn;
+    }
+
     async submitReturnRequest() {
         if (!this.canSubmitReturn) {
             this.errorMessage = 'Enter a return quantity greater than zero for at least one item.';
