@@ -2,6 +2,7 @@ import { LightningElement, api } from 'lwc';
 import getCheckoutContext from '@salesforce/apex/OrderSubmissionService.getCheckoutContext';
 import submitOrder from '@salesforce/apex/OrderSubmissionService.submitOrder';
 import createPaymentOrder from '@salesforce/apex/RazorpayPaymentService.createPaymentOrder';
+import getPaymentReadiness from '@salesforce/apex/RazorpayPaymentService.getPaymentReadiness';
 import verifyPayment from '@salesforce/apex/RazorpayPaymentService.verifyPayment';
 import getActiveSchedule from '@salesforce/apex/B2BEarlyPaymentDiscountService.getActiveSchedule';
 
@@ -169,7 +170,7 @@ export default class PortalCheckout extends LightningElement {
                 if (!this.submittedOrder) {
                     this.submittedOrder = await this.createSalesforceOrder();
                 }
-                await this.startRazorpayPayment();
+                await this.waitForInvoiceAndStartPayment();
                 return;
             }
 
@@ -199,9 +200,40 @@ export default class PortalCheckout extends LightningElement {
         });
     }
 
-    async startRazorpayPayment() {
+    async waitForInvoiceAndStartPayment() {
         this.isPaymentProcessing = true;
 
+        // Invoice creation is asynchronous: submitOrder publishes Order_Invoice_Request__e
+        // and the QuickBooks invoice can be created shortly afterwards. Poll readiness
+        // rather than immediately failing the customer's checkout.
+        const maxAttempts = 60;
+        const intervalMs = 1000;
+
+        for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+            if (!this.paymentWindow || this.paymentWindow.closed) {
+                throw new Error('The payment window was closed. Your order is saved and you can try again from My Orders.');
+            }
+
+            const readiness = await getPaymentReadiness({
+                orderId: this.submittedOrder.orderId
+            });
+
+            if (readiness?.ready) {
+                await this.startRazorpayPayment();
+                return;
+            }
+
+            if (readiness?.message && !readiness.message.toLowerCase().includes('waiting')) {
+                throw new Error(readiness.message);
+            }
+
+            await new Promise(resolve => window.setTimeout(resolve, intervalMs));
+        }
+
+        throw new Error('The QuickBooks invoice is taking longer than expected to become available. Your order is saved. Please open My Orders and try the payment again shortly.');
+    }
+
+    async startRazorpayPayment() {
         const paymentOrder = await createPaymentOrder({
             orderId: this.submittedOrder.orderId
         });
