@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CspTrustedSite xmlns="http://soap.sforce.com/2006/04/metadata">
-    <context>ExperienceBuilderSites</context>
+    <context>Communities</context>
     <description>Razorpay Standard Checkout hosted JavaScript and related browser resources.</description>
     <endpointUrl>https://checkout.razorpay.com</endpointUrl>
     <isActive>true</isActive>
