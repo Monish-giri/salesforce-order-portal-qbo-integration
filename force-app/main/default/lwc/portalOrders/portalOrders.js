@@ -169,7 +169,13 @@ export default class PortalOrders extends LightningElement {
         const order = this.selectedOrder;
         if (!order || this.isPaymentProcessing) return false;
         if (order.paymentStatus === 'Paid') return false;
-        if (!['Online', 'Invoice'].includes(order.paymentMethod)) return false;
+
+        // Explicitly disallow COD. Invoice and Online are payable through Razorpay.
+        // A null payment method is treated as legacy online payment so older orders
+        // created before Payment_Method__c was populated remain payable.
+        if (order.paymentMethod === 'Cash on Delivery') return false;
+        if (order.paymentMethod && !['Online', 'Invoice'].includes(order.paymentMethod)) return false;
+
         if (order.invoiceStatus !== 'Invoiced') return false;
         return Number(order.invoiceBalance) > 0;
     }
@@ -198,6 +204,11 @@ export default class PortalOrders extends LightningElement {
         const method = this.selectedOrder?.paymentMethod;
         if (method === 'Cash on Delivery') return 'Cash on Delivery';
         if (method === 'Online') return 'Online Payment';
+        if (method === 'Invoice') return 'B2B Invoice / Credit Terms';
+
+        // Legacy orders created before Payment_Method__c was populated can still
+        // be paid online when an invoice and outstanding balance exist.
+        if (this.canPayOnline) return 'Online Payment';
         return method || 'Payment';
     }
 
