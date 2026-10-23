@@ -96,6 +96,19 @@
                             </template>
                         </div>
 
+                        <template if:true={canPayOnline}>
+                            <div class="payment-action">
+                                <div>
+                                    <span class="section-kicker">ONLINE PAYMENT</span>
+                                    <h3>Pay this invoice securely</h3>
+                                    <p>Continue to Razorpay to complete the outstanding payment.</p>
+                                </div>
+                                <button class="pay-button" type="button" onclick={handlePayNow} disabled={isPaymentProcessing}>
+                                    {payButtonLabel}
+                                </button>
+                            </div>
+                        </template>
+
                         <div class="discount-panel">
                             <div class="discount-title">
                                 <div>
@@ -146,6 +159,18 @@
                             <span>Payment Status</span>
                             <strong>{selectedOrder.paymentStatus}</strong>
                         </div>
+                        <template if:true={canPayOnline}>
+                            <div class="payment-action">
+                                <div>
+                                    <span class="section-kicker">ONLINE PAYMENT</span>
+                                    <h3>Complete your payment</h3>
+                                    <p>Your order is invoiced and has an outstanding balance.</p>
+                                </div>
+                                <button class="pay-button" type="button" onclick={handlePayNow} disabled={isPaymentProcessing}>
+                                    {payButtonLabel}
+                                </button>
+                            </div>
+                        </template>
                     </section>
                 </template>
 
@@ -175,40 +200,26 @@
                         <button class="modal-close" type="button" onclick={closeReturnModal} disabled={returnSubmitting} aria-label="Close">×</button>
                     </div>
 
-                    <div class="return-items">
-                        <div class="return-items-heading"><span>Product</span><span>Ordered</span><span>Return Qty</span></div>
+                    <div class="modal-body">
                         <template for:each={returnLines} for:item="line">
-                            <div class="return-item" key={line.id}>
-                                <span>{line.productName}</span>
-                                <span>{line.returnableQuantity}</span>
-                                <lightning-input
-                                    type="number"
-                                    variant="label-hidden"
-                                    min="0"
-                                    max={line.returnableQuantity}
-                                    step="1"
-                                    value={line.requestedQuantity}
-                                    data-id={line.id}
-                                    onchange={handleQuantityChange}
-                                    placeholder="0">
-                                </lightning-input>
+                            <div class="return-line" key={line.id}>
+                                <div>
+                                    <strong>{line.productName}</strong>
+                                    <span>Ordered: {line.quantity}</span>
+                                </div>
+                                <input class="quantity-input" type="number" min="0" max={line.returnableQuantity} step="1" data-id={line.id} value={line.requestedQuantity} onchange={handleQuantityChange} />
                             </div>
                         </template>
-                    </div>
 
-                    <div class="return-form">
-                        <lightning-textarea
-                            label="Reason"
-                            value={returnReason}
-                            onchange={handleReasonChange}
-                            disabled={returnSubmitting}
-                            placeholder="Tell us why you are returning the item.">
-                        </lightning-textarea>
+                        <label class="reason-label" for="return-reason">Reason</label>
+                        <textarea id="return-reason" class="reason-input" value={returnReason} onchange={handleReasonChange} placeholder="Tell us why you want to return these items."></textarea>
                     </div>
 
                     <div class="modal-actions">
                         <button class="cancel-button" type="button" onclick={closeReturnModal} disabled={returnSubmitting}>Cancel</button>
-                        <button class="submit-return-button" type="button" onclick={submitReturnRequest} disabled={returnSubmitting}>{returnSubmitting ? 'Submitting...' : 'Submit Return Request'}</button>
+                        <button class="submit-return-button" type="button" onclick={submitReturnRequest} disabled={!canSubmitReturn}>
+                            {returnSubmitting ? 'Submitting...' : 'Submit Return Request'}
+                        </button>
                     </div>
                 </div>
             </section>
