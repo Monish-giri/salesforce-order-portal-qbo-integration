@@ -104,9 +104,10 @@
 
 .order-detail-card {
     border: 1px solid #e5e7eb;
-    border-radius: 16px;
+    border-radius: 18px;
     background: #fff;
     padding: 1.5rem;
+    box-shadow: 0 8px 30px rgba(15, 23, 42, 0.05);
 }
 
 .detail-header {
@@ -121,6 +122,8 @@
 .detail-header h2 {
     margin: 0.25rem 0;
     color: #182230;
+    font-size: 1.45rem;
+    letter-spacing: -0.02em;
 }
 
 .detail-actions {
@@ -139,7 +142,7 @@
     font-weight: 600;
     font-size: 0.85rem;
     cursor: pointer;
-    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
 }
 
 .detail-header .back-button,
@@ -169,13 +172,15 @@
     background: #175cd3;
     border-color: #175cd3;
     box-shadow: 0 4px 12px rgba(21, 112, 239, 0.2);
+    transform: translateY(-1px);
 }
 
 .detail-header .back-button:focus-visible,
 .return-button:focus-visible,
 .cancel-button:focus-visible,
 .submit-return-button:focus-visible,
-.modal-close:focus-visible {
+.modal-close:focus-visible,
+.pay-button:focus-visible {
     outline: 2px solid #1570ef;
     outline-offset: 2px;
 }
@@ -183,7 +188,8 @@
 .detail-header .back-button:disabled,
 .return-button:disabled,
 .cancel-button:disabled,
-.submit-return-button:disabled {
+.submit-return-button:disabled,
+.pay-button:disabled {
     opacity: 0.55;
     cursor: not-allowed;
 }
@@ -202,7 +208,8 @@
 
 .detail-summary div {
     background: #f8fafc;
-    border-radius: 10px;
+    border: 1px solid #edf2f7;
+    border-radius: 12px;
     padding: 0.9rem 1rem;
 }
 
@@ -213,15 +220,17 @@
 
 .detail-summary strong {
     color: #182230;
+    font-size: 1rem;
 }
 
 .invoice-panel,
 .payment-panel {
     margin-bottom: 1.25rem;
-    padding: 1.25rem;
+    padding: 1.35rem;
     border: 1px solid #dbe7f3;
-    border-radius: 14px;
-    background: #f8fbff;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #f8fbff 0%, #ffffff 72%);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
 }
 
 .panel-header,
@@ -341,15 +350,86 @@
 }
 
 .payment-panel {
-    background: #fff;
-    border-color: #e5e7eb;
+    background: linear-gradient(135deg, #f7fbff 0%, #ffffff 70%);
+    border-color: #d8e7f5;
+    overflow: hidden;
+}
+
+.payment-panel > h3 {
+    font-size: 1.15rem;
 }
 
 .payment-status-row {
     margin-top: 1rem;
-    padding: 0.8rem 0.9rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid #e3eaf2;
+    border-radius: 12px;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.payment-status-row span {
+    margin: 0;
+}
+
+.payment-status-row strong {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 0.35rem 0.7rem;
+    background: #fff7e6;
+    color: #b54708;
+    font-size: 0.78rem;
+}
+
+.payment-action {
+    margin-top: 1rem;
+    padding: 1.1rem;
+    border-radius: 14px;
+    border: 1px solid #b9d5f1;
+    background: linear-gradient(135deg, #eef7ff 0%, #ffffff 100%);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem;
+    box-shadow: 0 8px 20px rgba(21, 112, 239, 0.07);
+}
+
+.payment-action h3 {
+    margin: 0.2rem 0 0.3rem;
+    font-size: 1rem;
+    color: #182230;
+}
+
+.payment-action p {
+    margin: 0;
+    color: #667085;
+    font-size: 0.82rem;
+    line-height: 1.45;
+}
+
+.pay-button {
+    flex: 0 0 auto;
+    min-width: 135px;
+    border: 0;
     border-radius: 10px;
-    background: #f8fafc;
+    padding: 0.78rem 1.25rem;
+    background: #1570ef;
+    color: #fff;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 5px 12px rgba(21, 112, 239, 0.2);
+    transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.pay-button:hover:not(:disabled) {
+    background: #175cd3;
+    box-shadow: 0 7px 16px rgba(21, 112, 239, 0.25);
+    transform: translateY(-1px);
 }
 
 .line-list {
@@ -488,8 +568,17 @@
 
     .panel-header,
     .discount-title,
-    .detail-header {
+    .detail-header,
+    .payment-action {
         flex-direction: column;
+    }
+
+    .payment-action {
+        align-items: stretch;
+    }
+
+    .pay-button {
+        width: 100%;
     }
 
     .detail-actions {
