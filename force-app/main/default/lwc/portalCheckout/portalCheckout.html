@@ -19,9 +19,19 @@
             <div class="state-panel error-panel" role="alert">
                 <lightning-icon icon-name="utility:error" size="small" alternative-text="Error"></lightning-icon>
                 <div>
-                    <h2>We couldn't prepare your checkout</h2>
+                    <template if:true={submittedOrder}>
+                        <h2>Payment needs attention</h2>
+                    </template>
+                    <template if:false={submittedOrder}>
+                        <h2>We couldn't prepare your checkout</h2>
+                    </template>
                     <p>{errorMessage}</p>
-                    <button class="secondary-button" type="button" onclick={handleBack}>Back to Cart</button>
+                    <template if:true={submittedOrder}>
+                        <button class="place-order-button" type="button" onclick={handlePlaceOrder} disabled={isSubmitting}>
+                            Try Payment Again
+                        </button>
+                    </template>
+                    <button class="secondary-button" type="button" onclick={handleBack} disabled={isSubmitting}>Back to Cart</button>
                 </div>
             </div>
         </template>
@@ -267,8 +277,7 @@
                             type="button"
                             onclick={handlePlaceOrder}
                             disabled={isSubmitting}>
-                            <template if:true={isSubmitting}>Placing order...</template>
-                            <template if:false={isSubmitting}>Place Order</template>
+                            {placeOrderLabel}
                         </button>
 
                         <button
@@ -279,7 +288,7 @@
                             Back to Cart
                         </button>
 
-                        <p class="summary-note">Your order will be saved in Salesforce first. The invoice will be handled by the existing QuickBooks flow.</p>
+                        <p class="summary-note">Your order is saved in Salesforce first. Online payments are securely processed through Razorpay, while the existing QuickBooks flow remains responsible for accounting.</p>
                     </aside>
                 </div>
             </template>
