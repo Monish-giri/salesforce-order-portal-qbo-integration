@@ -1,17 +1,25 @@
 import { LightningElement, api } from 'lwc';
+import { loadScript } from 'lightning/platformResourceLoader';
+import razorpayCheckout from '@salesforce/resourceUrl/RazorpayCheckout';
 import getCheckoutContext from '@salesforce/apex/OrderSubmissionService.getCheckoutContext';
 import submitOrder from '@salesforce/apex/OrderSubmissionService.submitOrder';
+import createPaymentOrder from '@salesforce/apex/RazorpayPaymentService.createPaymentOrder';
+import verifyPayment from '@salesforce/apex/RazorpayPaymentService.verifyPayment';
 import getActiveSchedule from '@salesforce/apex/B2BEarlyPaymentDiscountService.getActiveSchedule';
 
 export default class PortalCheckout extends LightningElement {
     @api cartItems = [];
     isLoading = true;
     isSubmitting = false;
+    isPaymentProcessing = false;
     errorMessage;
     context;
     discountSchedule = [];
     selectedAccountId;
     selectedPaymentMethod = 'Online';
+    submittedOrder;
+    razorpayPaymentOrder;
+    razorpayLoaded = false;
 
     connectedCallback() {
         this.loadCheckoutContext();
@@ -78,7 +86,15 @@ export default class PortalCheckout extends LightningElement {
             return 'Your order will be invoiced with the configured B2B payment terms. Pay earlier to receive the highest available discount.';
         }
         if (this.selectedPaymentMethod === 'Cash on Delivery') return 'Pay the full order amount when your order is delivered.';
-        return 'Pay the full order amount online. Razorpay will be connected in the payment integration phase.';
+        if (this.isPaymentProcessing) return 'Opening secure Razorpay Checkout...';
+        if (this.submittedOrder) return 'Your Salesforce order is ready. Complete the payment in Razorpay to finish checkout.';
+        return 'Pay the full order amount securely online through Razorpay.';
+    }
+
+    get placeOrderLabel() {
+        if (this.isSubmitting) return this.selectedPaymentMethod === 'Online' ? 'Preparing payment...' : 'Placing order...';
+        if (this.submittedOrder && this.selectedPaymentMethod === 'Online') return 'Pay Now';
+        return 'Place Order';
     }
 
     async loadCheckoutContext() {
@@ -109,7 +125,12 @@ export default class PortalCheckout extends LightningElement {
     }
 
     handleAccountChange(event) { this.selectedAccountId = event.detail.value; }
-    handlePaymentMethodChange(event) { this.selectedPaymentMethod = event.detail.value; }
+    handlePaymentMethodChange(event) {
+        this.selectedPaymentMethod = event.detail.value;
+        this.submittedOrder = undefined;
+        this.razorpayPaymentOrder = undefined;
+        this.errorMessage = undefined;
+    }
 
     async handlePlaceOrder() {
         if (!this.cartItems.length || !this.selectedAccountId) {
@@ -124,20 +145,122 @@ export default class PortalCheckout extends LightningElement {
         this.isSubmitting = true;
         this.errorMessage = undefined;
         try {
-            const result = await submitOrder({
-                cartJson: JSON.stringify(this.cartItems.map(item => ({
-                    pricebookEntryId: item.pricebookEntryId,
-                    quantity: item.quantity
-                }))),
-                submissionKey: this.createSubmissionKey(),
-                orderForAccountId: this.selectedAccountId,
-                paymentMethod: this.selectedPaymentMethod
-            });
+            if (this.selectedPaymentMethod === 'Online') {
+                if (!this.submittedOrder) {
+                    this.submittedOrder = await this.createSalesforceOrder();
+                }
+                await this.startRazorpayPayment();
+                return;
+            }
+
+            const result = await this.createSalesforceOrder();
             this.dispatchEvent(new CustomEvent('ordersubmitted', { detail: result }));
         } catch (error) {
             this.errorMessage = this.reduceError(error);
         } finally {
             this.isSubmitting = false;
+            this.isPaymentProcessing = false;
+        }
+    }
+
+    async createSalesforceOrder() {
+        return submitOrder({
+            cartJson: JSON.stringify(this.cartItems.map(item => ({
+                pricebookEntryId: item.pricebookEntryId,
+                quantity: item.quantity
+            }))),
+            submissionKey: this.createSubmissionKey(),
+            orderForAccountId: this.selectedAccountId,
+            paymentMethod: this.selectedPaymentMethod
+        });
+    }
+
+    async startRazorpayPayment() {
+        this.isPaymentProcessing = true;
+
+        const paymentOrder = await createPaymentOrder({
+            orderId: this.submittedOrder.orderId
+        });
+        this.razorpayPaymentOrder = paymentOrder;
+
+        await this.ensureRazorpayLoaded();
+
+        const checkoutOptions = {
+            key: paymentOrder.keyId,
+            amount: paymentOrder.amountPaise,
+            currency: paymentOrder.currencyCode,
+            name: 'Order Portal',
+            description: `Payment for Order ${this.submittedOrder.orderNumber}`,
+            order_id: paymentOrder.razorpayOrderId,
+            notes: {
+                receipt: paymentOrder.receipt,
+                salesforceOrderId: this.submittedOrder.orderId,
+                salesforceOrderNumber: this.submittedOrder.orderNumber
+            },
+            handler: (response) => this.handleRazorpaySuccess(response),
+            modal: {
+                ondismiss: () => {
+                    this.isPaymentProcessing = false;
+                    this.errorMessage = 'Payment was not completed. Your order is saved and you can try again.';
+                }
+            }
+        };
+
+        try {
+            const Razorpay = window.Razorpay;
+            if (typeof Razorpay !== 'function') {
+                throw new Error('Razorpay Checkout is not available.');
+            }
+
+            const checkout = new Razorpay(checkoutOptions);
+            checkout.open();
+        } catch (error) {
+            this.isPaymentProcessing = false;
+            throw new Error(error?.message || 'Unable to open Razorpay Checkout.');
+        }
+    }
+
+    async ensureRazorpayLoaded() {
+        if (!this.razorpayLoaded) {
+            await loadScript(this, razorpayCheckout);
+            this.razorpayLoaded = true;
+        }
+
+        if (window.RazorpayCheckoutReady) {
+            await window.RazorpayCheckoutReady;
+        }
+
+        if (typeof window.Razorpay !== 'function') {
+            throw new Error('Unable to load Razorpay Checkout.');
+        }
+    }
+
+    async handleRazorpaySuccess(response) {
+        try {
+            this.isPaymentProcessing = true;
+            this.errorMessage = undefined;
+
+            const verification = await verifyPayment({
+                orderId: this.submittedOrder.orderId,
+                razorpayPaymentId: response?.razorpay_payment_id,
+                razorpayOrderId: response?.razorpay_order_id,
+                razorpaySignature: response?.razorpay_signature
+            });
+
+            if (!verification?.success) {
+                throw new Error('Razorpay payment could not be verified.');
+            }
+
+            this.dispatchEvent(new CustomEvent('ordersubmitted', {
+                detail: {
+                    ...this.submittedOrder,
+                    payment: verification
+                }
+            }));
+        } catch (error) {
+            this.errorMessage = this.reduceError(error);
+        } finally {
+            this.isPaymentProcessing = false;
         }
     }
 
@@ -147,6 +270,6 @@ export default class PortalCheckout extends LightningElement {
     reduceError(error) {
         if (error?.body?.message) return error.body.message;
         if (Array.isArray(error?.body) && error.body.length > 0) return error.body.map(item => item.message).join(', ');
-        return 'An unexpected error occurred while processing the order.';
+        return error?.message || 'An unexpected error occurred while processing the order.';
     }
 }
