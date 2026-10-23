@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CspTrustedSite xmlns="http://soap.sforce.com/2006/04/metadata">
-    <context>Communities</context>
-    <description>Razorpay CDN resources used by Standard Checkout.</description>
+    <context>VisualForce</context>
+    <description>Razorpay CDN browser resources used by the Visualforce checkout bridge.</description>
     <endpointUrl>https://cdn.razorpay.com</endpointUrl>
     <isActive>true</isActive>
     <isApplicableToConnectSrc>true</isApplicableToConnectSrc>
