@@ -217,7 +217,7 @@
 
                     <div class="modal-actions">
                         <button class="cancel-button" type="button" onclick={closeReturnModal} disabled={returnSubmitting}>Cancel</button>
-                        <button class="submit-return-button" type="button" onclick={submitReturnRequest} disabled={!canSubmitReturn}>
+                        <button class="submit-return-button" type="button" onclick={submitReturnRequest} disabled={isReturnSubmitDisabled}>
                             {returnSubmitting ? 'Submitting...' : 'Submit Return Request'}
                         </button>
                     </div>
