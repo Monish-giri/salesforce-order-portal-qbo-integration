@@ -1,6 +1,4 @@
 import { LightningElement, api } from 'lwc';
-import { loadScript } from 'lightning/platformResourceLoader';
-import razorpayCheckout from '@salesforce/resourceUrl/RazorpayCheckout';
 import getCheckoutContext from '@salesforce/apex/OrderSubmissionService.getCheckoutContext';
 import submitOrder from '@salesforce/apex/OrderSubmissionService.submitOrder';
 import createPaymentOrder from '@salesforce/apex/RazorpayPaymentService.createPaymentOrder';
@@ -19,10 +17,15 @@ export default class PortalCheckout extends LightningElement {
     selectedPaymentMethod = 'Online';
     submittedOrder;
     razorpayPaymentOrder;
-    razorpayLoaded = false;
+    paymentWindow;
 
     connectedCallback() {
         this.loadCheckoutContext();
+        window.addEventListener('message', this.handlePaymentMessage);
+    }
+
+    disconnectedCallback() {
+        window.removeEventListener('message', this.handlePaymentMessage);
     }
 
     get isPartner() { return this.context?.isPartner === true; }
@@ -144,6 +147,23 @@ export default class PortalCheckout extends LightningElement {
 
         this.isSubmitting = true;
         this.errorMessage = undefined;
+
+        if (this.selectedPaymentMethod === 'Online') {
+            // Open a blank window synchronously from the user click so browser popup blockers
+            // do not prevent the later Razorpay checkout navigation after the Apex callout.
+            this.paymentWindow = window.open(
+                'about:blank',
+                'razorpayCheckout',
+                'width=500,height=760,resizable=yes,scrollbars=yes'
+            );
+
+            if (!this.paymentWindow) {
+                this.isSubmitting = false;
+                this.errorMessage = 'Your browser blocked the payment window. Please allow pop-ups for the Order Portal and try again.';
+                return;
+            }
+        }
+
         try {
             if (this.selectedPaymentMethod === 'Online') {
                 if (!this.submittedOrder) {
@@ -156,6 +176,10 @@ export default class PortalCheckout extends LightningElement {
             const result = await this.createSalesforceOrder();
             this.dispatchEvent(new CustomEvent('ordersubmitted', { detail: result }));
         } catch (error) {
+            if (this.paymentWindow && !this.paymentWindow.closed) {
+                this.paymentWindow.close();
+            }
+            this.paymentWindow = undefined;
             this.errorMessage = this.reduceError(error);
         } finally {
             this.isSubmitting = false;
@@ -183,57 +207,64 @@ export default class PortalCheckout extends LightningElement {
         });
         this.razorpayPaymentOrder = paymentOrder;
 
-        await this.ensureRazorpayLoaded();
+        const checkoutUrl = this.buildRazorpayCheckoutUrl(paymentOrder);
+        if (!this.paymentWindow || this.paymentWindow.closed) {
+            throw new Error('Unable to open the Razorpay payment window. Please allow pop-ups and try again.');
+        }
 
-        const checkoutOptions = {
-            key: paymentOrder.keyId,
-            amount: paymentOrder.amountPaise,
+        this.paymentWindow.location.href = checkoutUrl;
+        this.paymentWindow.focus();
+    }
+
+    buildRazorpayCheckoutUrl(paymentOrder) {
+        const pathSegments = window.location.pathname.split('/').filter(Boolean);
+        const sitePrefix = pathSegments[0];
+        const visualforcePath = sitePrefix
+            ? `/${sitePrefix}/${sitePrefix}vforcesite/apex/RazorpayCheckoutBridge`
+            : '/vforcesite/apex/RazorpayCheckoutBridge';
+
+        const params = new URLSearchParams({
+            keyId: paymentOrder.keyId,
+            amount: String(paymentOrder.amountPaise),
             currency: paymentOrder.currencyCode,
-            name: 'Order Portal',
-            description: `Payment for Order ${this.submittedOrder.orderNumber}`,
-            order_id: paymentOrder.razorpayOrderId,
-            notes: {
-                receipt: paymentOrder.receipt,
-                salesforceOrderId: this.submittedOrder.orderId,
-                salesforceOrderNumber: this.submittedOrder.orderNumber
-            },
-            handler: (response) => this.handleRazorpaySuccess(response),
-            modal: {
-                ondismiss: () => {
-                    this.isPaymentProcessing = false;
-                    this.errorMessage = 'Payment was not completed. Your order is saved and you can try again.';
-                }
-            }
-        };
+            orderId: paymentOrder.razorpayOrderId,
+            receipt: paymentOrder.receipt,
+            parentOrigin: window.location.origin
+        });
 
-        try {
-            const Razorpay = window.Razorpay;
-            if (typeof Razorpay !== 'function') {
-                throw new Error('Razorpay Checkout is not available.');
-            }
-
-            const checkout = new Razorpay(checkoutOptions);
-            checkout.open();
-        } catch (error) {
-            this.isPaymentProcessing = false;
-            throw new Error(error?.message || 'Unable to open Razorpay Checkout.');
-        }
+        return `${window.location.origin}${visualforcePath}?${params.toString()}`;
     }
 
-    async ensureRazorpayLoaded() {
-        if (!this.razorpayLoaded) {
-            await loadScript(this, razorpayCheckout);
-            this.razorpayLoaded = true;
+    handlePaymentMessage = (event) => {
+        if (!this.paymentWindow || event.source !== this.paymentWindow) {
+            return;
         }
 
-        if (window.RazorpayCheckoutReady) {
-            await window.RazorpayCheckoutReady;
+        const message = event.data || {};
+        if (!['razorpay-success', 'razorpay-error', 'razorpay-dismissed'].includes(message.type)) {
+            return;
         }
 
-        if (typeof window.Razorpay !== 'function') {
-            throw new Error('Unable to load Razorpay Checkout.');
+        if (message.type === 'razorpay-success') {
+            this.handleRazorpaySuccess({
+                razorpay_payment_id: message.payload?.razorpayPaymentId,
+                razorpay_order_id: message.payload?.razorpayOrderId,
+                razorpay_signature: message.payload?.razorpaySignature
+            });
+            return;
         }
-    }
+
+        this.isPaymentProcessing = false;
+        this.isSubmitting = false;
+
+        if (message.type === 'razorpay-dismissed') {
+            this.errorMessage = 'Payment was not completed. Your order is saved and you can try again.';
+        } else {
+            this.errorMessage = message.payload?.message || 'Razorpay payment failed. Please try again.';
+        }
+
+        this.paymentWindow = undefined;
+    };
 
     async handleRazorpaySuccess(response) {
         try {
@@ -261,6 +292,8 @@ export default class PortalCheckout extends LightningElement {
             this.errorMessage = this.reduceError(error);
         } finally {
             this.isPaymentProcessing = false;
+            this.isSubmitting = false;
+            this.paymentWindow = undefined;
         }
     }
 
