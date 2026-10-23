@@ -14,6 +14,15 @@ public with sharing class RazorpayPaymentService {
         @AuraEnabled public String receipt;
     }
 
+    public class PaymentVerificationResult {
+        @AuraEnabled public Boolean success;
+        @AuraEnabled public String paymentId;
+        @AuraEnabled public String razorpayOrderId;
+        @AuraEnabled public String paymentStatus;
+        @AuraEnabled public Decimal amount;
+        @AuraEnabled public String paymentMethod;
+    }
+
     public class RazorpayPaymentException extends Exception {}
 
     @AuraEnabled
@@ -130,6 +139,92 @@ public with sharing class RazorpayPaymentService {
         }
     }
 
+    @AuraEnabled
+    public static PaymentVerificationResult verifyPayment(
+        Id orderId,
+        String razorpayPaymentId,
+        String razorpayOrderId,
+        String razorpaySignature
+    ) {
+        if (orderId == null || String.isBlank(razorpayPaymentId) || String.isBlank(razorpayOrderId)) {
+            throw new AuraHandledException('Payment details are incomplete.');
+        }
+
+        List<Order> visibleOrders = [
+            SELECT Id
+            FROM Order
+            WHERE Id = :orderId
+            WITH USER_MODE
+            LIMIT 1
+        ];
+        if (visibleOrders.isEmpty()) {
+            throw new AuraHandledException('The selected order could not be found or is not available to you.');
+        }
+
+        Order orderRecord = [
+            SELECT Id, OrderNumber, Payment_Amount__c, Invoice_Balance__c,
+                   Razorpay_Order_Id__c, Razorpay_Payment_Id__c,
+                   Payment_Gateway_Status__c, Payment_Status__c
+            FROM Order
+            WHERE Id = :orderId
+            WITH SYSTEM_MODE
+            LIMIT 1
+        ];
+
+        if (orderRecord.Razorpay_Order_Id__c != razorpayOrderId) {
+            throw new AuraHandledException('The Razorpay order does not match the Salesforce order.');
+        }
+
+        Map<String, Object> payment = sendFetchPayment(razorpayPaymentId);
+        String returnedOrderId = payment.containsKey('order_id')
+            ? String.valueOf(payment.get('order_id'))
+            : null;
+        String status = payment.containsKey('status')
+            ? String.valueOf(payment.get('status'))
+            : null;
+        String method = payment.containsKey('method')
+            ? String.valueOf(payment.get('method'))
+            : null;
+
+        if (returnedOrderId != razorpayOrderId) {
+            throw new AuraHandledException('The Razorpay payment does not belong to this order.');
+        }
+
+        Integer amountPaise = payment.containsKey('amount')
+            ? Integer.valueOf(String.valueOf(payment.get('amount')))
+            : 0;
+        Integer expectedPaise = toPaise(orderRecord.Payment_Amount__c);
+
+        if (amountPaise != expectedPaise) {
+            throw new AuraHandledException('The Razorpay payment amount does not match the expected amount.');
+        }
+
+        if (status != 'captured') {
+            throw new AuraHandledException('Razorpay has not marked this payment as captured yet. Current status: ' + status);
+        }
+
+        Database.SaveResult result = Database.update(new Order(
+            Id = orderRecord.Id,
+            Razorpay_Payment_Id__c = razorpayPaymentId,
+            Payment_Gateway_Status__c = 'Captured',
+            Payment_Status__c = 'Paid',
+            Payment_Amount__c = Decimal.valueOf(amountPaise) / 100
+        ), AccessLevel.SYSTEM_MODE);
+
+        if (!result.isSuccess()) {
+            throw new AuraHandledException('Payment was captured but Salesforce could not update the order.');
+        }
+
+        PaymentVerificationResult verification = new PaymentVerificationResult();
+        verification.success = true;
+        verification.paymentId = razorpayPaymentId;
+        verification.razorpayOrderId = razorpayOrderId;
+        verification.paymentStatus = status;
+        verification.amount = Decimal.valueOf(amountPaise) / 100;
+        verification.paymentMethod = method;
+        return verification;
+    }
+
     private class PaymentGatewayConfig {
         String keyId;
     }
@@ -180,7 +275,36 @@ public with sharing class RazorpayPaymentService {
         }
     }
 
+    private static Map<String, Object> sendFetchPayment(String paymentId) {
+        HttpRequest request = new HttpRequest();
+        request.setEndpoint('callout:' + NAMED_CREDENTIAL + '/v1/payments/' + EncodingUtil.urlEncode(paymentId, 'UTF-8'));
+        request.setMethod('GET');
+        request.setHeader('Accept', 'application/json');
+        request.setTimeout(20000);
+
+        HttpResponse response = new Http().send(request);
+        Integer statusCode = response.getStatusCode();
+        if (statusCode < 200 || statusCode >= 300) {
+            throw new RazorpayPaymentException(
+                'Razorpay payment verification failed (' + statusCode + ').'
+            );
+        }
+
+        if (String.isBlank(response.getBody())) {
+            throw new RazorpayPaymentException('Razorpay returned an empty payment response.');
+        }
+
+        try {
+            return (Map<String, Object>) JSON.deserializeUntyped(response.getBody());
+        } catch (Exception ex) {
+            throw new RazorpayPaymentException('Razorpay returned invalid payment JSON.');
+        }
+    }
+
     private static Integer toPaise(Decimal amount) {
+        if (amount == null) {
+            return 0;
+        }
         Decimal rounded = amount.setScale(2);
         return Integer.valueOf(String.valueOf((rounded * 100).setScale(0)));
     }
