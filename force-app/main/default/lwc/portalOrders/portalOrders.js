@@ -242,12 +242,11 @@ export default class PortalOrders extends LightningElement {
         const pathSegments = window.location.pathname.split('/').filter(Boolean);
         const sitePrefix = pathSegments[0];
 
-        // LWR Experience Cloud creates a dedicated Visualforce URL by
-        // combining the site's path with the site's vforcesite suffix.
-        // For /orderportal/ the correct Visualforce base is
-        // /orderportal/orderportalvforcesite/, not /orderportal/vforcesite/.
+        // The Order Portal is exposed at /orderportal, while the Visualforce
+        // bridge has its own custom URL at /orderportalvforcesite.
+        // Do not add the site prefix a second time.
         const visualforcePath = sitePrefix
-            ? `/${sitePrefix}/${sitePrefix}vforcesite/RazorpayCheckoutBridge`
+            ? `/${sitePrefix}vforcesite/RazorpayCheckoutBridge`
             : '/vforcesite/RazorpayCheckoutBridge';
 
         const params = new URLSearchParams({
