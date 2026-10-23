@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ApexPage xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>67.0</apiVersion>
+    <description>Hosts Razorpay Standard Checkout outside the LWR sandbox and returns the payment response to the Order Portal.</description>
+    <label>Razorpay Checkout Bridge</label>
+</ApexPage>
