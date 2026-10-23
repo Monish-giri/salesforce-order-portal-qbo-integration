@@ -14,6 +14,11 @@ public with sharing class RazorpayPaymentService {
         @AuraEnabled public String receipt;
     }
 
+    public class PaymentReadinessResult {
+        @AuraEnabled public Boolean ready;
+        @AuraEnabled public String message;
+    }
+
     public class PaymentVerificationResult {
         @AuraEnabled public Boolean success;
         @AuraEnabled public String paymentId;
@@ -24,6 +29,54 @@ public with sharing class RazorpayPaymentService {
     }
 
     public class RazorpayPaymentException extends Exception {}
+
+    @AuraEnabled
+    public static PaymentReadinessResult getPaymentReadiness(Id orderId) {
+        if (orderId == null) {
+            throw new AuraHandledException('Order is required.');
+        }
+
+        List<Order> visibleOrders = [
+            SELECT Id
+            FROM Order
+            WHERE Id = :orderId
+            WITH USER_MODE
+            LIMIT 1
+        ];
+        if (visibleOrders.isEmpty()) {
+            throw new AuraHandledException('The selected order could not be found or is not available to you.');
+        }
+
+        Order orderRecord = [
+            SELECT Id, QBO_Invoice_Id__c, Invoice_Balance__c, Payment_Status__c
+            FROM Order
+            WHERE Id = :orderId
+            WITH SYSTEM_MODE
+            LIMIT 1
+        ];
+
+        PaymentReadinessResult result = new PaymentReadinessResult();
+        result.ready = false;
+
+        if (String.isBlank(orderRecord.QBO_Invoice_Id__c)) {
+            result.message = 'Waiting for the QuickBooks invoice to be created...';
+            return result;
+        }
+
+        if (orderRecord.Invoice_Balance__c == null || orderRecord.Invoice_Balance__c <= 0) {
+            result.message = 'There is no outstanding balance to pay on this invoice.';
+            return result;
+        }
+
+        if (orderRecord.Payment_Status__c == 'Paid') {
+            result.message = 'This invoice has already been paid.';
+            return result;
+        }
+
+        result.ready = true;
+        result.message = 'Payment is ready.';
+        return result;
+    }
 
     @AuraEnabled
     public static PaymentOrderResult createPaymentOrder(Id orderId) {
