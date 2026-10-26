@@ -14,6 +14,7 @@ public with sharing class PortalCatalogService {
         @AuraEnabled public Decimal recommendedRetailPrice;
         @AuraEnabled public Decimal estimatedMarginAmount;
         @AuraEnabled public Decimal estimatedMarginPercent;
+        @AuraEnabled public List<String> imageUrls = new List<String>();
 
         public CatalogProduct(PricebookEntry entry, Boolean isPartner) {
             productId = entry.Product2Id;
@@ -23,6 +24,7 @@ public with sharing class PortalCatalogService {
             description = entry.Product2.Description;
             family = entry.Product2.Family;
             unitPrice = entry.UnitPrice;
+            imageUrls = parseImageUrls(entry.Product2.Cloudinary_Image_URLs__c);
 
             if (isPartner && entry.Product2.Recommended_Retail_Price__c != null) {
                 recommendedRetailPrice = entry.Product2.Recommended_Retail_Price__c;
@@ -81,7 +83,8 @@ public with sharing class PortalCatalogService {
                 SELECT Id, Product2Id, UnitPrice,
                        Product2.Name, Product2.ProductCode,
                        Product2.Description, Product2.Family,
-                       Product2.Recommended_Retail_Price__c
+                       Product2.Recommended_Retail_Price__c,
+                       Product2.Cloudinary_Image_URLs__c
                 FROM PricebookEntry
                 WHERE Pricebook2Id = :configuredPricebook.Id
                   AND IsActive = true
@@ -95,7 +98,8 @@ public with sharing class PortalCatalogService {
                 SELECT Id, Product2Id, UnitPrice,
                        Product2.Name, Product2.ProductCode,
                        Product2.Description, Product2.Family,
-                       Product2.Recommended_Retail_Price__c
+                       Product2.Recommended_Retail_Price__c,
+                       Product2.Cloudinary_Image_URLs__c
                 FROM PricebookEntry
                 WHERE Pricebook2Id = :configuredPricebook.Id
                   AND IsActive = true
@@ -116,6 +120,23 @@ public with sharing class PortalCatalogService {
         }
 
         return new CatalogResponse(products, effectivePageSize, entries.size() == effectivePageSize, audience);
+    }
+
+    private static List<String> parseImageUrls(String rawUrls) {
+        List<String> urls = new List<String>();
+
+        if (String.isBlank(rawUrls)) {
+            return urls;
+        }
+
+        for (String rawUrl : rawUrls.split('[\\r\\n]+')) {
+            String url = rawUrl == null ? null : rawUrl.trim();
+            if (!String.isBlank(url)) {
+                urls.add(url);
+            }
+        }
+
+        return urls;
     }
 
     private static String resolveAudience() {
