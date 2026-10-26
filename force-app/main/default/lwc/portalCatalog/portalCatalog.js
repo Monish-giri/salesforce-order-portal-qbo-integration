@@ -1,4 +1,4 @@
-import { LightningElement } from 'lwc';
+import { LightningElement, api } from 'lwc';
 import getProducts from '@salesforce/apex/PortalCatalogService.getProducts';
 
 const PAGE_SIZE = 24;
@@ -22,6 +22,17 @@ export default class PortalCatalog extends LightningElement {
     searchTimer;
     previewTimers = new Map();
     previewTransitionTimers = new Map();
+    _cartItems = [];
+
+    @api
+    get cartItems() {
+        return this._cartItems;
+    }
+
+    set cartItems(value) {
+        this._cartItems = Array.isArray(value) ? value : [];
+        this.syncCartQuantities();
+    }
 
     connectedCallback() {
         this.loadProducts();
@@ -92,6 +103,7 @@ export default class PortalCatalog extends LightningElement {
 
             this.products = (response?.products ?? []).map((product) => {
                 const imageUrls = product.imageUrls ?? [];
+                const cartQuantity = this.getCartQuantity(product.pricebookEntryId);
 
                 return {
                     ...product,
@@ -101,8 +113,8 @@ export default class PortalCatalog extends LightningElement {
                     currentImageIndex: 0,
                     currentImageUrl: imageUrls[0],
                     previewImageClass: 'preview-image',
-                    isSelectingQuantity: false,
-                    selectedQuantity: 1,
+                    cartQuantity,
+                    isInCart: cartQuantity > 0,
                     quantityInputId: `quantity-${product.pricebookEntryId}`
                 };
             });
@@ -114,6 +126,30 @@ export default class PortalCatalog extends LightningElement {
         } finally {
             this.isLoading = false;
         }
+    }
+
+    syncCartQuantities() {
+        if (!this.products.length) {
+            return;
+        }
+
+        this.products = this.products.map((product) => {
+            const cartQuantity = this.getCartQuantity(product.pricebookEntryId);
+
+            return {
+                ...product,
+                cartQuantity,
+                isInCart: cartQuantity > 0
+            };
+        });
+    }
+
+    getCartQuantity(pricebookEntryId) {
+        const item = this._cartItems.find(
+            cartItem => cartItem.pricebookEntryId === pricebookEntryId
+        );
+
+        return item?.quantity ?? 0;
     }
 
     handleProductMouseEnter(event) {
@@ -215,8 +251,6 @@ export default class PortalCatalog extends LightningElement {
             this.previewTransitionTimers.delete(pricebookEntryId);
         }
 
-        // Fade the current image out first. The new Cloudinary image is swapped in
-        // after the fade has completed, giving the hover carousel a calm transition.
         this.products = this.products.map((item) =>
             item.pricebookEntryId === pricebookEntryId
                 ? { ...item, previewImageClass: 'preview-image preview-image-fade-out' }
@@ -334,59 +368,61 @@ export default class PortalCatalog extends LightningElement {
     }
 
     handleAddToCart(event) {
-        this.setQuantitySelectorState(event.currentTarget.dataset.id, true);
+        const pricebookEntryId = event.currentTarget.dataset.id;
+        this.dispatchCartQuantityChange(pricebookEntryId, 1);
     }
 
     handleIncreaseQuantity(event) {
         const pricebookEntryId = event.currentTarget.dataset.id;
+        const product = this.products.find(item => item.pricebookEntryId === pricebookEntryId);
 
-        this.products = this.products.map((product) =>
-            product.pricebookEntryId === pricebookEntryId
-                ? {
-                    ...product,
-                    selectedQuantity: product.selectedQuantity + 1
-                }
-                : product
-        );
+        if (!product) {
+            return;
+        }
+
+        this.dispatchCartQuantityChange(pricebookEntryId, product.cartQuantity + 1);
     }
 
     handleDecreaseQuantity(event) {
         const pricebookEntryId = event.currentTarget.dataset.id;
+        const product = this.products.find(item => item.pricebookEntryId === pricebookEntryId);
 
-        this.products = this.products.map((product) =>
-            product.pricebookEntryId === pricebookEntryId
-                ? {
-                    ...product,
-                    selectedQuantity: Math.max(1, product.selectedQuantity - 1)
-                }
-                : product
-        );
+        if (!product) {
+            return;
+        }
+
+        this.dispatchCartQuantityChange(pricebookEntryId, Math.max(0, product.cartQuantity - 1));
     }
 
     handleQuantityInput(event) {
         const pricebookEntryId = event.target.dataset.id;
-        const value = Number(event.target.value);
+        const rawValue = event.target.value;
 
-        if (!Number.isInteger(value) || value < 1) {
-            this.updateSelectedQuantity(pricebookEntryId, 1);
+        if (rawValue === '') {
             return;
         }
 
-        this.updateSelectedQuantity(pricebookEntryId, value);
+        const value = Number(rawValue);
+
+        if (!Number.isInteger(value) || value < 0) {
+            event.target.value = this.getCartQuantity(pricebookEntryId);
+            return;
+        }
+
+        this.dispatchCartQuantityChange(pricebookEntryId, value);
     }
 
-    handleConfirmAddToCart(event) {
-        const pricebookEntryId = event.currentTarget.dataset.id;
+    dispatchCartQuantityChange(pricebookEntryId, quantity) {
         const product = this.products.find(
             item => item.pricebookEntryId === pricebookEntryId
         );
 
-        if (!product || !Number.isInteger(product.selectedQuantity) || product.selectedQuantity < 1) {
+        if (!product) {
             return;
         }
 
         this.dispatchEvent(
-            new CustomEvent('addtocart', {
+            new CustomEvent('cartquantitychange', {
                 detail: {
                     productId: product.productId,
                     pricebookEntryId: product.pricebookEntryId,
@@ -395,31 +431,9 @@ export default class PortalCatalog extends LightningElement {
                     recommendedRetailPrice: this.isPartner ? product.recommendedRetailPrice : undefined,
                     estimatedMarginAmount: this.isPartner ? product.estimatedMarginAmount : undefined,
                     estimatedMarginPercent: this.isPartner ? product.estimatedMarginPercent : undefined,
-                    quantity: product.selectedQuantity
+                    quantity
                 }
             })
-        );
-
-        this.setQuantitySelectorState(pricebookEntryId, false);
-    }
-
-    setQuantitySelectorState(pricebookEntryId, isSelectingQuantity) {
-        this.products = this.products.map((product) =>
-            product.pricebookEntryId === pricebookEntryId
-                ? {
-                    ...product,
-                    isSelectingQuantity,
-                    selectedQuantity: isSelectingQuantity ? 1 : product.selectedQuantity
-                }
-                : product
-        );
-    }
-
-    updateSelectedQuantity(pricebookEntryId, selectedQuantity) {
-        this.products = this.products.map((product) =>
-            product.pricebookEntryId === pricebookEntryId
-                ? { ...product, selectedQuantity }
-                : product
         );
     }
 
