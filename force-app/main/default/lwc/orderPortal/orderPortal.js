@@ -129,24 +129,52 @@ export default class OrderPortal extends LightningElement {
         this.activeSection = 'catalog';
     }
 
-    handleAddToCart(event) {
+    handleCartQuantityChange(event) {
         const product = event.detail;
+        const quantity = Number(product.quantity);
+
+        if (!Number.isInteger(quantity) || quantity < 0) {
+            return;
+        }
+
         const existing = this.cartItems.find(
             item => item.pricebookEntryId === product.pricebookEntryId
         );
 
+        if (quantity === 0) {
+            this.cartItems = this.cartItems.filter(
+                item => item.pricebookEntryId !== product.pricebookEntryId
+            );
+            return;
+        }
+
         if (existing) {
             this.cartItems = this.cartItems.map(item =>
                 item.pricebookEntryId === product.pricebookEntryId
-                    ? { ...item, quantity: item.quantity + product.quantity, lineTotal: item.unitPrice * (item.quantity + product.quantity) }
+                    ? {
+                        ...item,
+                        quantity,
+                        lineTotal: item.unitPrice * quantity
+                    }
                     : item
             );
-        } else {
-            this.cartItems = [
-                ...this.cartItems,
-                { ...product, quantity: product.quantity, lineTotal: product.unitPrice * product.quantity }
-            ];
+            return;
         }
+
+        this.cartItems = [
+            ...this.cartItems,
+            {
+                productId: product.productId,
+                pricebookEntryId: product.pricebookEntryId,
+                name: product.name,
+                unitPrice: product.unitPrice,
+                recommendedRetailPrice: product.recommendedRetailPrice,
+                estimatedMarginAmount: product.estimatedMarginAmount,
+                estimatedMarginPercent: product.estimatedMarginPercent,
+                quantity,
+                lineTotal: product.unitPrice * quantity
+            }
+        ];
     }
 
     increaseQuantity(event) {
