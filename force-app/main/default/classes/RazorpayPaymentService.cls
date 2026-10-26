@@ -30,6 +30,27 @@ public with sharing class RazorpayPaymentService {
 
     public class RazorpayPaymentException extends Exception {}
 
+    private static Id getCurrentPortalContactId() {
+        User currentUser = [
+            SELECT ContactId
+            FROM User
+            WHERE Id = :UserInfo.getUserId()
+            WITH USER_MODE
+            LIMIT 1
+        ];
+        return currentUser.ContactId;
+    }
+
+    private static void enforcePaymentAuthority(Id placedByContactId) {
+        Id currentContactId = getCurrentPortalContactId();
+
+        if (currentContactId == null ||
+            placedByContactId == null ||
+            placedByContactId != currentContactId) {
+            throw new AuraHandledException('Only the user who placed this order can make the online payment.');
+        }
+    }
+
     @AuraEnabled
     public static PaymentReadinessResult getPaymentReadiness(Id orderId) {
         if (orderId == null) {
@@ -48,12 +69,14 @@ public with sharing class RazorpayPaymentService {
         }
 
         Order orderRecord = [
-            SELECT Id, QBO_Invoice_Id__c, Invoice_Balance__c, Payment_Status__c
+            SELECT Id, Placed_By_Contact__c, QBO_Invoice_Id__c, Invoice_Balance__c, Payment_Status__c
             FROM Order
             WHERE Id = :orderId
             WITH SYSTEM_MODE
             LIMIT 1
         ];
+
+        enforcePaymentAuthority(orderRecord.Placed_By_Contact__c);
 
         PaymentReadinessResult result = new PaymentReadinessResult();
         result.ready = false;
@@ -96,7 +119,7 @@ public with sharing class RazorpayPaymentService {
         }
 
         Order orderRecord = [
-            SELECT Id, OrderNumber, Payment_Method__c, Payment_Status__c,
+            SELECT Id, OrderNumber, Placed_By_Contact__c, Payment_Method__c, Payment_Status__c,
                    QBO_Invoice_Id__c, QBO_Invoice_Number__c,
                    Invoice_Issue_Date__c, Invoice_Due_Date__c, Invoice_Balance__c,
                    Razorpay_Order_Id__c, Razorpay_Payment_Id__c,
@@ -106,6 +129,8 @@ public with sharing class RazorpayPaymentService {
             WITH SYSTEM_MODE
             LIMIT 1
         ];
+
+        enforcePaymentAuthority(orderRecord.Placed_By_Contact__c);
 
         if (String.isBlank(orderRecord.QBO_Invoice_Id__c)) {
             throw new AuraHandledException('Online payment is available after the QuickBooks invoice is created.');
@@ -215,7 +240,7 @@ public with sharing class RazorpayPaymentService {
         }
 
         Order orderRecord = [
-            SELECT Id, OrderNumber, Payment_Amount__c, Invoice_Balance__c,
+            SELECT Id, OrderNumber, Placed_By_Contact__c, Payment_Amount__c, Invoice_Balance__c,
                    Razorpay_Order_Id__c, Razorpay_Payment_Id__c,
                    Payment_Gateway_Status__c, Payment_Status__c
             FROM Order
@@ -223,6 +248,8 @@ public with sharing class RazorpayPaymentService {
             WITH SYSTEM_MODE
             LIMIT 1
         ];
+
+        enforcePaymentAuthority(orderRecord.Placed_By_Contact__c);
 
         if (orderRecord.Razorpay_Order_Id__c != razorpayOrderId) {
             throw new AuraHandledException('The Razorpay order does not match the Salesforce order.');
