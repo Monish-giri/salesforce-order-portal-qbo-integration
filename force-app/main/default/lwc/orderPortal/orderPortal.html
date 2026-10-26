@@ -75,7 +75,10 @@
                             </span>
                         </div>
                     </section>
-                    <c-portal-catalog onaddtocart={handleAddToCart}></c-portal-catalog>
+                    <c-portal-catalog
+                        cart-items={cartItems}
+                        onaddtocart={handleAddToCart}>
+                    </c-portal-catalog>
                 </template>
 
                 <template if:true={isCart}>
