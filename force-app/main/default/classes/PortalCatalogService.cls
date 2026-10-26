@@ -14,6 +14,7 @@ public with sharing class PortalCatalogService {
         @AuraEnabled public Decimal recommendedRetailPrice;
         @AuraEnabled public Decimal estimatedMarginAmount;
         @AuraEnabled public Decimal estimatedMarginPercent;
+        @AuraEnabled public List<String> imageUrls;
 
         public CatalogProduct(PricebookEntry entry, Boolean isPartner) {
             productId = entry.Product2Id;
@@ -23,6 +24,15 @@ public with sharing class PortalCatalogService {
             description = entry.Product2.Description;
             family = entry.Product2.Family;
             unitPrice = entry.UnitPrice;
+            imageUrls = new List<String>();
+
+            if (!String.isBlank(entry.Product2.Cloudinary_Image_URLs__c)) {
+                for (String imageUrl : entry.Product2.Cloudinary_Image_URLs__c.split('\\r?\\n')) {
+                    if (!String.isBlank(imageUrl)) {
+                        imageUrls.add(imageUrl.trim());
+                    }
+                }
+            }
 
             if (isPartner && entry.Product2.Recommended_Retail_Price__c != null) {
                 recommendedRetailPrice = entry.Product2.Recommended_Retail_Price__c;
@@ -81,6 +91,7 @@ public with sharing class PortalCatalogService {
                 SELECT Id, Product2Id, UnitPrice,
                        Product2.Name, Product2.ProductCode,
                        Product2.Description, Product2.Family,
+                       Product2.Cloudinary_Image_URLs__c,
                        Product2.Recommended_Retail_Price__c
                 FROM PricebookEntry
                 WHERE Pricebook2Id = :configuredPricebook.Id
@@ -95,6 +106,7 @@ public with sharing class PortalCatalogService {
                 SELECT Id, Product2Id, UnitPrice,
                        Product2.Name, Product2.ProductCode,
                        Product2.Description, Product2.Family,
+                       Product2.Cloudinary_Image_URLs__c,
                        Product2.Recommended_Retail_Price__c
                 FROM PricebookEntry
                 WHERE Pricebook2Id = :configuredPricebook.Id
