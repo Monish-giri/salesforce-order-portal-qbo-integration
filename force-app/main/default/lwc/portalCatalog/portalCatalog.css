@@ -154,19 +154,33 @@
     -webkit-line-clamp: 3;
 }
 
+/* Corporate product image preview shown while hovering over a product name. */
 .image-preview {
     position: absolute;
     z-index: 50;
-    top: 2rem;
-    left: 0;
-    width: 15rem;
-    height: 11rem;
+    top: 2.65rem;
+    left: 50%;
+    width: min(23rem, 32vw);
+    height: 17rem;
     overflow: hidden;
-    border: 1px solid #d9e2ec;
-    border-radius: 0.75rem;
+    transform: translateX(-50%);
+    border: 1px solid #cfd8e3;
+    border-radius: 1rem;
     background: #ffffff;
-    box-shadow: 0 14px 32px rgba(16, 24, 40, 0.18);
+    box-shadow: 0 24px 55px rgba(16, 24, 40, 0.22), 0 4px 12px rgba(16, 24, 40, 0.08);
     cursor: pointer;
+}
+
+.image-preview::after {
+    position: absolute;
+    z-index: 2;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 3.25rem;
+    background: linear-gradient(transparent, rgba(15, 23, 42, 0.55));
+    content: '';
+    pointer-events: none;
 }
 
 .preview-image {
@@ -174,7 +188,7 @@
     width: 100%;
     height: 100%;
     object-fit: contain;
-    background: #f8fafc;
+    background: #f4f7fa;
 }
 
 .preview-nav,
@@ -182,34 +196,58 @@
     position: absolute;
     display: grid;
     place-items: center;
-    border: 1px solid rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.9);
     border-radius: 50%;
-    background: rgba(17, 24, 39, 0.65);
+    background: rgba(15, 23, 42, 0.72);
     color: #ffffff;
     cursor: pointer;
     font-size: 1.3rem;
     line-height: 1;
+    transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .preview-nav {
     top: 50%;
-    width: 1.8rem;
-    height: 1.8rem;
+    z-index: 5;
+    width: 2.35rem;
+    height: 2.35rem;
     padding: 0;
     transform: translateY(-50%);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18);
 }
 
 .preview-prev {
-    left: 0.4rem;
+    left: 0.7rem;
 }
 
 .preview-next {
-    right: 0.4rem;
+    right: 0.7rem;
 }
 
 .preview-nav:hover,
 .modal-nav:hover {
-    background: rgba(17, 24, 39, 0.85);
+    background: rgba(15, 23, 42, 0.92);
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.25);
+}
+
+.preview-nav:active,
+.modal-nav:active {
+    transform: translateY(-50%) scale(0.94);
+}
+
+.image-preview::before {
+    position: absolute;
+    z-index: 4;
+    right: 0.75rem;
+    bottom: 0.55rem;
+    left: 0.75rem;
+    color: #ffffff;
+    content: 'Hover to preview  •  Click for full gallery';
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-align: center;
+    pointer-events: none;
 }
 
 .image-modal-backdrop {
@@ -220,16 +258,18 @@
     align-items: center;
     justify-content: center;
     padding: 2rem;
-    background: rgba(15, 23, 42, 0.65);
+    background: rgba(15, 23, 42, 0.72);
+    backdrop-filter: blur(3px);
 }
 
 .image-modal {
-    width: min(90vw, 50rem);
-    max-height: 90vh;
+    width: min(94vw, 62rem);
+    max-height: 92vh;
     overflow: hidden;
-    border-radius: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    border-radius: 1.25rem;
     background: #ffffff;
-    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.3);
 }
 
 .image-modal-header {
@@ -237,20 +277,20 @@
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    padding: 1rem 1.25rem;
+    padding: 1.1rem 1.35rem;
     border-bottom: 1px solid #e4e7ec;
 }
 
 .image-modal-header h2 {
     margin: 0;
     color: #172033;
-    font-size: 1.1rem;
+    font-size: 1.15rem;
 }
 
 .modal-close {
     display: grid;
-    width: 2.2rem;
-    height: 2.2rem;
+    width: 2.4rem;
+    height: 2.4rem;
     place-items: center;
     padding: 0;
     border: 1px solid #d0d5dd;
@@ -269,18 +309,18 @@
 .modal-image-container {
     position: relative;
     display: flex;
-    min-height: 25rem;
+    min-height: 31rem;
     align-items: center;
     justify-content: center;
-    padding: 1.5rem;
-    background: #f8fafc;
+    padding: 2rem 4.5rem;
+    background: #f4f7fa;
     touch-action: pan-y;
 }
 
 .modal-image {
     display: block;
     max-width: 100%;
-    max-height: 60vh;
+    max-height: 67vh;
     object-fit: contain;
     user-select: none;
     -webkit-user-drag: none;
@@ -288,25 +328,30 @@
 
 .modal-nav {
     top: 50%;
-    width: 2.5rem;
-    height: 2.5rem;
+    z-index: 5;
+    width: 3rem;
+    height: 3rem;
     padding: 0;
     transform: translateY(-50%);
-    font-size: 1.8rem;
+    font-size: 2rem;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.2);
 }
 
 .modal-prev {
-    left: 1rem;
+    left: 1.25rem;
 }
 
 .modal-next {
-    right: 1rem;
+    right: 1.25rem;
 }
 
 .image-counter {
-    padding: 0.75rem;
-    color: #667085;
+    padding: 0.8rem;
+    border-top: 1px solid #e4e7ec;
+    background: #ffffff;
+    color: #475467;
     font-size: 0.75rem;
+    font-weight: 700;
     text-align: center;
 }
 
@@ -542,5 +587,6 @@
 
     .modal-image-container {
         min-height: 20rem;
+        padding: 1rem 3.5rem;
     }
 }
