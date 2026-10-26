@@ -116,6 +116,8 @@ export default class PortalCatalog extends LightningElement {
                     cartQuantity,
                     isInCart: cartQuantity > 0,
                     isSingleQuantity: cartQuantity === 1,
+                    quantityDecreaseTitle: cartQuantity === 1 ? 'Remove from cart' : 'Decrease quantity',
+                    quantityDecreaseLabel: cartQuantity === 1 ? 'Remove from cart' : 'Decrease quantity',
                     quantityInputId: `quantity-${product.pricebookEntryId}`
                 };
             });
@@ -141,7 +143,9 @@ export default class PortalCatalog extends LightningElement {
                 ...product,
                 cartQuantity,
                 isInCart: cartQuantity > 0,
-                isSingleQuantity: cartQuantity === 1
+                isSingleQuantity: cartQuantity === 1,
+                quantityDecreaseTitle: cartQuantity === 1 ? 'Remove from cart' : 'Decrease quantity',
+                quantityDecreaseLabel: cartQuantity === 1 ? 'Remove from cart' : 'Decrease quantity'
             };
         });
     }
