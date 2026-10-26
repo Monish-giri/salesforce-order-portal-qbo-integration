@@ -49,13 +49,13 @@
                         <template for:each={products} for:item="product">
                             <article class="product-card" key={product.pricebookEntryId}>
                                 <div class="product-visual">
-                                    <template if:true={product.imageUrls.length}>
+                                    <template if:true={product.hasImages}>
                                         <div class="product-image-badge">
                                             <lightning-icon icon-name="utility:image" size="xx-small" alternative-text="Product images"></lightning-icon>
-                                            <span>{product.imageUrls.length}</span>
+                                            <span>{product.imageCount}</span>
                                         </div>
                                     </template>
-                                    <template if:false={product.imageUrls.length}>
+                                    <template if:false={product.hasImages}>
                                         <div class="product-icon">
                                             <lightning-icon icon-name="standard:product" size="medium" alternative-text=""></lightning-icon>
                                         </div>
@@ -81,14 +81,12 @@
                                         <template if:true={product.isImageHovering}>
                                             <div class="hover-gallery" role="dialog" aria-label="Product image preview">
                                                 <img
-                                                    src={product.imageUrls[product.hoverImageIndex]}
+                                                    src={product.hoverImageUrl}
                                                     alt={product.name} />
-                                                <template if:true={product.imageUrls.length}>
-                                                    <div class="hover-gallery-footer">
-                                                        <span>{product.hoverImageIndex + 1} / {product.imageUrls.length}</span>
-                                                        <span>Click to view</span>
-                                                    </div>
-                                                </template>
+                                                <div class="hover-gallery-footer">
+                                                    <span>{product.hoverImageCounter}</span>
+                                                    <span>Click to view</span>
+                                                </div>
                                             </div>
                                         </template>
                                     </div>
@@ -189,7 +187,8 @@
             aria-modal="true"
             aria-label={galleryProduct.name}
             onclick={handleGalleryBackdropClick}
-            onkeydown={handleGalleryKeydown}>
+            onkeydown={handleGalleryKeydown}
+            tabindex="-1">
             <div class="gallery-modal">
                 <header class="gallery-header">
                     <div>
