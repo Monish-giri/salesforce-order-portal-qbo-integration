@@ -21,6 +21,7 @@ export default class PortalCatalog extends LightningElement {
     searchTimer;
     hoverTimer;
     hoveredProductId;
+    touchStartX;
 
     connectedCallback() {
         this.loadProducts();
@@ -82,15 +83,24 @@ export default class PortalCatalog extends LightningElement {
             this.audience = response?.audience ?? 'Customer';
             this.isPartner = response?.isPartner === true;
 
-            this.products = (response?.products ?? []).map((product) => ({
-                ...product,
-                imageUrls: Array.isArray(product.imageUrls) ? product.imageUrls : [],
-                isSelectingQuantity: false,
-                isImageHovering: false,
-                hoverImageIndex: 0,
-                selectedQuantity: 1,
-                quantityInputId: `quantity-${product.pricebookEntryId}`
-            }));
+            this.products = (response?.products ?? []).map((product) => {
+                const imageUrls = Array.isArray(product.imageUrls) ? product.imageUrls : [];
+                const hoverImageIndex = 0;
+
+                return {
+                    ...product,
+                    imageUrls,
+                    hasImages: imageUrls.length > 0,
+                    imageCount: imageUrls.length,
+                    isSelectingQuantity: false,
+                    isImageHovering: false,
+                    hoverImageIndex,
+                    hoverImageUrl: imageUrls[hoverImageIndex],
+                    hoverImageCounter: imageUrls.length ? `1 / ${imageUrls.length}` : '',
+                    selectedQuantity: 1,
+                    quantityInputId: `quantity-${product.pricebookEntryId}`
+                };
+            });
             this.hasMore = response?.hasMore ?? false;
         } catch (error) {
             this.products = [];
@@ -195,14 +205,16 @@ export default class PortalCatalog extends LightningElement {
         const pricebookEntryId = event.currentTarget.dataset.id;
         const product = this.products.find(item => item.pricebookEntryId === pricebookEntryId);
 
-        if (!product?.imageUrls?.length) return;
+        if (!product?.hasImages) return;
 
         this.clearHoverTimer();
         this.hoveredProductId = pricebookEntryId;
         this.products = this.products.map((item) => ({
             ...item,
             isImageHovering: item.pricebookEntryId === pricebookEntryId,
-            hoverImageIndex: item.pricebookEntryId === pricebookEntryId ? 0 : item.hoverImageIndex
+            hoverImageIndex: item.pricebookEntryId === pricebookEntryId ? 0 : item.hoverImageIndex,
+            hoverImageUrl: item.pricebookEntryId === pricebookEntryId ? item.imageUrls[0] : item.hoverImageUrl,
+            hoverImageCounter: item.pricebookEntryId === pricebookEntryId ? `1 / ${item.imageCount}` : item.hoverImageCounter
         }));
 
         if (product.imageUrls.length > 1) {
@@ -228,11 +240,15 @@ export default class PortalCatalog extends LightningElement {
             if (product.pricebookEntryId !== this.hoveredProductId) return product;
 
             const imageCount = product.imageUrls.length;
+            const hoverImageIndex = imageCount > 0
+                ? (product.hoverImageIndex + 1) % imageCount
+                : 0;
+
             return {
                 ...product,
-                hoverImageIndex: imageCount > 0
-                    ? (product.hoverImageIndex + 1) % imageCount
-                    : 0
+                hoverImageIndex,
+                hoverImageUrl: product.imageUrls[hoverImageIndex],
+                hoverImageCounter: imageCount ? `${hoverImageIndex + 1} / ${imageCount}` : ''
             };
         });
     }
@@ -241,7 +257,7 @@ export default class PortalCatalog extends LightningElement {
         const pricebookEntryId = event.currentTarget.dataset.id;
         const product = this.products.find(item => item.pricebookEntryId === pricebookEntryId);
 
-        if (!product?.imageUrls?.length) return;
+        if (!product?.hasImages) return;
 
         this.clearHoverTimer();
         this.galleryProduct = product;
