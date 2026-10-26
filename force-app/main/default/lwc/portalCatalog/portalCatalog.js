@@ -13,6 +13,10 @@ export default class PortalCatalog extends LightningElement {
     audience = 'Customer';
     isPartner = false;
 
+    selectedImageProduct;
+    selectedImageIndex = 0;
+    touchStartX;
+
     searchTimer;
 
     connectedCallback() {
@@ -37,6 +41,26 @@ export default class PortalCatalog extends LightningElement {
             : 'Choose the products and services available to your account.';
     }
 
+    get hasSelectedImages() {
+        return Boolean(this.selectedImageProduct?.imageUrls?.length);
+    }
+
+    get selectedImageUrl() {
+        if (!this.hasSelectedImages) {
+            return undefined;
+        }
+
+        return this.selectedImageProduct.imageUrls[this.selectedImageIndex];
+    }
+
+    get selectedImageCounter() {
+        if (!this.hasSelectedImages) {
+            return '';
+        }
+
+        return `${this.selectedImageIndex + 1} / ${this.selectedImageProduct.imageUrls.length}`;
+    }
+
     handleSearchInput(event) {
         this.searchTerm = event.target.value;
 
@@ -49,6 +73,7 @@ export default class PortalCatalog extends LightningElement {
     async loadProducts() {
         this.isLoading = true;
         this.errorMessage = undefined;
+        this.closeImageModal();
 
         try {
             const response = await getProducts({
@@ -59,12 +84,21 @@ export default class PortalCatalog extends LightningElement {
             this.audience = response?.audience ?? 'Customer';
             this.isPartner = response?.isPartner === true;
 
-            this.products = (response?.products ?? []).map((product) => ({
-                ...product,
-                isSelectingQuantity: false,
-                selectedQuantity: 1,
-                quantityInputId: `quantity-${product.pricebookEntryId}`
-            }));
+            this.products = (response?.products ?? []).map((product) => {
+                const imageUrls = product.imageUrls ?? [];
+
+                return {
+                    ...product,
+                    imageUrls,
+                    hasImages: imageUrls.length > 0,
+                    isImagePreviewVisible: false,
+                    currentImageIndex: 0,
+                    currentImageUrl: imageUrls[0],
+                    isSelectingQuantity: false,
+                    selectedQuantity: 1,
+                    quantityInputId: `quantity-${product.pricebookEntryId}`
+                };
+            });
             this.hasMore = response?.hasMore ?? false;
         } catch (error) {
             this.products = [];
@@ -72,6 +106,148 @@ export default class PortalCatalog extends LightningElement {
             this.errorMessage = this.reduceError(error);
         } finally {
             this.isLoading = false;
+        }
+    }
+
+    handleProductMouseEnter(event) {
+        const pricebookEntryId = event.currentTarget.dataset.id;
+
+        this.products = this.products.map((product) =>
+            product.pricebookEntryId === pricebookEntryId
+                ? { ...product, isImagePreviewVisible: product.hasImages }
+                : product
+        );
+    }
+
+    handleProductMouseLeave(event) {
+        const pricebookEntryId = event.currentTarget.dataset.id;
+
+        this.products = this.products.map((product) =>
+            product.pricebookEntryId === pricebookEntryId
+                ? { ...product, isImagePreviewVisible: false }
+                : product
+        );
+    }
+
+    handlePreviousHoverImage(event) {
+        event.stopPropagation();
+        const pricebookEntryId = event.currentTarget.dataset.id;
+        this.changeHoverImage(pricebookEntryId, -1);
+    }
+
+    handleNextHoverImage(event) {
+        event.stopPropagation();
+        const pricebookEntryId = event.currentTarget.dataset.id;
+        this.changeHoverImage(pricebookEntryId, 1);
+    }
+
+    changeHoverImage(pricebookEntryId, direction) {
+        this.products = this.products.map((product) => {
+            if (product.pricebookEntryId !== pricebookEntryId || !product.hasImages) {
+                return product;
+            }
+
+            const imageCount = product.imageUrls.length;
+            const nextIndex =
+                (product.currentImageIndex + direction + imageCount) % imageCount;
+
+            return {
+                ...product,
+                currentImageIndex: nextIndex,
+                currentImageUrl: product.imageUrls[nextIndex]
+            };
+        });
+    }
+
+    handleOpenImageModal(event) {
+        event.stopPropagation();
+
+        const pricebookEntryId = event.currentTarget.dataset.id;
+        const product = this.products.find(
+            item => item.pricebookEntryId === pricebookEntryId
+        );
+
+        if (!product?.hasImages) {
+            return;
+        }
+
+        this.selectedImageProduct = product;
+        this.selectedImageIndex = product.currentImageIndex ?? 0;
+    }
+
+    handleCloseImageModal(event) {
+        if (event) {
+            event.stopPropagation();
+        }
+
+        this.closeImageModal();
+    }
+
+    closeImageModal() {
+        this.selectedImageProduct = undefined;
+        this.selectedImageIndex = 0;
+        this.touchStartX = undefined;
+    }
+
+    handleModalContentClick(event) {
+        event.stopPropagation();
+    }
+
+    handlePreviousModalImage(event) {
+        if (event) {
+            event.stopPropagation();
+        }
+
+        const images = this.selectedImageProduct?.imageUrls ?? [];
+        if (images.length === 0) {
+            return;
+        }
+
+        this.selectedImageIndex =
+            this.selectedImageIndex === 0
+                ? images.length - 1
+                : this.selectedImageIndex - 1;
+    }
+
+    handleNextModalImage(event) {
+        if (event) {
+            event.stopPropagation();
+        }
+
+        const images = this.selectedImageProduct?.imageUrls ?? [];
+        if (images.length === 0) {
+            return;
+        }
+
+        this.selectedImageIndex =
+            this.selectedImageIndex === images.length - 1
+                ? 0
+                : this.selectedImageIndex + 1;
+    }
+
+    handleImageTouchStart(event) {
+        this.touchStartX = event.changedTouches[0].screenX;
+    }
+
+    handleImageTouchEnd(event) {
+        if (this.touchStartX === undefined) {
+            return;
+        }
+
+        const touchEndX = event.changedTouches[0].screenX;
+        const deltaX = touchEndX - this.touchStartX;
+        const minimumSwipeDistance = 40;
+
+        this.touchStartX = undefined;
+
+        if (Math.abs(deltaX) < minimumSwipeDistance) {
+            return;
+        }
+
+        if (deltaX > 0) {
+            this.handlePreviousModalImage();
+        } else {
+            this.handleNextModalImage();
         }
     }
 
