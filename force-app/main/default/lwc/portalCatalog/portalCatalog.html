@@ -137,45 +137,55 @@
                                     </template>
 
                                     <template if:true={product.isInCart}>
-                                        <div class="quantity-controls" aria-label="Product quantity control">
-                                            <button
-                                                class="quantity-button"
-                                                type="button"
-                                                data-id={product.pricebookEntryId}
-                                                onclick={handleDecreaseQuantity}
-                                                title={product.quantityDecreaseTitle}
-                                                aria-label={product.quantityDecreaseLabel}>
-                                                <template if:true={product.isSingleQuantity}>
-                                                    <lightning-icon icon-name="utility:delete" size="xx-small" alternative-text="Remove"></lightning-icon>
-                                                </template>
-                                                <template if:false={product.isSingleQuantity}>
-                                                    −
-                                                </template>
-                                            </button>
+                                        <div class="cart-action-stack">
+                                            <div class="quantity-controls" aria-label="Product quantity control">
+                                                <button
+                                                    class="quantity-button"
+                                                    type="button"
+                                                    data-id={product.pricebookEntryId}
+                                                    onclick={handleDecreaseQuantity}
+                                                    title={product.quantityDecreaseTitle}
+                                                    aria-label={product.quantityDecreaseLabel}>
+                                                    <template if:true={product.isSingleQuantity}>
+                                                        <lightning-icon icon-name="utility:delete" size="xx-small" alternative-text="Remove"></lightning-icon>
+                                                    </template>
+                                                    <template if:false={product.isSingleQuantity}>
+                                                        −
+                                                    </template>
+                                                </button>
 
-                                            <input
-                                                class="quantity-input"
-                                                type="number"
-                                                min="1"
-                                                step="1"
-                                                value={product.cartQuantity}
-                                                data-id={product.pricebookEntryId}
-                                                aria-label="Quantity"
-                                                onchange={handleQuantityInput} />
+                                                <input
+                                                    class="quantity-input"
+                                                    type="number"
+                                                    min="1"
+                                                    step="1"
+                                                    value={product.cartQuantity}
+                                                    data-id={product.pricebookEntryId}
+                                                    aria-label="Quantity"
+                                                    onchange={handleQuantityInput} />
 
-                                            <button
-                                                class="quantity-button"
-                                                type="button"
-                                                title="Increase quantity"
-                                                aria-label="Increase quantity"
-                                                data-id={product.pricebookEntryId}
-                                                onclick={handleIncreaseQuantity}>
-                                                +
-                                            </button>
+                                                <button
+                                                    class="quantity-button"
+                                                    type="button"
+                                                    title="Increase quantity"
+                                                    aria-label="Increase quantity"
+                                                    data-id={product.pricebookEntryId}
+                                                    onclick={handleIncreaseQuantity}>
+                                                    +
+                                                </button>
 
-                                            <span class="slds-assistive-text" aria-live="polite">
-                                                In cart: {product.cartQuantity}
-                                            </span>
+                                                <span class="slds-assistive-text" aria-live="polite">
+                                                    In cart: {product.cartQuantity}
+                                                </span>
+                                            </div>
+
+                                            <lightning-button
+                                                class="confirm-cart-button"
+                                                label={product.addMoreLabel}
+                                                variant="brand-outline"
+                                                data-id={product.pricebookEntryId}
+                                                onclick={handleAddMoreToCart}>
+                                            </lightning-button>
                                         </div>
                                     </template>
                                 </div>
