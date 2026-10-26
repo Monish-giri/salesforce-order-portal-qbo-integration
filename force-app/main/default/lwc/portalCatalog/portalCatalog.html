@@ -66,14 +66,15 @@
                                 </div>
 
                                 <div class="product-content">
-                                    <div class="product-name-wrap">
+                                    <div
+                                        class="product-name-wrap"
+                                        onmouseenter={handleProductNameEnter}
+                                        onmouseleave={handleProductNameLeave}>
                                         <button
                                             class="product-name-button"
                                             type="button"
                                             data-id={product.pricebookEntryId}
                                             aria-label={product.name}
-                                            onmouseenter={handleProductNameEnter}
-                                            onmouseleave={handleProductNameLeave}
                                             onclick={handleOpenGallery}>
                                             <h3>{product.name}</h3>
                                         </button>
