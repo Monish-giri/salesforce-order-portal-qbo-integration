@@ -154,31 +154,50 @@
     -webkit-line-clamp: 3;
 }
 
-/* Corporate product image preview shown while hovering over a product name. */
+/* Corporate hover preview: larger, elevated, positioned above the product name. */
 .image-preview {
     position: absolute;
-    z-index: 50;
-    top: 2.65rem;
-    left: 50%;
-    width: min(23rem, 32vw);
-    height: 17rem;
+    z-index: 100;
+    bottom: calc(100% + 0.85rem);
+    left: 0;
+    width: min(31rem, 42vw);
+    height: 22rem;
+    box-sizing: border-box;
     overflow: hidden;
-    transform: translateX(-50%);
-    border: 1px solid #cfd8e3;
-    border-radius: 1rem;
+    transform: translateY(8px);
+    border: 1px solid #c9d5e2;
+    border-radius: 1.1rem;
     background: #ffffff;
-    box-shadow: 0 24px 55px rgba(16, 24, 40, 0.22), 0 4px 12px rgba(16, 24, 40, 0.08);
+    box-shadow: 0 28px 65px rgba(16, 24, 40, 0.22), 0 8px 22px rgba(16, 24, 40, 0.1);
     cursor: pointer;
+    animation: previewCardEnter 0.45s ease-out forwards;
+}
+
+.image-preview::before {
+    position: absolute;
+    z-index: 6;
+    top: 0.85rem;
+    left: 0.95rem;
+    padding: 0.35rem 0.55rem;
+    border: 1px solid rgba(255, 255, 255, 0.72);
+    border-radius: 0.45rem;
+    background: rgba(15, 23, 42, 0.78);
+    color: #ffffff;
+    content: 'PRODUCT PREVIEW';
+    font-size: 0.58rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    pointer-events: none;
 }
 
 .image-preview::after {
     position: absolute;
-    z-index: 2;
+    z-index: 4;
     right: 0;
     bottom: 0;
     left: 0;
-    height: 3.25rem;
-    background: linear-gradient(transparent, rgba(15, 23, 42, 0.55));
+    height: 4rem;
+    background: linear-gradient(transparent, rgba(15, 23, 42, 0.62));
     content: '';
     pointer-events: none;
 }
@@ -187,8 +206,21 @@
     display: block;
     width: 100%;
     height: 100%;
+    box-sizing: border-box;
+    padding: 1.1rem;
     object-fit: contain;
-    background: #f4f7fa;
+    background: #f6f8fb;
+    opacity: 1;
+    transition: opacity 0.65s ease-in-out;
+}
+
+.preview-image-fade-out {
+    opacity: 0;
+}
+
+.preview-image-fade-in {
+    opacity: 1;
+    animation: previewImageReveal 0.7s ease-in-out;
 }
 
 .preview-nav,
@@ -208,26 +240,26 @@
 
 .preview-nav {
     top: 50%;
-    z-index: 5;
-    width: 2.35rem;
-    height: 2.35rem;
+    z-index: 7;
+    width: 2.6rem;
+    height: 2.6rem;
     padding: 0;
     transform: translateY(-50%);
-    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18);
+    box-shadow: 0 5px 14px rgba(15, 23, 42, 0.2);
 }
 
 .preview-prev {
-    left: 0.7rem;
+    left: 0.9rem;
 }
 
 .preview-next {
-    right: 0.7rem;
+    right: 0.9rem;
 }
 
 .preview-nav:hover,
 .modal-nav:hover {
-    background: rgba(15, 23, 42, 0.92);
-    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.25);
+    background: rgba(15, 23, 42, 0.94);
+    box-shadow: 0 7px 18px rgba(15, 23, 42, 0.28);
 }
 
 .preview-nav:active,
@@ -235,19 +267,26 @@
     transform: translateY(-50%) scale(0.94);
 }
 
-.image-preview::before {
-    position: absolute;
-    z-index: 4;
-    right: 0.75rem;
-    bottom: 0.55rem;
-    left: 0.75rem;
-    color: #ffffff;
-    content: 'Hover to preview  •  Click for full gallery';
-    font-size: 0.65rem;
-    font-weight: 700;
-    letter-spacing: 0.02em;
-    text-align: center;
-    pointer-events: none;
+@keyframes previewCardEnter {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes previewImageReveal {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 .image-modal-backdrop {
