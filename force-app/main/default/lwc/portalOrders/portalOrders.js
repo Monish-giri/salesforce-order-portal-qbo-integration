@@ -167,16 +167,16 @@ export default class PortalOrders extends LightningElement {
 
     get canPayOnline() {
         const order = this.selectedOrder;
-        if (!order) return false;
-        if (order.paymentStatus === 'Paid') return false;
+        if (!order || this.isPaymentProcessing) return false;
 
-        // Explicitly disallow COD. Invoice and Online are payable through Razorpay.
-        // A null payment method is treated as legacy online payment so older orders
-        // created before Payment_Method__c was populated remain payable.
+        // Payment authorization is determined by Apex from Placed_By_Contact__c.
+        // The client-side checks remain as a second layer for payment state.
+        if (order.canPay !== true) return false;
+        if (order.paymentStatus === 'Paid') return false;
         if (order.paymentMethod === 'Cash on Delivery') return false;
         if (order.paymentMethod && !['Online', 'Invoice'].includes(order.paymentMethod)) return false;
-
         if (order.invoiceStatus !== 'Invoiced') return false;
+
         return Number(order.invoiceBalance) > 0;
     }
 
@@ -206,8 +206,6 @@ export default class PortalOrders extends LightningElement {
         if (method === 'Online') return 'Online Payment';
         if (method === 'Invoice') return 'B2B Invoice / Credit Terms';
 
-        // Legacy orders created before Payment_Method__c was populated can still
-        // be paid online when an invoice and outstanding balance exist.
         if (this.canPayOnline) return 'Online Payment';
         return method || 'Payment';
     }
@@ -253,9 +251,6 @@ export default class PortalOrders extends LightningElement {
         const pathSegments = window.location.pathname.split('/').filter(Boolean);
         const sitePrefix = pathSegments[0];
 
-        // The Order Portal is exposed at /orderportal, while the Visualforce
-        // bridge has its own custom URL at /orderportalvforcesite.
-        // Do not add the site prefix a second time.
         const visualforcePath = sitePrefix
             ? `/${sitePrefix}vforcesite/RazorpayCheckoutBridge`
             : '/vforcesite/RazorpayCheckoutBridge';
