@@ -118,7 +118,6 @@ export default class PortalCatalog extends LightningElement {
                     isSingleQuantity: cartQuantity === 1,
                     quantityDecreaseTitle: cartQuantity === 1 ? 'Remove from cart' : 'Decrease quantity',
                     quantityDecreaseLabel: cartQuantity === 1 ? 'Remove from cart' : 'Decrease quantity',
-                    addMoreLabel: `Add ${cartQuantity} More`,
                     quantityInputId: `quantity-${product.pricebookEntryId}`
                 };
             });
@@ -146,8 +145,7 @@ export default class PortalCatalog extends LightningElement {
                 isInCart: cartQuantity > 0,
                 isSingleQuantity: cartQuantity === 1,
                 quantityDecreaseTitle: cartQuantity === 1 ? 'Remove from cart' : 'Decrease quantity',
-                quantityDecreaseLabel: cartQuantity === 1 ? 'Remove from cart' : 'Decrease quantity',
-                addMoreLabel: `Add ${cartQuantity} More`
+                quantityDecreaseLabel: cartQuantity === 1 ? 'Remove from cart' : 'Decrease quantity'
             };
         });
     }
@@ -380,7 +378,7 @@ export default class PortalCatalog extends LightningElement {
         this.dispatchCartQuantityChange(pricebookEntryId, 1);
     }
 
-    handleAddMoreToCart(event) {
+    handleAddSelectedQuantityToCart(event) {
         const pricebookEntryId = event.currentTarget.dataset.id;
         const product = this.products.find(item => item.pricebookEntryId === pricebookEntryId);
 
@@ -388,8 +386,9 @@ export default class PortalCatalog extends LightningElement {
             return;
         }
 
-        const newQuantity = product.cartQuantity + product.cartQuantity;
-        this.dispatchCartQuantityChange(pricebookEntryId, newQuantity);
+        // Commit the selected quantity as the cart quantity.
+        // This intentionally does NOT add the quantity again, so 4 stays 4.
+        this.dispatchCartQuantityChange(pricebookEntryId, product.cartQuantity);
     }
 
     handleIncreaseQuantity(event) {
