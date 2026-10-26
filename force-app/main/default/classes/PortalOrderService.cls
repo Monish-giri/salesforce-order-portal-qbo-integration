@@ -37,12 +37,56 @@ public with sharing class PortalOrderService {
         @AuraEnabled public List<OrderLine> lines = new List<OrderLine>();
     }
 
+    /**
+     * Returns the Accounts whose Orders the current portal user is allowed to see.
+     *
+     * Customer users see Orders for their own Contact.AccountId.
+     * Partner users see Orders for customer Accounts linked to their partner
+     * Account through Account.Partner_Account__c. This matches the existing
+     * PartnerCustomerAccountSharingService relationship model.
+     */
+    private static Set<Id> getPortalAccountIds() {
+        User currentUser = [
+            SELECT Id, UserType, Contact.AccountId
+            FROM User
+            WHERE Id = :UserInfo.getUserId()
+            WITH USER_MODE
+            LIMIT 1
+        ];
+
+        Set<Id> accountIds = new Set<Id>();
+        if (currentUser.Contact == null || currentUser.Contact.AccountId == null) {
+            return accountIds;
+        }
+
+        if (currentUser.UserType == 'PowerPartner') {
+            for (Account customerAccount : [
+                SELECT Id
+                FROM Account
+                WHERE Partner_Account__c = :currentUser.Contact.AccountId
+                WITH USER_MODE
+            ]) {
+                accountIds.add(customerAccount.Id);
+            }
+        } else {
+            accountIds.add(currentUser.Contact.AccountId);
+        }
+
+        return accountIds;
+    }
+
     @AuraEnabled(cacheable=true)
     public static List<OrderSummary> getOrders() {
+        Set<Id> accountIds = getPortalAccountIds();
+        if (accountIds.isEmpty()) {
+            return new List<OrderSummary>();
+        }
+
         List<Order> orders = [
             SELECT Id, OrderNumber, Account.Name, Status, EffectiveDate, TotalAmount,
                    (SELECT Id FROM OrderItems)
             FROM Order
+            WHERE AccountId IN :accountIds
             WITH USER_MODE
             ORDER BY CreatedDate DESC
             LIMIT 50
@@ -69,6 +113,11 @@ public with sharing class PortalOrderService {
             throw new AuraHandledException('Select an order to view its details.');
         }
 
+        Set<Id> accountIds = getPortalAccountIds();
+        if (accountIds.isEmpty()) {
+            throw new AuraHandledException('You do not have access to this order.');
+        }
+
         List<Order> orders = [
             SELECT Id, OrderNumber, Account.Name, Status, EffectiveDate, TotalAmount,
                    Payment_Method__c, Payment_Status__c, Invoice_Status__c,
@@ -76,6 +125,7 @@ public with sharing class PortalOrderService {
                    Invoice_Issue_Date__c, Invoice_Due_Date__c, Invoice_Balance__c
             FROM Order
             WHERE Id = :orderId
+            AND AccountId IN :accountIds
             WITH USER_MODE
             LIMIT 1
         ];
