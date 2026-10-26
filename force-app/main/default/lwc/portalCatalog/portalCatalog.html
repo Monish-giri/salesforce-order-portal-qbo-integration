@@ -57,8 +57,54 @@
                                     </template>
                                 </div>
 
-                                <div class="product-content">
-                                    <h3 title={product.name}>{product.name}</h3>
+                                <div
+                                    class="product-content"
+                                    data-id={product.pricebookEntryId}
+                                    onmouseenter={handleProductMouseEnter}
+                                    onmouseleave={handleProductMouseLeave}>
+                                    <h3
+                                        class="product-name"
+                                        title={product.name}
+                                        data-id={product.pricebookEntryId}
+                                        onclick={handleOpenImageModal}>
+                                        {product.name}
+                                    </h3>
+
+                                    <template if:true={product.hasImages}>
+                                        <template if:true={product.isImagePreviewVisible}>
+                                            <div
+                                                class="image-preview"
+                                                role="button"
+                                                tabindex="0"
+                                                title="Click to view product images"
+                                                data-id={product.pricebookEntryId}
+                                                onclick={handleOpenImageModal}>
+                                                <img
+                                                    src={product.currentImageUrl}
+                                                    alt={product.name}
+                                                    class="preview-image" />
+                                                <button
+                                                    class="preview-nav preview-prev"
+                                                    type="button"
+                                                    title="Previous image"
+                                                    aria-label="Previous image"
+                                                    data-id={product.pricebookEntryId}
+                                                    onclick={handlePreviousHoverImage}>
+                                                    ‹
+                                                </button>
+                                                <button
+                                                    class="preview-nav preview-next"
+                                                    type="button"
+                                                    title="Next image"
+                                                    aria-label="Next image"
+                                                    data-id={product.pricebookEntryId}
+                                                    onclick={handleNextHoverImage}>
+                                                    ›
+                                                </button>
+                                            </div>
+                                        </template>
+                                    </template>
+
                                     <template if:true={product.productCode}>
                                         <p class="product-code">{product.productCode}</p>
                                     </template>
@@ -147,4 +193,63 @@
             </template>
         </template>
     </section>
+
+    <template if:true={selectedImageProduct}>
+        <section
+            class="image-modal-backdrop"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Product images"
+            onclick={handleCloseImageModal}>
+            <div
+                class="image-modal"
+                onclick={handleModalContentClick}>
+                <div class="image-modal-header">
+                    <div>
+                        <p class="eyebrow">PRODUCT IMAGES</p>
+                        <h2>{selectedImageProduct.name}</h2>
+                    </div>
+                    <button
+                        class="modal-close"
+                        type="button"
+                        title="Close"
+                        aria-label="Close"
+                        onclick={handleCloseImageModal}>
+                        ×
+                    </button>
+                </div>
+
+                <div
+                    class="modal-image-container"
+                    ontouchstart={handleImageTouchStart}
+                    ontouchend={handleImageTouchEnd}>
+                    <img
+                        src={selectedImageUrl}
+                        alt={selectedImageProduct.name}
+                        class="modal-image" />
+
+                    <button
+                        class="modal-nav modal-prev"
+                        type="button"
+                        title="Previous image"
+                        aria-label="Previous image"
+                        onclick={handlePreviousModalImage}>
+                        ‹
+                    </button>
+                    <button
+                        class="modal-nav modal-next"
+                        type="button"
+                        title="Next image"
+                        aria-label="Next image"
+                        onclick={handleNextModalImage}>
+                        ›
+                    </button>
+                </div>
+
+                <div class="image-counter">
+                    {selectedImageCounter}
+                </div>
+            </div>
+        </section>
+    </template>
 </template>
