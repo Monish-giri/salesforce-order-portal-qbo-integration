@@ -167,7 +167,7 @@ export default class PortalOrders extends LightningElement {
 
     get canPayOnline() {
         const order = this.selectedOrder;
-        if (!order || this.isPaymentProcessing) return false;
+        if (!order) return false;
         if (order.paymentStatus === 'Paid') return false;
 
         // Explicitly disallow COD. Invoice and Online are payable through Razorpay.
@@ -213,7 +213,7 @@ export default class PortalOrders extends LightningElement {
     }
 
     async handlePayNow() {
-        if (!this.canPayOnline) return;
+        if (!this.canPayOnline || this.isPaymentProcessing) return;
 
         this.errorMessage = undefined;
         this.successMessage = undefined;
