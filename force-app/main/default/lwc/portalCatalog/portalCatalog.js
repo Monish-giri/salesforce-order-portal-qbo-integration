@@ -3,7 +3,7 @@ import getProducts from '@salesforce/apex/PortalCatalogService.getProducts';
 
 const PAGE_SIZE = 24;
 const SEARCH_DELAY = 350;
-const HOVER_CAROUSEL_INTERVAL = 5000;
+const HOVER_CAROUSEL_INTERVAL = 2000;
 const HOVER_IMAGE_FADE_DURATION = 700;
 
 export default class PortalCatalog extends LightningElement {
