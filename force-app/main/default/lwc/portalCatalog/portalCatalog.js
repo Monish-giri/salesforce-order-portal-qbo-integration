@@ -3,7 +3,8 @@ import getProducts from '@salesforce/apex/PortalCatalogService.getProducts';
 
 const PAGE_SIZE = 24;
 const SEARCH_DELAY = 350;
-const HOVER_CAROUSEL_INTERVAL = 2200;
+const HOVER_CAROUSEL_INTERVAL = 5000;
+const HOVER_IMAGE_FADE_DURATION = 700;
 
 export default class PortalCatalog extends LightningElement {
     products = [];
@@ -20,6 +21,7 @@ export default class PortalCatalog extends LightningElement {
 
     searchTimer;
     previewTimers = new Map();
+    previewTransitionTimers = new Map();
 
     connectedCallback() {
         this.loadProducts();
@@ -98,6 +100,7 @@ export default class PortalCatalog extends LightningElement {
                     isImagePreviewVisible: false,
                     currentImageIndex: 0,
                     currentImageUrl: imageUrls[0],
+                    previewImageClass: 'preview-image',
                     isSelectingQuantity: false,
                     selectedQuantity: 1,
                     quantityInputId: `quantity-${product.pricebookEntryId}`
@@ -123,7 +126,11 @@ export default class PortalCatalog extends LightningElement {
 
         this.products = this.products.map((item) =>
             item.pricebookEntryId === pricebookEntryId
-                ? { ...item, isImagePreviewVisible: true }
+                ? {
+                    ...item,
+                    isImagePreviewVisible: true,
+                    previewImageClass: 'preview-image preview-image-fade-in'
+                }
                 : item
         );
 
@@ -164,11 +171,20 @@ export default class PortalCatalog extends LightningElement {
             window.clearInterval(timer);
             this.previewTimers.delete(pricebookEntryId);
         }
+
+        const transitionTimer = this.previewTransitionTimers.get(pricebookEntryId);
+        if (transitionTimer) {
+            window.clearTimeout(transitionTimer);
+            this.previewTransitionTimers.delete(pricebookEntryId);
+        }
     }
 
     clearAllPreviewTimers() {
         this.previewTimers.forEach(timer => window.clearInterval(timer));
         this.previewTimers.clear();
+
+        this.previewTransitionTimers.forEach(timer => window.clearTimeout(timer));
+        this.previewTransitionTimers.clear();
     }
 
     handlePreviousHoverImage(event) {
@@ -184,21 +200,45 @@ export default class PortalCatalog extends LightningElement {
     }
 
     changeHoverImage(pricebookEntryId, direction) {
-        this.products = this.products.map((product) => {
-            if (product.pricebookEntryId !== pricebookEntryId || !product.hasImages) {
-                return product;
-            }
+        const product = this.products.find(item => item.pricebookEntryId === pricebookEntryId);
+        if (!product?.hasImages) {
+            return;
+        }
 
-            const imageCount = product.imageUrls.length;
-            const nextIndex =
-                (product.currentImageIndex + direction + imageCount) % imageCount;
+        const imageCount = product.imageUrls.length;
+        const nextIndex =
+            (product.currentImageIndex + direction + imageCount) % imageCount;
 
-            return {
-                ...product,
-                currentImageIndex: nextIndex,
-                currentImageUrl: product.imageUrls[nextIndex]
-            };
-        });
+        const existingTransitionTimer = this.previewTransitionTimers.get(pricebookEntryId);
+        if (existingTransitionTimer) {
+            window.clearTimeout(existingTransitionTimer);
+            this.previewTransitionTimers.delete(pricebookEntryId);
+        }
+
+        // Fade the current image out first. The new Cloudinary image is swapped in
+        // after the fade has completed, giving the hover carousel a calm transition.
+        this.products = this.products.map((item) =>
+            item.pricebookEntryId === pricebookEntryId
+                ? { ...item, previewImageClass: 'preview-image preview-image-fade-out' }
+                : item
+        );
+
+        const transitionTimer = window.setTimeout(() => {
+            this.products = this.products.map((item) =>
+                item.pricebookEntryId === pricebookEntryId
+                    ? {
+                        ...item,
+                        currentImageIndex: nextIndex,
+                        currentImageUrl: item.imageUrls[nextIndex],
+                        previewImageClass: 'preview-image preview-image-fade-in'
+                    }
+                    : item
+            );
+
+            this.previewTransitionTimers.delete(pricebookEntryId);
+        }, HOVER_IMAGE_FADE_DURATION);
+
+        this.previewTransitionTimers.set(pricebookEntryId, transitionTimer);
     }
 
     handleOpenImageModal(event) {
