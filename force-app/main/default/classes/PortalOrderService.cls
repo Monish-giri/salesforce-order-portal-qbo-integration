@@ -32,6 +32,7 @@ public with sharing class PortalOrderService {
         @AuraEnabled public Date invoiceIssueDate;
         @AuraEnabled public Date invoiceDueDate;
         @AuraEnabled public Decimal invoiceBalance;
+        @AuraEnabled public Boolean canPay;
         @AuraEnabled public List<B2BEarlyPaymentDiscountService.DiscountRule> discountSchedule = new List<B2BEarlyPaymentDiscountService.DiscountRule>();
         @AuraEnabled public B2BEarlyPaymentDiscountService.DiscountResult currentDiscount;
         @AuraEnabled public List<OrderLine> lines = new List<OrderLine>();
@@ -73,6 +74,17 @@ public with sharing class PortalOrderService {
         }
 
         return accountIds;
+    }
+
+    private static Id getCurrentPortalContactId() {
+        User currentUser = [
+            SELECT ContactId
+            FROM User
+            WHERE Id = :UserInfo.getUserId()
+            WITH USER_MODE
+            LIMIT 1
+        ];
+        return currentUser.ContactId;
     }
 
     @AuraEnabled(cacheable=true)
@@ -122,7 +134,8 @@ public with sharing class PortalOrderService {
             SELECT Id, OrderNumber, Account.Name, Status, EffectiveDate, TotalAmount,
                    Payment_Method__c, Payment_Status__c, Invoice_Status__c,
                    QBO_Invoice_Id__c, QBO_Invoice_Number__c,
-                   Invoice_Issue_Date__c, Invoice_Due_Date__c, Invoice_Balance__c
+                   Invoice_Issue_Date__c, Invoice_Due_Date__c, Invoice_Balance__c,
+                   Placed_By_Contact__c
             FROM Order
             WHERE Id = :orderId
             AND AccountId IN :accountIds
@@ -135,14 +148,7 @@ public with sharing class PortalOrderService {
         }
 
         Order orderRecord = orders[0];
-
-        List<OrderItem> items = [
-            SELECT Id, Quantity, UnitPrice, TotalPrice, PricebookEntry.Product2.Name
-            FROM OrderItem
-            WHERE OrderId = :orderRecord.Id
-            WITH USER_MODE
-            ORDER BY CreatedDate
-        ];
+        Id currentContactId = getCurrentPortalContactId();
 
         OrderDetail detail = new OrderDetail();
         detail.id = orderRecord.Id;
@@ -160,6 +166,17 @@ public with sharing class PortalOrderService {
         detail.invoiceDueDate = orderRecord.Invoice_Due_Date__c;
         detail.invoiceBalance = orderRecord.Invoice_Balance__c;
 
+        // The order remains visible to linked users, but only the Contact who
+        // placed the order is allowed to initiate its online payment.
+        detail.canPay = currentContactId != null &&
+            orderRecord.Placed_By_Contact__c != null &&
+            orderRecord.Placed_By_Contact__c == currentContactId &&
+            orderRecord.Payment_Status__c != 'Paid' &&
+            orderRecord.Invoice_Status__c == 'Invoiced' &&
+            orderRecord.Invoice_Balance__c != null &&
+            orderRecord.Invoice_Balance__c > 0 &&
+            orderRecord.Payment_Method__c != 'Cash on Delivery';
+
         if (orderRecord.Payment_Method__c == 'Invoice') {
             detail.discountSchedule = B2BEarlyPaymentDiscountService.getActiveSchedule();
 
@@ -174,6 +191,14 @@ public with sharing class PortalOrderService {
                 );
             }
         }
+
+        List<OrderItem> items = [
+            SELECT Id, Quantity, UnitPrice, TotalPrice, PricebookEntry.Product2.Name
+            FROM OrderItem
+            WHERE OrderId = :orderRecord.Id
+            WITH USER_MODE
+            ORDER BY CreatedDate
+        ];
 
         for (OrderItem item : items) {
             OrderLine line = new OrderLine();
