@@ -115,6 +115,7 @@ export default class PortalCatalog extends LightningElement {
                     previewImageClass: 'preview-image',
                     cartQuantity,
                     isInCart: cartQuantity > 0,
+                    isSingleQuantity: cartQuantity === 1,
                     quantityInputId: `quantity-${product.pricebookEntryId}`
                 };
             });
@@ -139,7 +140,8 @@ export default class PortalCatalog extends LightningElement {
             return {
                 ...product,
                 cartQuantity,
-                isInCart: cartQuantity > 0
+                isInCart: cartQuantity > 0,
+                isSingleQuantity: cartQuantity === 1
             };
         });
     }
@@ -404,7 +406,7 @@ export default class PortalCatalog extends LightningElement {
 
         const value = Number(rawValue);
 
-        if (!Number.isInteger(value) || value < 0) {
+        if (!Number.isInteger(value) || value < 1) {
             event.target.value = this.getCartQuantity(pricebookEntryId);
             return;
         }
