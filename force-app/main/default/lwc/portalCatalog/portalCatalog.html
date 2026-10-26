@@ -143,8 +143,8 @@
                                                 type="button"
                                                 data-id={product.pricebookEntryId}
                                                 onclick={handleDecreaseQuantity}
-                                                title={product.isSingleQuantity ? 'Remove from cart' : 'Decrease quantity'}
-                                                aria-label={product.isSingleQuantity ? 'Remove from cart' : 'Decrease quantity'}>
+                                                title={product.quantityDecreaseTitle}
+                                                aria-label={product.quantityDecreaseLabel}>
                                                 <template if:true={product.isSingleQuantity}>
                                                     <lightning-icon icon-name="utility:delete" size="xx-small" alternative-text="Remove"></lightning-icon>
                                                 </template>
