@@ -3,6 +3,7 @@ import getProducts from '@salesforce/apex/PortalCatalogService.getProducts';
 
 const PAGE_SIZE = 24;
 const SEARCH_DELAY = 350;
+const HOVER_CAROUSEL_INTERVAL = 2200;
 
 export default class PortalCatalog extends LightningElement {
     products = [];
@@ -18,6 +19,7 @@ export default class PortalCatalog extends LightningElement {
     touchStartX;
 
     searchTimer;
+    previewTimers = new Map();
 
     connectedCallback() {
         this.loadProducts();
@@ -25,6 +27,7 @@ export default class PortalCatalog extends LightningElement {
 
     disconnectedCallback() {
         window.clearTimeout(this.searchTimer);
+        this.clearAllPreviewTimers();
     }
 
     get hasProducts() {
@@ -74,6 +77,7 @@ export default class PortalCatalog extends LightningElement {
         this.isLoading = true;
         this.errorMessage = undefined;
         this.closeImageModal();
+        this.clearAllPreviewTimers();
 
         try {
             const response = await getProducts({
@@ -111,22 +115,60 @@ export default class PortalCatalog extends LightningElement {
 
     handleProductMouseEnter(event) {
         const pricebookEntryId = event.currentTarget.dataset.id;
+        const product = this.products.find(item => item.pricebookEntryId === pricebookEntryId);
 
-        this.products = this.products.map((product) =>
-            product.pricebookEntryId === pricebookEntryId
-                ? { ...product, isImagePreviewVisible: product.hasImages }
-                : product
+        if (!product?.hasImages) {
+            return;
+        }
+
+        this.products = this.products.map((item) =>
+            item.pricebookEntryId === pricebookEntryId
+                ? { ...item, isImagePreviewVisible: true }
+                : item
         );
+
+        this.startHoverCarousel(pricebookEntryId);
     }
 
     handleProductMouseLeave(event) {
         const pricebookEntryId = event.currentTarget.dataset.id;
+
+        this.stopHoverCarousel(pricebookEntryId);
 
         this.products = this.products.map((product) =>
             product.pricebookEntryId === pricebookEntryId
                 ? { ...product, isImagePreviewVisible: false }
                 : product
         );
+    }
+
+    startHoverCarousel(pricebookEntryId) {
+        this.stopHoverCarousel(pricebookEntryId);
+
+        const product = this.products.find(item => item.pricebookEntryId === pricebookEntryId);
+        if (!product?.hasImages || product.imageUrls.length < 2) {
+            return;
+        }
+
+        const timer = window.setInterval(() => {
+            this.changeHoverImage(pricebookEntryId, 1);
+        }, HOVER_CAROUSEL_INTERVAL);
+
+        this.previewTimers.set(pricebookEntryId, timer);
+    }
+
+    stopHoverCarousel(pricebookEntryId) {
+        const timer = this.previewTimers.get(pricebookEntryId);
+
+        if (timer) {
+            window.clearInterval(timer);
+            this.previewTimers.delete(pricebookEntryId);
+        }
+    }
+
+    clearAllPreviewTimers() {
+        this.previewTimers.forEach(timer => window.clearInterval(timer));
+        this.previewTimers.clear();
     }
 
     handlePreviousHoverImage(event) {
