@@ -35,6 +35,7 @@ public with sharing class OrderSubmissionService {
     private class ActorContext {
         Id contactId;
         Account account;
+        Boolean isPartner;
     }
 
     @AuraEnabled(cacheable=true)
@@ -44,7 +45,7 @@ public with sharing class OrderSubmissionService {
         CheckoutContext result = new CheckoutContext();
         result.actorAccountId = actor.account.Id;
         result.actorAccountName = actor.account.Name;
-        result.isPartner = actor.account.IsPartner;
+        result.isPartner = actor.isPartner;
         result.defaultOrderAccountId = actor.account.Id;
         result.defaultOrderAccountName = actor.account.Name;
 
@@ -77,7 +78,7 @@ public with sharing class OrderSubmissionService {
         }
 
         ActorContext actor = resolveActor();
-        String audience = actor.account.IsPartner ? 'Partner' : 'Customer';
+        String audience = actor.isPartner ? 'Partner' : 'Customer';
         String normalizedPaymentMethod = normalizePaymentMethod(paymentMethod, audience);
 
         List<Order> existingOrders = [
@@ -100,7 +101,7 @@ public with sharing class OrderSubmissionService {
             return result;
         }
 
-        Account orderAccount = resolveAuthorizedOrderAccount(actor.account, orderForAccountId);
+        Account orderAccount = resolveAuthorizedOrderAccount(actor, orderForAccountId);
 
         String pricebookName = Test.isRunningTest() && testPricebookName != null
             ? testPricebookName
@@ -259,10 +260,7 @@ public with sharing class OrderSubmissionService {
                 WITH SYSTEM_MODE
                 LIMIT 1
             ];
-            if (testIsPartner != null) {
-                actor.account = actor.account.clone(false, true, false, false);
-                actor.account.put('IsPartner', testIsPartner);
-            }
+            actor.isPartner = testIsPartner == null ? actor.account.IsPartner : testIsPartner;
             actor.contactId = testContactId;
             return actor;
         }
@@ -287,18 +285,19 @@ public with sharing class OrderSubmissionService {
             WITH SYSTEM_MODE
             LIMIT 1
         ];
+        actor.isPartner = actor.account.IsPartner;
 
         return actor;
     }
 
-    private static Account resolveAuthorizedOrderAccount(Account actorAccount, Id orderForAccountId) {
-        if (!actorAccount.IsPartner && orderForAccountId != actorAccount.Id) {
+    private static Account resolveAuthorizedOrderAccount(ActorContext actor, Id orderForAccountId) {
+        if (!actor.isPartner && orderForAccountId != actor.account.Id) {
             throw new AuraHandledException('You can only place orders for your own account.');
         }
 
         // Partners always place portal orders against their own Partner Account.
         // No customer account selection is accepted for Partner checkout.
-        return actorAccount;
+        return actor.account;
     }
 
     private static String resolvePricebookName(String audience) {
