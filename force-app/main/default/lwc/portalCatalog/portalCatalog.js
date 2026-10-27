@@ -1,5 +1,6 @@
 import { LightningElement, api } from 'lwc';
 import getProducts from '@salesforce/apex/PortalCatalogService.getProducts';
+import getProductsByCodes from '@salesforce/apex/PortalCatalogService.getProductsByCodes';
 
 const PAGE_SIZE = 24;
 const SEARCH_DELAY = 350;
@@ -10,10 +11,16 @@ export default class PortalCatalog extends LightningElement {
     products = [];
     searchTerm = '';
     isLoading = true;
+    isBulkLoading = false;
     errorMessage;
+    bulkErrorMessage;
+    bulkInput = '';
+    bulkResults = [];
+    bulkMissingCodes = [];
     hasMore = false;
     audience = 'Customer';
     isPartner = false;
+    showQuickOrder = false;
 
     selectedImageProduct;
     selectedImageIndex = 0;
@@ -386,8 +393,6 @@ export default class PortalCatalog extends LightningElement {
             return;
         }
 
-        // Commit the selected quantity as the cart quantity.
-        // This intentionally does NOT add the quantity again, so 4 stays 4.
         this.dispatchCartQuantityChange(pricebookEntryId, product.cartQuantity);
     }
 
@@ -454,6 +459,164 @@ export default class PortalCatalog extends LightningElement {
                 }
             })
         );
+    }
+
+    openQuickOrder() {
+        if (!this.isPartner) {
+            return;
+        }
+
+        this.bulkErrorMessage = undefined;
+        this.bulkInput = '';
+        this.bulkResults = [];
+        this.bulkMissingCodes = [];
+        this.showQuickOrder = true;
+    }
+
+    closeQuickOrder() {
+        if (this.isBulkLoading) {
+            return;
+        }
+
+        this.showQuickOrder = false;
+        this.bulkErrorMessage = undefined;
+    }
+
+    handleBulkInput(event) {
+        this.bulkInput = event.target.value;
+    }
+
+    handleBulkFileChange(event) {
+        const file = event.target.files?.[0];
+        if (!file) {
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = () => {
+            this.bulkInput = reader.result || '';
+            this.bulkErrorMessage = undefined;
+        };
+        reader.onerror = () => {
+            this.bulkErrorMessage = 'The CSV file could not be read. Please try again.';
+        };
+        reader.readAsText(file);
+    }
+
+    get bulkTemplate() {
+        return 'Product Code,Quantity\nGC1020,25\nIN7020,10';
+    }
+
+    downloadBulkTemplate() {
+        const blob = new Blob([this.bulkTemplate], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = 'partner-quick-order-template.csv';
+        anchor.click();
+        URL.revokeObjectURL(url);
+    }
+
+    parseBulkOrderInput() {
+        const text = (this.bulkInput || '').trim();
+        if (!text) {
+            throw new Error('Paste your product code and quantity list, or upload a CSV file.');
+        }
+
+        const lines = text.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+        if (!lines.length) {
+            throw new Error('No order lines were found.');
+        }
+
+        const firstLine = lines[0].toLowerCase();
+        const delimiter = firstLine.includes('\t') ? '\t' : firstLine.includes(';') ? ';' : ',';
+        const headerParts = firstLine.split(delimiter).map(value => value.trim().replace(/^"|"$/g, ''));
+        const hasHeader = headerParts.some(value => ['product code', 'productcode', 'code', 'sku'].includes(value))
+            && headerParts.some(value => ['quantity', 'qty'].includes(value));
+
+        let codeIndex = 0;
+        let quantityIndex = 1;
+        let startIndex = 0;
+
+        if (hasHeader) {
+            codeIndex = headerParts.findIndex(value => ['product code', 'productcode', 'code', 'sku'].includes(value));
+            quantityIndex = headerParts.findIndex(value => ['quantity', 'qty'].includes(value));
+            startIndex = 1;
+        }
+
+        const requested = [];
+        for (let index = startIndex; index < lines.length; index += 1) {
+            const parts = lines[index].split(delimiter).map(value => value.trim().replace(/^"|"$/g, ''));
+            const code = parts[codeIndex];
+            const quantity = Number(parts[quantityIndex]);
+
+            if (!code) {
+                throw new Error(`Line ${index + 1}: product code is missing.`);
+            }
+            if (!Number.isInteger(quantity) || quantity < 1) {
+                throw new Error(`Line ${index + 1}: quantity must be a whole number greater than 0.`);
+            }
+
+            requested.push({ code, quantity });
+        }
+
+        if (!requested.length) {
+            throw new Error('No order lines were found.');
+        }
+
+        return requested;
+    }
+
+    async applyQuickOrder() {
+        if (!this.isPartner || this.isBulkLoading) {
+            return;
+        }
+
+        this.isBulkLoading = true;
+        this.bulkErrorMessage = undefined;
+        this.bulkResults = [];
+        this.bulkMissingCodes = [];
+
+        try {
+            const requested = this.parseBulkOrderInput();
+            const quantitiesByCode = new Map();
+
+            requested.forEach(({ code, quantity }) => {
+                quantitiesByCode.set(code.toUpperCase(), (quantitiesByCode.get(code.toUpperCase()) || 0) + quantity);
+            });
+
+            const codes = [...quantitiesByCode.keys()];
+            const products = await getProductsByCodes({ productCodes: codes });
+            const productsByCode = new Map(
+                (products || []).map(product => [product.productCode?.trim().toUpperCase(), product])
+            );
+
+            const missing = codes.filter(code => !productsByCode.has(code));
+            if (missing.length) {
+                this.bulkMissingCodes = missing;
+                throw new Error('Some product codes were not found in the active Partner catalog.');
+            }
+
+            products.forEach(product => {
+                const quantity = quantitiesByCode.get(product.productCode.trim().toUpperCase());
+                this.dispatchCartQuantityChange(product.pricebookEntryId, quantity);
+            });
+
+            this.bulkResults = products.map(product => ({
+                code: product.productCode,
+                name: product.name,
+                quantity: quantitiesByCode.get(product.productCode.trim().toUpperCase()),
+                unitPrice: product.unitPrice,
+                total: product.unitPrice * quantitiesByCode.get(product.productCode.trim().toUpperCase())
+            }));
+
+            this.bulkInput = '';
+            this.showQuickOrder = false;
+        } catch (error) {
+            this.bulkErrorMessage = error?.message || this.reduceError(error);
+        } finally {
+            this.isBulkLoading = false;
+        }
     }
 
     reduceError(error) {
