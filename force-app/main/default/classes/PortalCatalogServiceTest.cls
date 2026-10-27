@@ -41,45 +41,26 @@ private class PortalCatalogServiceTest {
 
     @IsTest
     static void returnsConfiguredProducts() {
-        Pricebook2 portalPricebook = [
-            SELECT Id, Name
-            FROM Pricebook2
-            WHERE Name = 'Test Portal Catalog'
-            LIMIT 1
-        ];
-
+        Pricebook2 portalPricebook = [SELECT Id, Name FROM Pricebook2 WHERE Name = 'Test Portal Catalog' LIMIT 1];
         PortalCatalogService.testPricebookName = portalPricebook.Name;
 
         Test.startTest();
-        PortalCatalogService.CatalogResponse response =
-            PortalCatalogService.getProducts(null, 24);
+        PortalCatalogService.CatalogResponse response = PortalCatalogService.getProducts(null, 24);
         Test.stopTest();
 
         System.assertEquals(1, response.products.size());
         System.assertEquals('Test Portal Product', response.products[0].name);
         System.assertEquals(125, response.products[0].unitPrice);
-        System.assertEquals(portalPricebook.Id, [
-            SELECT Pricebook2Id
-            FROM PricebookEntry
-            WHERE Pricebook2Id = :portalPricebook.Id
-            LIMIT 1
-        ].Pricebook2Id);
+        System.assertEquals(portalPricebook.Id, [SELECT Pricebook2Id FROM PricebookEntry WHERE Pricebook2Id = :portalPricebook.Id LIMIT 1].Pricebook2Id);
     }
 
     @IsTest
     static void filtersProductsServerSide() {
-        Pricebook2 portalPricebook = [
-            SELECT Id, Name
-            FROM Pricebook2
-            WHERE Name = 'Test Portal Catalog'
-            LIMIT 1
-        ];
-
+        Pricebook2 portalPricebook = [SELECT Id, Name FROM Pricebook2 WHERE Name = 'Test Portal Catalog' LIMIT 1];
         PortalCatalogService.testPricebookName = portalPricebook.Name;
 
         Test.startTest();
-        PortalCatalogService.CatalogResponse response =
-            PortalCatalogService.getProducts('TEST-001', 24);
+        PortalCatalogService.CatalogResponse response = PortalCatalogService.getProducts('TEST-001', 24);
         Test.stopTest();
 
         System.assertEquals(1, response.products.size());
@@ -87,19 +68,28 @@ private class PortalCatalogServiceTest {
     }
 
     @IsTest
-    static void capsRequestedPageSize() {
-        Pricebook2 portalPricebook = [
-            SELECT Name
-            FROM Pricebook2
-            WHERE Name = 'Test Portal Catalog'
-            LIMIT 1
-        ];
-
+    static void bulkLookupReturnsProductsByCode() {
+        Pricebook2 portalPricebook = [SELECT Name FROM Pricebook2 WHERE Name = 'Test Portal Catalog' LIMIT 1];
         PortalCatalogService.testPricebookName = portalPricebook.Name;
 
         Test.startTest();
-        PortalCatalogService.CatalogResponse response =
-            PortalCatalogService.getProducts(null, 500);
+        List<PortalCatalogService.CatalogProduct> products = PortalCatalogService.getProductsByCodes(
+            new List<String>{'TEST-001', 'UNKNOWN-CODE'}
+        );
+        Test.stopTest();
+
+        System.assertEquals(1, products.size());
+        System.assertEquals('TEST-001', products[0].productCode);
+        System.assertEquals(125, products[0].unitPrice);
+    }
+
+    @IsTest
+    static void capsRequestedPageSize() {
+        Pricebook2 portalPricebook = [SELECT Name FROM Pricebook2 WHERE Name = 'Test Portal Catalog' LIMIT 1];
+        PortalCatalogService.testPricebookName = portalPricebook.Name;
+
+        Test.startTest();
+        PortalCatalogService.CatalogResponse response = PortalCatalogService.getProducts(null, 500);
         Test.stopTest();
 
         System.assertEquals(48, response.pageSize);
@@ -107,18 +97,11 @@ private class PortalCatalogServiceTest {
 
     @IsTest
     static void doesNotExposeB2BMarginToCustomerContext() {
-        Pricebook2 portalPricebook = [
-            SELECT Name
-            FROM Pricebook2
-            WHERE Name = 'Test Portal Catalog'
-            LIMIT 1
-        ];
-
+        Pricebook2 portalPricebook = [SELECT Name FROM Pricebook2 WHERE Name = 'Test Portal Catalog' LIMIT 1];
         PortalCatalogService.testPricebookName = portalPricebook.Name;
 
         Test.startTest();
-        PortalCatalogService.CatalogResponse response =
-            PortalCatalogService.getProducts(null, 24);
+        PortalCatalogService.CatalogResponse response = PortalCatalogService.getProducts(null, 24);
         Test.stopTest();
 
         System.assertEquals(1, response.products.size());
