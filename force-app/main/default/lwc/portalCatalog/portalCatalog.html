@@ -205,61 +205,66 @@
         </template>
     </section>
 
+    <template if:true={showQuickOrder}>
+        <section role="dialog" aria-modal="true" aria-labelledby="quick-order-title" style="position:fixed;z-index:2000;inset:0;display:flex;align-items:center;justify-content:center;padding:1.5rem;background:rgba(15,23,42,0.68);backdrop-filter:blur(4px);">
+            <div style="width:min(92vw,56rem);max-height:90vh;overflow:auto;border:1px solid #dbe4ee;border-radius:1.25rem;background:#fff;box-shadow:0 30px 80px rgba(0,0,0,0.28);">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1.35rem 1.5rem;border-bottom:1px solid #e4e7ec;">
+                    <div>
+                        <p class="eyebrow">PARTNER BULK ORDERING</p>
+                        <h2 id="quick-order-title" style="margin:0;color:#172033;font-size:1.35rem;">Quick Order / CSV Order</h2>
+                        <p style="margin:0.35rem 0 0;color:#667085;font-size:0.78rem;">Enter product codes and quantities to build your cart in one step. No customer account selection is required.</p>
+                    </div>
+                    <button type="button" onclick={closeQuickOrder} disabled={isBulkLoading} aria-label="Close" title="Close" style="display:grid;width:2.5rem;height:2.5rem;place-items:center;border:1px solid #d0d5dd;border-radius:50%;background:#fff;color:#344054;cursor:pointer;font-size:1.4rem;">×</button>
+                </div>
+                <div style="padding:1.5rem;">
+                    <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:1rem;align-items:end;">
+                        <div>
+                            <p style="margin:0 0 0.35rem;color:#344054;font-size:0.72rem;font-weight:800;">CSV / SHEET FORMAT</p>
+                            <p style="margin:0;color:#667085;font-size:0.72rem;line-height:1.5;">Use two columns: <strong>Product Code</strong> and <strong>Quantity</strong>. Excel or Google Sheets can be exported as CSV.</p>
+                        </div>
+                        <button type="button" onclick={downloadBulkTemplate} style="padding:0.55rem 0.8rem;border:1px solid #cbd5e1;border-radius:0.55rem;background:#fff;color:#344054;font-size:0.7rem;font-weight:800;cursor:pointer;white-space:nowrap;">Download Template</button>
+                    </div>
+                    <div style="margin-top:1rem;padding:1rem;border:1px solid #dbe4ee;border-radius:0.8rem;background:#f8fafc;">
+                        <lightning-input type="file" label="Upload CSV" accept=".csv,.txt" onchange={handleBulkFileChange} disabled={isBulkLoading}></lightning-input>
+                        <p style="margin:0.45rem 0 0;color:#98a2b3;font-size:0.65rem;">Or paste directly below. Tab-separated spreadsheet rows are also supported.</p>
+                    </div>
+                    <div style="margin-top:1rem;">
+                        <lightning-textarea label="Order lines" value={bulkInput} onchange={handleBulkInput} disabled={isBulkLoading} rows="9" placeholder="Product Code,Quantity\nGC1020,25\nIN7020,10"></lightning-textarea>
+                    </div>
+                    <template if:true={bulkErrorMessage}>
+                        <div role="alert" style="margin-top:1rem;padding:0.8rem 0.95rem;border:1px solid #fecdca;border-radius:0.65rem;background:#fff6f5;color:#b42318;font-size:0.72rem;">
+                            <strong>{bulkErrorMessage}</strong>
+                            <template if:true={bulkMissingCodes.length}><div style="margin-top:0.35rem;">Missing product codes: {bulkMissingCodes}</div></template>
+                        </div>
+                    </template>
+                    <div style="display:flex;justify-content:flex-end;gap:0.65rem;margin-top:1.25rem;">
+                        <button type="button" onclick={closeQuickOrder} disabled={isBulkLoading} style="padding:0.65rem 1rem;border:1px solid #cbd5e1;border-radius:0.6rem;background:#fff;color:#344054;font-size:0.72rem;font-weight:800;cursor:pointer;">Cancel</button>
+                        <button type="button" onclick={applyQuickOrder} disabled={isBulkLoading} style="display:inline-flex;align-items:center;gap:0.5rem;padding:0.65rem 1.05rem;border:1px solid #0b5cab;border-radius:0.6rem;background:#0b5cab;color:#fff;font-size:0.72rem;font-weight:800;cursor:pointer;">
+                            <template if:true={isBulkLoading}><lightning-spinner alternative-text="Loading" size="x-small"></lightning-spinner></template>
+                            <span>{isBulkLoading ? 'Building Cart...' : 'Add Bulk Order to Cart'}</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </template>
+
     <template if:true={selectedImageProduct}>
-        <section
-            class="image-modal-backdrop"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Product images"
-            onclick={handleCloseImageModal}>
-            <div
-                class="image-modal"
-                onclick={handleModalContentClick}>
+        <section class="image-modal-backdrop" role="dialog" aria-modal="true" aria-label="Product images" onclick={handleCloseImageModal}>
+            <div class="image-modal" onclick={handleModalContentClick}>
                 <div class="image-modal-header">
                     <div>
                         <p class="eyebrow">PRODUCT IMAGES</p>
                         <h2>{selectedImageProduct.name}</h2>
                     </div>
-                    <button
-                        class="modal-close"
-                        type="button"
-                        title="Close"
-                        aria-label="Close"
-                        onclick={handleCloseImageModal}>
-                        ×
-                    </button>
+                    <button class="modal-close" type="button" title="Close" aria-label="Close" onclick={handleCloseImageModal}>×</button>
                 </div>
-
-                <div
-                    class="modal-image-container"
-                    ontouchstart={handleImageTouchStart}
-                    ontouchend={handleImageTouchEnd}>
-                    <img
-                        src={selectedImageUrl}
-                        alt={selectedImageProduct.name}
-                        class="modal-image" />
-
-                    <button
-                        class="modal-nav modal-prev"
-                        type="button"
-                        title="Previous image"
-                        aria-label="Previous image"
-                        onclick={handlePreviousModalImage}>
-                        ‹
-                    </button>
-                    <button
-                        class="modal-nav modal-next"
-                        type="button"
-                        title="Next image"
-                        aria-label="Next image"
-                        onclick={handleNextModalImage}>
-                        ›
-                    </button>
+                <div class="modal-image-container" ontouchstart={handleImageTouchStart} ontouchend={handleImageTouchEnd}>
+                    <img src={selectedImageUrl} alt={selectedImageProduct.name} class="modal-image" />
+                    <button class="modal-nav modal-prev" type="button" title="Previous image" aria-label="Previous image" onclick={handlePreviousModalImage}>‹</button>
+                    <button class="modal-nav modal-next" type="button" title="Next image" aria-label="Next image" onclick={handleNextModalImage}>›</button>
                 </div>
-
-                <div class="image-counter">
-                    {selectedImageCounter}
-                </div>
+                <div class="image-counter">{selectedImageCounter}</div>
             </div>
         </section>
     </template>
