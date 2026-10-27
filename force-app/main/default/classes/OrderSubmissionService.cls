@@ -46,21 +46,10 @@ public with sharing class OrderSubmissionService {
         result.isPartner = actor.account.IsPartner;
 
         if (actor.account.IsPartner) {
-            for (Account customer : [
-                SELECT Id, Name
-                FROM Account
-                WHERE Partner_Account__c = :actor.account.Id
-                  AND IsPartner = false
-                WITH SYSTEM_MODE
-                ORDER BY Name
-            ]) {
-                result.customerAccounts.add(new CustomerOption(customer.Id, customer.Name));
-            }
-
-            if (!result.customerAccounts.isEmpty()) {
-                result.defaultOrderAccountId = result.customerAccounts[0].id;
-                result.defaultOrderAccountName = result.customerAccounts[0].name;
-            }
+            // Partner orders are placed by the partner account itself.
+            // Customer accounts are intentionally not presented for selection.
+            result.defaultOrderAccountId = actor.account.Id;
+            result.defaultOrderAccountName = actor.account.Name;
         } else {
             result.defaultOrderAccountId = actor.account.Id;
             result.defaultOrderAccountName = actor.account.Name;
@@ -90,9 +79,6 @@ public with sharing class OrderSubmissionService {
         }
         if (String.isBlank(submissionKey) || submissionKey.length() > 100) {
             throw new AuraHandledException('A valid submission key is required.');
-        }
-        if (orderForAccountId == null) {
-            throw new AuraHandledException('Select the account this order is for.');
         }
 
         List<Object> rawLines;
@@ -334,21 +320,9 @@ public with sharing class OrderSubmissionService {
             return actorAccount;
         }
 
-        List<Account> authorizedAccounts = [
-            SELECT Id, Name
-            FROM Account
-            WHERE Id = :orderForAccountId
-              AND Partner_Account__c = :actorAccount.Id
-              AND IsPartner = false
-            WITH SYSTEM_MODE
-            LIMIT 1
-        ];
-
-        if (authorizedAccounts.isEmpty()) {
-            throw new AuraHandledException('You are not authorized to place an order for that customer.');
-        }
-
-        return authorizedAccounts[0];
+        // Partners purchase under their own account. The customer account is never selected
+        // or accepted as the Order.AccountId for portal orders.
+        return actorAccount;
     }
 
     private static String resolvePricebookName(String audience) {
