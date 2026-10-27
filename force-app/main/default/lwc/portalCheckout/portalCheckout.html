@@ -4,7 +4,7 @@
             <div>
                 <p class="eyebrow">CHECKOUT</p>
                 <h1>Review your order</h1>
-                <p class="subtitle">Confirm the customer, quantities, and payment method before placing the order.</p>
+                <p class="subtitle">Confirm the order, quantities, and payment method before placing the order.</p>
             </div>
         </div>
 
@@ -19,17 +19,11 @@
             <div class="state-panel error-panel" role="alert">
                 <lightning-icon icon-name="utility:error" size="small" alternative-text="Error"></lightning-icon>
                 <div>
-                    <template if:true={submittedOrder}>
-                        <h2>Payment needs attention</h2>
-                    </template>
-                    <template if:false={submittedOrder}>
-                        <h2>We couldn't prepare your checkout</h2>
-                    </template>
+                    <template if:true={submittedOrder}><h2>Payment needs attention</h2></template>
+                    <template if:false={submittedOrder}><h2>We couldn't prepare your checkout</h2></template>
                     <p>{errorMessage}</p>
                     <template if:true={submittedOrder}>
-                        <button class="place-order-button" type="button" onclick={handlePlaceOrder} disabled={isSubmitting}>
-                            Try Payment Again
-                        </button>
+                        <button class="place-order-button" type="button" onclick={handlePlaceOrder} disabled={isSubmitting}>Try Payment Again</button>
                     </template>
                     <button class="secondary-button" type="button" onclick={handleBack} disabled={isSubmitting}>Back to Cart</button>
                 </div>
@@ -43,19 +37,16 @@
                         <div class="checkout-card">
                             <div class="card-heading">
                                 <div>
-                                    <p class="card-kicker">ORDER FOR</p>
+                                    <p class="card-kicker">ORDER ACCOUNT</p>
                                     <h2>{orderAccountName}</h2>
                                 </div>
                             </div>
 
                             <template if:true={isPartner}>
-                                <lightning-combobox
-                                    label="Customer account"
-                                    value={selectedAccountId}
-                                    options={customerOptions}
-                                    onchange={handleAccountChange}
-                                    required>
-                                </lightning-combobox>
+                                <div class="account-note" style="display:flex;align-items:flex-start;gap:0.65rem;padding:0.8rem 0.9rem;border:1px solid #cfe1f2;border-radius:0.7rem;background:#f5faff;">
+                                    <lightning-icon icon-name="utility:partner_fund_allocation" size="x-small" alternative-text="Partner order"></lightning-icon>
+                                    <span>Partner orders are placed under your Partner account. No customer account selection is required.</span>
+                                </div>
                             </template>
 
                             <template if:false={isPartner}>
@@ -74,49 +65,20 @@
                             <div class="review-list">
                                 <template for:each={cartItems} for:item="item">
                                     <article class="review-item" key={item.pricebookEntryId}>
-                                        <div class="review-icon">
-                                            <lightning-icon icon-name="standard:product" size="small" alternative-text=""></lightning-icon>
-                                        </div>
+                                        <div class="review-icon"><lightning-icon icon-name="standard:product" size="small" alternative-text=""></lightning-icon></div>
                                         <div class="review-info">
                                             <h3>{item.name}</h3>
                                             <p>{item.quantity} × <lightning-formatted-number value={item.unitPrice} format-style="currency" currency-code="INR" maximum-fraction-digits="0"></lightning-formatted-number></p>
-
                                             <template if:true={isPartner}>
                                                 <template if:true={item.recommendedRetailPrice}>
                                                     <div class="item-commercials">
-                                                        <span>
-                                                            Retail opportunity:
-                                                            <lightning-formatted-number
-                                                                value={item.recommendedRetailPrice}
-                                                                format-style="currency"
-                                                                currency-code="INR"
-                                                                maximum-fraction-digits="0">
-                                                            </lightning-formatted-number>
-                                                        </span>
-                                                        <span>
-                                                            Margin:
-                                                            <lightning-formatted-number
-                                                                value={item.estimatedMarginAmount}
-                                                                format-style="currency"
-                                                                currency-code="INR"
-                                                                maximum-fraction-digits="0">
-                                                            </lightning-formatted-number>
-                                                            (<lightning-formatted-number
-                                                                value={item.estimatedMarginPercent}
-                                                                maximum-fraction-digits="1">
-                                                            </lightning-formatted-number>%)
-                                                        </span>
+                                                        <span>Retail opportunity: <lightning-formatted-number value={item.recommendedRetailPrice} format-style="currency" currency-code="INR" maximum-fraction-digits="0"></lightning-formatted-number></span>
+                                                        <span>Margin: <lightning-formatted-number value={item.estimatedMarginAmount} format-style="currency" currency-code="INR" maximum-fraction-digits="0"></lightning-formatted-number> (<lightning-formatted-number value={item.estimatedMarginPercent} maximum-fraction-digits="1"></lightning-formatted-number>%)</span>
                                                     </div>
                                                 </template>
                                             </template>
                                         </div>
-                                        <lightning-formatted-number
-                                            class="review-total"
-                                            value={item.lineTotal}
-                                            format-style="currency"
-                                            currency-code="INR"
-                                            maximum-fraction-digits="0">
-                                        </lightning-formatted-number>
+                                        <lightning-formatted-number class="review-total" value={item.lineTotal} format-style="currency" currency-code="INR" maximum-fraction-digits="0"></lightning-formatted-number>
                                     </article>
                                 </template>
                             </div>
@@ -129,30 +91,15 @@
                                     <h2>{paymentHeading}</h2>
                                 </div>
                             </div>
-
                             <template if:true={isPartner}>
                                 <div class="payment-option payment-option-static">
-                                    <div class="payment-option-icon">
-                                        <lightning-icon icon-name="utility:invoice" size="small" alternative-text="Invoice"></lightning-icon>
-                                    </div>
-                                    <div>
-                                        <h3>B2B Invoice / Credit Terms</h3>
-                                        <p>Your order will be invoiced according to the configured B2B payment terms.</p>
-                                    </div>
+                                    <div class="payment-option-icon"><lightning-icon icon-name="utility:invoice" size="small" alternative-text="Invoice"></lightning-icon></div>
+                                    <div><h3>B2B Invoice / Credit Terms</h3><p>Your order will be invoiced according to the configured B2B payment terms.</p></div>
                                 </div>
                             </template>
-
                             <template if:false={isPartner}>
-                                <lightning-radio-group
-                                    name="paymentMethod"
-                                    label="Payment method"
-                                    options={paymentOptions}
-                                    value={selectedPaymentMethod}
-                                    type="radio"
-                                    onchange={handlePaymentMethodChange}>
-                                </lightning-radio-group>
+                                <lightning-radio-group name="paymentMethod" label="Payment method" options={paymentOptions} value={selectedPaymentMethod} type="radio" onchange={handlePaymentMethodChange}></lightning-radio-group>
                             </template>
-
                             <p class="payment-summary">{paymentSummary}</p>
                         </div>
 
@@ -165,21 +112,14 @@
                                         <p class="card-description">Your discount is calculated from the invoice issue date and configured B2B payment terms.</p>
                                     </div>
                                 </div>
-
                                 <div class="discount-schedule">
                                     <template for:each={discountSchedule} for:item="rule">
                                         <div class="discount-row" key={rule.dayFrom}>
                                             <span>Days {rule.dayFrom}–{rule.dayTo}</span>
-                                            <strong>
-                                                <lightning-formatted-number
-                                                    value={rule.discountPercent}
-                                                    maximum-fraction-digits="2">
-                                                </lightning-formatted-number>% discount
-                                            </strong>
+                                            <strong><lightning-formatted-number value={rule.discountPercent} maximum-fraction-digits="2"></lightning-formatted-number>% discount</strong>
                                         </div>
                                     </template>
                                 </div>
-
                                 <p class="discount-note">The applicable discount is determined when payment is made. The invoice remains the source for the amount due and due date.</p>
                             </div>
                         </template>
@@ -193,43 +133,10 @@
                                         <p>Based on the recommended retail prices configured for these products.</p>
                                     </div>
                                 </div>
-
                                 <div class="commercial-grid">
-                                    <div class="commercial-metric">
-                                        <span>Partner purchase total</span>
-                                        <lightning-formatted-number
-                                            value={cartSubtotal}
-                                            format-style="currency"
-                                            currency-code="INR"
-                                            maximum-fraction-digits="0">
-                                        </lightning-formatted-number>
-                                    </div>
-                                    <div class="commercial-metric">
-                                        <span>Recommended retail total</span>
-                                        <lightning-formatted-number
-                                            value={b2bRecommendedRetailTotal}
-                                            format-style="currency"
-                                            currency-code="INR"
-                                            maximum-fraction-digits="0">
-                                        </lightning-formatted-number>
-                                    </div>
-                                    <div class="commercial-metric commercial-highlight">
-                                        <span>Estimated margin</span>
-                                        <div>
-                                            <lightning-formatted-number
-                                                value={b2bEstimatedMarginTotal}
-                                                format-style="currency"
-                                                currency-code="INR"
-                                                maximum-fraction-digits="0">
-                                            </lightning-formatted-number>
-                                            <span class="commercial-percent">
-                                                (<lightning-formatted-number
-                                                    value={b2bEstimatedMarginPercent}
-                                                    maximum-fraction-digits="1">
-                                                </lightning-formatted-number>%)
-                                            </span>
-                                        </div>
-                                    </div>
+                                    <div class="commercial-metric"><span>Partner purchase total</span><lightning-formatted-number value={cartSubtotal} format-style="currency" currency-code="INR" maximum-fraction-digits="0"></lightning-formatted-number></div>
+                                    <div class="commercial-metric"><span>Recommended retail total</span><lightning-formatted-number value={b2bRecommendedRetailTotal} format-style="currency" currency-code="INR" maximum-fraction-digits="0"></lightning-formatted-number></div>
+                                    <div class="commercial-metric commercial-highlight"><span>Estimated margin</span><div><lightning-formatted-number value={b2bEstimatedMarginTotal} format-style="currency" currency-code="INR" maximum-fraction-digits="0"></lightning-formatted-number><span class="commercial-percent"> (<lightning-formatted-number value={b2bEstimatedMarginPercent} maximum-fraction-digits="1"></lightning-formatted-number>%)</span></div></div>
                                 </div>
                             </div>
                         </template>
@@ -237,57 +144,14 @@
 
                     <aside class="checkout-summary">
                         <p class="summary-label">ORDER SUMMARY</p>
-                        <div class="summary-row">
-                            <span>Items</span>
-                            <span>{itemCount}</span>
-                        </div>
+                        <div class="summary-row"><span>Items</span><span>{itemCount}</span></div>
                         <div class="summary-divider"></div>
-                        <div class="summary-total">
-                            <span>Subtotal</span>
-                            <lightning-formatted-number
-                                value={cartSubtotal}
-                                format-style="currency"
-                                currency-code="INR"
-                                maximum-fraction-digits="0">
-                            </lightning-formatted-number>
-                        </div>
-
+                        <div class="summary-total"><span>Subtotal</span><lightning-formatted-number value={cartSubtotal} format-style="currency" currency-code="INR" maximum-fraction-digits="0"></lightning-formatted-number></div>
                         <template if:true={hasB2BMarginData}>
-                            <div class="summary-opportunity">
-                                <span>Estimated margin</span>
-                                <div>
-                                    <lightning-formatted-number
-                                        value={b2bEstimatedMarginTotal}
-                                        format-style="currency"
-                                        currency-code="INR"
-                                        maximum-fraction-digits="0">
-                                    </lightning-formatted-number>
-                                    <span class="commercial-percent">
-                                        (<lightning-formatted-number
-                                            value={b2bEstimatedMarginPercent}
-                                            maximum-fraction-digits="1">
-                                        </lightning-formatted-number>%)
-                                    </span>
-                                </div>
-                            </div>
+                            <div class="summary-opportunity"><span>Estimated margin</span><div><lightning-formatted-number value={b2bEstimatedMarginTotal} format-style="currency" currency-code="INR" maximum-fraction-digits="0"></lightning-formatted-number><span class="commercial-percent"> (<lightning-formatted-number value={b2bEstimatedMarginPercent} maximum-fraction-digits="1"></lightning-formatted-number>%)</span></div></div>
                         </template>
-
-                        <button
-                            class="place-order-button"
-                            type="button"
-                            onclick={handlePlaceOrder}
-                            disabled={isSubmitting}>
-                            {placeOrderLabel}
-                        </button>
-
-                        <button
-                            class="back-button"
-                            type="button"
-                            onclick={handleBack}
-                            disabled={isSubmitting}>
-                            Back to Cart
-                        </button>
-
+                        <button class="place-order-button" type="button" onclick={handlePlaceOrder} disabled={isSubmitting}>{placeOrderLabel}</button>
+                        <button class="back-button" type="button" onclick={handleBack} disabled={isSubmitting}>Back to Cart</button>
                         <p class="summary-note">Your order is saved in Salesforce first. Online payments are securely processed through Razorpay, while the existing QuickBooks flow remains responsible for accounting.</p>
                     </aside>
                 </div>
