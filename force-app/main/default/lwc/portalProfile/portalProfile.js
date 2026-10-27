@@ -15,21 +15,21 @@ export default class PortalProfile extends LightningElement {
     isUploadingPhoto = false;
     errorMessage;
     successMessage;
-    wiredUserRecord;
+    wiredUserResult;
 
     @wire(getRecord, { recordId: USER_ID, fields: USER_FIELDS })
-    wiredUserRecord(result) {
-        this.wiredUserRecord = result;
+    handleUserRecord(result) {
+        this.wiredUserResult = result;
     }
 
     get displayName() {
-        const firstName = getFieldValue(this.wiredUserRecord?.data, FIRST_NAME) || '';
-        const lastName = getFieldValue(this.wiredUserRecord?.data, LAST_NAME) || '';
+        const firstName = getFieldValue(this.wiredUserResult?.data, FIRST_NAME) || '';
+        const lastName = getFieldValue(this.wiredUserResult?.data, LAST_NAME) || '';
         return `${firstName} ${lastName}`.trim() || 'Portal User';
     }
 
     get photoUrl() {
-        return getFieldValue(this.wiredUserRecord?.data, MEDIUM_PHOTO_URL);
+        return getFieldValue(this.wiredUserResult?.data, MEDIUM_PHOTO_URL);
     }
 
     openProfile() {
@@ -84,7 +84,7 @@ export default class PortalProfile extends LightningElement {
                 contentType: file.type
             });
 
-            await refreshApex(this.wiredUserRecord);
+            await refreshApex(this.wiredUserResult);
             this.successMessage = 'Profile picture updated successfully.';
         } catch (error) {
             this.errorMessage = error?.body?.message || error?.message || 'Unable to update your profile picture.';
@@ -109,6 +109,7 @@ export default class PortalProfile extends LightningElement {
     handleSaveSuccess() {
         this.errorMessage = undefined;
         this.successMessage = 'Profile details saved successfully.';
+        refreshApex(this.wiredUserResult);
     }
 
     handleSaveError(event) {
