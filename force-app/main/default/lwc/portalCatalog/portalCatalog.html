@@ -45,7 +45,7 @@
         <template if:false={isLoading}>
             <template if:false={errorMessage}>
                 <template if:true={hasProducts}>
-                    <div class="catalog-grid">
+                    <div class="catalog-grid" style="grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));">
                         <template for:each={products} for:item="product">
                             <article class="product-card" key={product.pricebookEntryId}>
                                 <div class="product-visual">
