@@ -1,0 +1,119 @@
+<template>
+    <section class="bulk-order-page">
+        <div class="bulk-hero">
+            <div>
+                <p class="section-kicker">PARTNER ORDERING</p>
+                <h1>Bulk Order</h1>
+                <p>Build a large order from product codes and quantities without selecting a customer account.</p>
+            </div>
+            <div class="hero-icon" aria-hidden="true">
+                <lightning-icon icon-name="utility:upload" size="medium" alternative-text=""></lightning-icon>
+            </div>
+        </div>
+
+        <div class="bulk-layout">
+            <article class="bulk-card input-card">
+                <div class="card-heading">
+                    <div>
+                        <p class="eyebrow">QUICK ORDER</p>
+                        <h2>Enter your order lines</h2>
+                        <p>Use Product Code and Quantity. You can paste spreadsheet rows or upload a CSV file.</p>
+                    </div>
+                    <button class="secondary-button" type="button" onclick={downloadTemplate} disabled={isLoading}>
+                        <lightning-icon icon-name="utility:download" size="xx-small" alternative-text=""></lightning-icon>
+                        Download Template
+                    </button>
+                </div>
+
+                <div class="format-note">
+                    <div class="format-icon">
+                        <lightning-icon icon-name="utility:info" size="xx-small" alternative-text=""></lightning-icon>
+                    </div>
+                    <div>
+                        <strong>Supported format</strong>
+                        <p>CSV, comma-separated text, or tab-separated rows copied directly from Excel or Google Sheets.</p>
+                    </div>
+                </div>
+
+                <div class="upload-area">
+                    <lightning-input
+                        type="file"
+                        label="Upload CSV"
+                        accept=".csv,.txt"
+                        onchange={handleFileChange}
+                        disabled={isLoading}>
+                    </lightning-input>
+                </div>
+
+                <div class="divider"><span>OR ENTER MANUALLY</span></div>
+
+                <lightning-textarea
+                    label="Order lines"
+                    value={bulkInput}
+                    onchange={handleInputChange}
+                    disabled={isLoading}
+                    rows="12"
+                    placeholder="Product Code,Quantity\nGC1020,25\nIN7020,10">
+                </lightning-textarea>
+
+                <div class="example-block">
+                    <span>Example</span>
+                    <code>GC1020,25</code>
+                    <code>IN7020,10</code>
+                </div>
+
+                <template if:true={errorMessage}>
+                    <div class="error-message" role="alert">
+                        <lightning-icon icon-name="utility:error" size="x-small" alternative-text="Error"></lightning-icon>
+                        <span>{errorMessage}</span>
+                    </div>
+                </template>
+
+                <div class="action-row">
+                    <button class="primary-button" type="button" onclick={addBulkOrderToCart} disabled={isLoading}>
+                        <template if:true={isLoading}>
+                            <lightning-spinner alternative-text="Building cart" size="x-small"></lightning-spinner>
+                        </template>
+                        <lightning-icon icon-name="utility:cart" size="x-small" alternative-text=""></lightning-icon>
+                        <span>{actionLabel}</span>
+                    </button>
+                </div>
+            </article>
+
+            <aside class="bulk-card guide-card">
+                <p class="eyebrow">HOW IT WORKS</p>
+                <h2>Order in three steps</h2>
+
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div>
+                        <h3>Prepare your list</h3>
+                        <p>Enter the Salesforce Product Codes and the quantities you need.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div>
+                        <h3>Validate the products</h3>
+                        <p>The portal checks every code against the active Partner catalog before changing your cart.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div>
+                        <h3>Build your cart</h3>
+                        <p>All requested quantities are added to your existing cart in one action.</p>
+                    </div>
+                </div>
+
+                <div class="partner-note">
+                    <lightning-icon icon-name="utility:lock" size="x-small" alternative-text=""></lightning-icon>
+                    <div>
+                        <strong>Partner ordering</strong>
+                        <p>This workflow uses the logged-in Partner context. No customer account selection is required.</p>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </section>
+</template>
