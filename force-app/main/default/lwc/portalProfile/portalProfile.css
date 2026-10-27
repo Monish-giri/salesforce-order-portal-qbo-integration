@@ -1,0 +1,267 @@
+:host {
+    display: block;
+}
+
+.profile-trigger {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    min-width: 0;
+    padding: 0.25rem 0.15rem 0.25rem 0.85rem;
+    border: 0;
+    border-left: 1px solid #e6eaf0;
+    background: transparent;
+    color: #172033;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.profile-trigger:hover .profile-name {
+    color: #0b5cab;
+}
+
+.avatar,
+.large-avatar {
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    overflow: hidden;
+    border-radius: 50%;
+    background: #eaf3ff;
+}
+
+.avatar {
+    width: 2.35rem;
+    height: 2.35rem;
+}
+
+.avatar img,
+.large-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-copy {
+    min-width: 0;
+}
+
+.profile-name,
+.profile-label {
+    display: block;
+}
+
+.profile-name {
+    max-width: 11rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.profile-label {
+    margin-top: 0.1rem;
+    color: #667085;
+    font-size: 0.68rem;
+}
+
+.chevron {
+    margin-left: 0.1rem;
+}
+
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    background: rgba(15, 23, 42, 0.48);
+}
+
+.profile-modal {
+    width: min(48rem, 100%);
+    max-height: min(90vh, 48rem);
+    overflow: auto;
+    border: 1px solid #dce3ed;
+    border-radius: 1rem;
+    background: #ffffff;
+    box-shadow: 0 24px 70px rgba(16, 24, 40, 0.24);
+}
+
+.modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.35rem 1.5rem;
+    border-bottom: 1px solid #edf0f4;
+}
+
+.section-kicker {
+    margin: 0 0 0.3rem;
+    color: #0b5cab;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+}
+
+.modal-header h2 {
+    margin: 0;
+    color: #172033;
+    font-size: 1.35rem;
+}
+
+.modal-header p:last-child {
+    margin: 0.35rem 0 0;
+    color: #667085;
+    font-size: 0.75rem;
+}
+
+.close-button {
+    display: grid;
+    width: 2.1rem;
+    height: 2.1rem;
+    place-items: center;
+    border: 0;
+    border-radius: 0.55rem;
+    background: transparent;
+    cursor: pointer;
+}
+
+.close-button:hover {
+    background: #f2f4f7;
+}
+
+.profile-content {
+    padding: 1.35rem 1.5rem 1.5rem;
+}
+
+.photo-panel {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    margin-bottom: 1.25rem;
+    border: 1px solid #dce7f3;
+    border-radius: 0.85rem;
+    background: #f8fbff;
+}
+
+.large-avatar {
+    width: 5.25rem;
+    height: 5.25rem;
+}
+
+.photo-panel h3,
+.section-heading h3 {
+    margin: 0;
+    color: #172033;
+    font-size: 0.9rem;
+}
+
+.photo-panel p,
+.section-heading p {
+    margin: 0.25rem 0 0;
+    color: #667085;
+    font-size: 0.7rem;
+    line-height: 1.45;
+}
+
+.photo-input {
+    margin-top: 0.65rem;
+}
+
+.profile-section {
+    padding: 0.1rem 0;
+}
+
+.section-heading {
+    margin-bottom: 0.75rem;
+}
+
+.address-heading {
+    margin-top: 1.15rem;
+}
+
+.form-grid {
+    display: grid;
+    gap: 0.8rem;
+}
+
+.form-grid.two-column {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.65rem;
+    margin-top: 1.35rem;
+    padding-top: 1rem;
+    border-top: 1px solid #edf0f4;
+}
+
+.cancel-button {
+    padding: 0.65rem 1rem;
+    border: 1px solid #d0d5dd;
+    border-radius: 0.6rem;
+    background: #ffffff;
+    color: #344054;
+    font: inherit;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.cancel-button:hover {
+    background: #f8fafc;
+}
+
+.error-message,
+.success-message {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding: 0.7rem 0.8rem;
+    border-radius: 0.65rem;
+    font-size: 0.72rem;
+}
+
+.error-message {
+    border: 1px solid #fecdca;
+    background: #fef3f2;
+    color: #b42318;
+}
+
+.success-message {
+    border: 1px solid #abefc6;
+    background: #ecfdf3;
+    color: #067647;
+}
+
+@media (max-width: 600px) {
+    .modal-backdrop {
+        align-items: flex-end;
+        padding: 0;
+    }
+
+    .profile-modal {
+        width: 100%;
+        max-height: 94vh;
+        border-radius: 1rem 1rem 0 0;
+    }
+
+    .form-grid.two-column {
+        grid-template-columns: 1fr;
+    }
+
+    .photo-panel {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}
