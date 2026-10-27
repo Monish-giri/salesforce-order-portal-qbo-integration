@@ -46,6 +46,7 @@ private class OrderSubmissionServiceTest {
 
         OrderSubmissionService.testActorAccountId = customer.Id;
         OrderSubmissionService.testContactId = contact.Id;
+        OrderSubmissionService.testIsPartner = false;
 
         Test.startTest();
         OrderSubmissionService.CheckoutContext context = OrderSubmissionService.getCheckoutContext();
@@ -59,7 +60,7 @@ private class OrderSubmissionServiceTest {
 
     @IsTest
     static void partnerCheckoutUsesPartnerAccountWithoutCustomerSelection() {
-        Account partner = new Account(Name = 'Test Partner Account', IsPartner = true);
+        Account partner = new Account(Name = 'Test Partner Account');
         insert partner;
 
         Contact contact = new Contact(
@@ -73,6 +74,7 @@ private class OrderSubmissionServiceTest {
 
         OrderSubmissionService.testActorAccountId = partner.Id;
         OrderSubmissionService.testContactId = contact.Id;
+        OrderSubmissionService.testIsPartner = true;
         OrderSubmissionService.testPricebookName = 'Order Submission Test Pricebook';
 
         Test.startTest();
@@ -107,6 +109,7 @@ private class OrderSubmissionServiceTest {
 
         OrderSubmissionService.testActorAccountId = customer.Id;
         OrderSubmissionService.testContactId = contact.Id;
+        OrderSubmissionService.testIsPartner = false;
         OrderSubmissionService.testPricebookName = 'Order Submission Test Pricebook';
 
         String cartJson = JSON.serialize(new List<Object>{
@@ -121,7 +124,8 @@ private class OrderSubmissionServiceTest {
         OrderSubmissionService.SubmissionResult result = OrderSubmissionService.submitOrder(
             cartJson,
             'test-submission-001',
-            customer.Id
+            customer.Id,
+            'Online'
         );
         Test.stopTest();
 
@@ -159,6 +163,7 @@ private class OrderSubmissionServiceTest {
 
         OrderSubmissionService.testActorAccountId = customer.Id;
         OrderSubmissionService.testContactId = contact.Id;
+        OrderSubmissionService.testIsPartner = false;
         OrderSubmissionService.testPricebookName = 'Order Submission Test Pricebook';
 
         String cartJson = JSON.serialize(new List<Object>{
@@ -190,6 +195,7 @@ private class OrderSubmissionServiceTest {
 
         OrderSubmissionService.testActorAccountId = customer.Id;
         OrderSubmissionService.testContactId = contact.Id;
+        OrderSubmissionService.testIsPartner = false;
         OrderSubmissionService.testPricebookName = 'Order Submission Test Pricebook';
 
         Test.startTest();
@@ -215,6 +221,7 @@ private class OrderSubmissionServiceTest {
 
         OrderSubmissionService.testActorAccountId = customer.Id;
         OrderSubmissionService.testContactId = contact.Id;
+        OrderSubmissionService.testIsPartner = false;
         OrderSubmissionService.testPricebookName = 'Order Submission Test Pricebook';
 
         String cartJson = JSON.serialize(new List<Object>{
@@ -222,8 +229,8 @@ private class OrderSubmissionServiceTest {
         });
 
         Test.startTest();
-        OrderSubmissionService.SubmissionResult first = OrderSubmissionService.submitOrder(cartJson, 'test-submission-duplicate', customer.Id);
-        OrderSubmissionService.SubmissionResult second = OrderSubmissionService.submitOrder(cartJson, 'test-submission-duplicate', customer.Id);
+        OrderSubmissionService.SubmissionResult first = OrderSubmissionService.submitOrder(cartJson, 'test-submission-duplicate', customer.Id, 'Online');
+        OrderSubmissionService.SubmissionResult second = OrderSubmissionService.submitOrder(cartJson, 'test-submission-duplicate', customer.Id, 'Online');
         Test.stopTest();
 
         System.assertEquals(first.orderId, second.orderId);
@@ -238,17 +245,20 @@ private class OrderSubmissionServiceTest {
         Account unrelated = new Account(Name = 'Unrelated Customer');
         insert unrelated;
         Contact contact = [SELECT Id FROM Contact WHERE Email = 'order-submission-test@example.com' LIMIT 1];
+        PricebookEntry entry = [SELECT Id FROM PricebookEntry WHERE Pricebook2.Name = 'Order Submission Test Pricebook' LIMIT 1];
 
         OrderSubmissionService.testActorAccountId = customer.Id;
         OrderSubmissionService.testContactId = contact.Id;
+        OrderSubmissionService.testIsPartner = false;
         OrderSubmissionService.testPricebookName = 'Order Submission Test Pricebook';
 
         Test.startTest();
         try {
             OrderSubmissionService.submitOrder(
-                JSON.serialize(new List<Object>{new Map<String, Object>{'pricebookEntryId' => '01u000000000000AAA', 'quantity' => 1}}),
+                JSON.serialize(new List<Object>{new Map<String, Object>{'pricebookEntryId' => String.valueOf(entry.Id), 'quantity' => 1}}),
                 'test-submission-unauthorized',
-                unrelated.Id
+                unrelated.Id,
+                'Online'
             );
             System.assert(false, 'Expected authorization failure.');
         } catch (AuraHandledException ex) {
