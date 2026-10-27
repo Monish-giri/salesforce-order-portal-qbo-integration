@@ -1,6 +1,5 @@
 import { LightningElement, api } from 'lwc';
 import getProductsByCodes from '@salesforce/apex/PortalCatalogService.getProductsByCodes';
-import TEMPLATE_URL from '@salesforce/resourceUrl/PartnerBulkOrderTemplate';
 
 export default class PortalBulkOrder extends LightningElement {
     @api cartItems = [];
@@ -10,8 +9,6 @@ export default class PortalBulkOrder extends LightningElement {
     errorMessage;
     addedLineCount = 0;
     addedQuantity = 0;
-
-    templateUrl = TEMPLATE_URL;
 
     get actionLabel() {
         return this.isLoading ? 'Building Cart...' : 'Add Bulk Order to Cart';
@@ -41,6 +38,21 @@ export default class PortalBulkOrder extends LightningElement {
             this.errorMessage = 'The CSV file could not be read. Please try again.';
         };
         reader.readAsText(file);
+    }
+
+    downloadTemplate() {
+        const templateContent = 'Product Code,Quantity\nGC1020,25\nIN7020,10';
+        const blob = new Blob([templateContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+
+        anchor.href = url;
+        anchor.download = 'partner-bulk-order-template.csv';
+        anchor.style.display = 'none';
+        document.body.appendChild(anchor);
+        anchor.click();
+        document.body.removeChild(anchor);
+        URL.revokeObjectURL(url);
     }
 
     parseInput() {
