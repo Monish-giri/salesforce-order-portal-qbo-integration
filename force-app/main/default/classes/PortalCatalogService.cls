@@ -130,6 +130,59 @@ public with sharing class PortalCatalogService {
         return new CatalogResponse(products, effectivePageSize, entries.size() == effectivePageSize, audience);
     }
 
+    @AuraEnabled(cacheable=true)
+    public static List<CatalogProduct> getProductsByCodes(List<String> productCodes) {
+        String audience = resolveAudience();
+        Boolean isPartner = audience == 'Partner';
+        String pricebookName = Test.isRunningTest() && testPricebookName != null
+            ? testPricebookName
+            : resolvePricebookName(audience);
+
+        if (String.isBlank(pricebookName)) {
+            throw new AuraHandledException('No active catalog configuration is available for your portal audience.');
+        }
+
+        Pricebook2 configuredPricebook = getConfiguredPricebook(pricebookName);
+        if (configuredPricebook == null) {
+            throw new AuraHandledException('The configured catalog pricebook could not be found or is inactive.');
+        }
+
+        Set<String> normalizedCodes = new Set<String>();
+        if (productCodes != null) {
+            for (String code : productCodes) {
+                if (!String.isBlank(code)) {
+                    normalizedCodes.add(code.trim());
+                }
+            }
+        }
+
+        if (normalizedCodes.isEmpty()) {
+            return new List<CatalogProduct>();
+        }
+
+        List<PricebookEntry> entries = [
+            SELECT Id, Product2Id, UnitPrice,
+                   Product2.Name, Product2.ProductCode,
+                   Product2.Description, Product2.Family,
+                   Product2.Cloudinary_Image_URLs__c,
+                   Product2.Recommended_Retail_Price__c
+            FROM PricebookEntry
+            WHERE Pricebook2Id = :configuredPricebook.Id
+              AND IsActive = true
+              AND Product2.IsActive = true
+              AND Product2.ProductCode IN :normalizedCodes
+            WITH USER_MODE
+            ORDER BY Product2.Name
+        ];
+
+        List<CatalogProduct> products = new List<CatalogProduct>();
+        for (PricebookEntry entry : entries) {
+            products.add(new CatalogProduct(entry, isPartner));
+        }
+
+        return products;
+    }
+
     private static String resolveAudience() {
         return UserInfo.getUserType() == PARTNER_USER_TYPE ? 'Partner' : 'Customer';
     }
