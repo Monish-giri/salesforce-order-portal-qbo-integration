@@ -1,0 +1,348 @@
+:host {
+    display: block;
+}
+
+.bulk-order-page {
+    min-width: 0;
+}
+
+.bulk-hero {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    min-height: 9.5rem;
+    margin-bottom: 1rem;
+    padding: 1.5rem 1.65rem;
+    border: 1px solid #dce7f3;
+    border-radius: 1rem;
+    background: linear-gradient(135deg, #ffffff 0%, #f1f7fd 100%);
+    box-shadow: 0 7px 22px rgba(16, 24, 40, 0.05);
+}
+
+.bulk-hero h1 {
+    margin: 0;
+    color: #172033;
+    font-size: clamp(1.45rem, 2.5vw, 2rem);
+    line-height: 1.15;
+}
+
+.bulk-hero p:last-child {
+    max-width: 46rem;
+    margin: 0.55rem 0 0;
+    color: #667085;
+    font-size: 0.82rem;
+    line-height: 1.55;
+}
+
+.section-kicker,
+.eyebrow {
+    margin: 0 0 0.35rem;
+    color: #0b5cab;
+    font-size: 0.66rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+}
+
+.hero-icon {
+    display: grid;
+    width: 5rem;
+    height: 5rem;
+    flex: 0 0 auto;
+    place-items: center;
+    border: 1px solid #b7d8f5;
+    border-radius: 1.25rem;
+    background: #eaf3ff;
+}
+
+.hero-icon lightning-icon {
+    --slds-c-icon-color-foreground-default: #0b5cab;
+}
+
+.bulk-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.55fr) minmax(17rem, 0.75fr);
+    gap: 1rem;
+    align-items: start;
+}
+
+.bulk-card {
+    border: 1px solid #dfe5ee;
+    border-radius: 1rem;
+    background: #ffffff;
+    box-shadow: 0 7px 20px rgba(16, 24, 40, 0.045);
+}
+
+.input-card {
+    padding: 1.35rem;
+}
+
+.card-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.card-heading h2,
+.guide-card h2 {
+    margin: 0;
+    color: #172033;
+    font-size: 1.05rem;
+}
+
+.card-heading p:last-child {
+    max-width: 38rem;
+    margin: 0.4rem 0 0;
+    color: #667085;
+    font-size: 0.72rem;
+    line-height: 1.5;
+}
+
+.secondary-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex: 0 0 auto;
+    padding: 0.55rem 0.75rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 0.6rem;
+    background: #ffffff;
+    color: #344054;
+    font: inherit;
+    font-size: 0.68rem;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.secondary-button:hover {
+    border-color: #9eb9d5;
+    background: #f8fafc;
+}
+
+.format-note {
+    display: flex;
+    gap: 0.7rem;
+    margin-top: 1.15rem;
+    padding: 0.85rem 0.9rem;
+    border: 1px solid #dce7f3;
+    border-radius: 0.75rem;
+    background: #f7fbff;
+}
+
+.format-icon {
+    display: grid;
+    width: 2rem;
+    height: 2rem;
+    flex: 0 0 auto;
+    place-items: center;
+    border-radius: 0.55rem;
+    background: #e1effd;
+}
+
+.format-icon lightning-icon {
+    --slds-c-icon-color-foreground-default: #0b5cab;
+}
+
+.format-note strong {
+    color: #344054;
+    font-size: 0.7rem;
+}
+
+.format-note p {
+    margin: 0.15rem 0 0;
+    color: #667085;
+    font-size: 0.67rem;
+    line-height: 1.45;
+}
+
+.upload-area {
+    margin-top: 1rem;
+    padding: 0.95rem;
+    border: 1px dashed #b9c7d8;
+    border-radius: 0.75rem;
+    background: #fbfcfe;
+}
+
+.divider {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 1.1rem 0 0.75rem;
+    color: #98a2b3;
+    font-size: 0.58rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+}
+
+.divider::before,
+.divider::after {
+    content: '';
+    height: 1px;
+    flex: 1;
+    background: #e5e7eb;
+}
+
+.example-block {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem;
+    margin-top: 0.75rem;
+}
+
+.example-block span {
+    margin-right: 0.2rem;
+    color: #98a2b3;
+    font-size: 0.62rem;
+    font-weight: 700;
+}
+
+.example-block code {
+    padding: 0.3rem 0.45rem;
+    border: 1px solid #e4e7ec;
+    border-radius: 0.35rem;
+    background: #f8fafc;
+    color: #344054;
+    font-size: 0.63rem;
+}
+
+.error-message {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.55rem;
+    margin-top: 0.9rem;
+    padding: 0.75rem 0.8rem;
+    border: 1px solid #fecdca;
+    border-radius: 0.65rem;
+    background: #fff6f5;
+    color: #b42318;
+    font-size: 0.68rem;
+    line-height: 1.45;
+}
+
+.action-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 1.1rem;
+}
+
+.primary-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-width: 12rem;
+    min-height: 2.65rem;
+    padding: 0.65rem 1rem;
+    border: 0;
+    border-radius: 0.65rem;
+    background: #0b5cab;
+    color: #ffffff;
+    font: inherit;
+    font-size: 0.72rem;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 5px 12px rgba(11, 92, 171, 0.18);
+}
+
+.primary-button:hover {
+    background: #094f91;
+}
+
+.primary-button:disabled,
+.secondary-button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.guide-card {
+    padding: 1.35rem;
+}
+
+.step {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1.15rem;
+}
+
+.step-number {
+    display: grid;
+    width: 1.85rem;
+    height: 1.85rem;
+    flex: 0 0 auto;
+    place-items: center;
+    border-radius: 50%;
+    background: #eaf3ff;
+    color: #0b5cab;
+    font-size: 0.7rem;
+    font-weight: 900;
+}
+
+.step h3 {
+    margin: 0;
+    color: #344054;
+    font-size: 0.73rem;
+}
+
+.step p {
+    margin: 0.25rem 0 0;
+    color: #667085;
+    font-size: 0.66rem;
+    line-height: 1.5;
+}
+
+.partner-note {
+    display: flex;
+    gap: 0.6rem;
+    margin-top: 1.35rem;
+    padding: 0.8rem;
+    border: 1px solid #dce7f3;
+    border-radius: 0.7rem;
+    background: #f7fbff;
+}
+
+.partner-note lightning-icon {
+    --slds-c-icon-color-foreground-default: #0b5cab;
+}
+
+.partner-note strong {
+    color: #344054;
+    font-size: 0.68rem;
+}
+
+.partner-note p {
+    margin: 0.2rem 0 0;
+    color: #667085;
+    font-size: 0.63rem;
+    line-height: 1.45;
+}
+
+@media (max-width: 900px) {
+    .bulk-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 600px) {
+    .bulk-hero {
+        min-height: auto;
+    }
+
+    .hero-icon {
+        display: none;
+    }
+
+    .card-heading {
+        flex-direction: column;
+    }
+
+    .secondary-button,
+    .primary-button {
+        width: 100%;
+    }
+
+    .action-row {
+        justify-content: stretch;
+    }
+}
