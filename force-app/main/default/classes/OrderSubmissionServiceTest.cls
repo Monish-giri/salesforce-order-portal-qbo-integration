@@ -58,6 +58,48 @@ private class OrderSubmissionServiceTest {
     }
 
     @IsTest
+    static void partnerCheckoutUsesPartnerAccountWithoutCustomerSelection() {
+        Account partner = new Account(Name = 'Test Partner Account', IsPartner = true);
+        insert partner;
+
+        Contact contact = new Contact(
+            LastName = 'Partner Portal User',
+            AccountId = partner.Id,
+            Email = 'partner-order-submission-test@example.com'
+        );
+        insert contact;
+
+        PricebookEntry entry = [SELECT Id FROM PricebookEntry WHERE Pricebook2.Name = 'Order Submission Test Pricebook' LIMIT 1];
+
+        OrderSubmissionService.testActorAccountId = partner.Id;
+        OrderSubmissionService.testContactId = contact.Id;
+        OrderSubmissionService.testPricebookName = 'Order Submission Test Pricebook';
+
+        Test.startTest();
+        OrderSubmissionService.CheckoutContext context = OrderSubmissionService.getCheckoutContext();
+        OrderSubmissionService.SubmissionResult result = OrderSubmissionService.submitOrder(
+            JSON.serialize(new List<Object>{
+                new Map<String, Object>{
+                    'pricebookEntryId' => String.valueOf(entry.Id),
+                    'quantity' => 25
+                }
+            }),
+            'test-partner-bulk-order',
+            null,
+            'Invoice'
+        );
+        Test.stopTest();
+
+        System.assertEquals(true, context.isPartner);
+        System.assertEquals(partner.Id, context.defaultOrderAccountId);
+        System.assertEquals(partner.Name, context.defaultOrderAccountName);
+        System.assertEquals(0, context.customerAccounts.size());
+        System.assertEquals(partner.Id, [SELECT AccountId FROM Order WHERE Id = :result.orderId].AccountId);
+        System.assertEquals(partner.Id, [SELECT Placed_By_Account__c FROM Order WHERE Id = :result.orderId].Placed_By_Account__c);
+        System.assertEquals('Invoice', result.paymentMethod);
+    }
+
+    @IsTest
     static void submitsOrderUsingServerSidePricingAndQuantity() {
         Account customer = [SELECT Id, Name FROM Account WHERE Name = 'Test Direct Customer' LIMIT 1];
         Contact contact = [SELECT Id FROM Contact WHERE Email = 'order-submission-test@example.com' LIMIT 1];
