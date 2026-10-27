@@ -1,6 +1,7 @@
 public with sharing class OrderSubmissionService {
     @TestVisible private static Id testContactId;
     @TestVisible private static Id testActorAccountId;
+    @TestVisible private static Boolean testIsPartner;
     @TestVisible private static String testPricebookName;
 
     public class CustomerOption {
@@ -44,27 +45,10 @@ public with sharing class OrderSubmissionService {
         result.actorAccountId = actor.account.Id;
         result.actorAccountName = actor.account.Name;
         result.isPartner = actor.account.IsPartner;
-
-        if (actor.account.IsPartner) {
-            // Partner orders are placed by the partner account itself.
-            // Customer accounts are intentionally not presented for selection.
-            result.defaultOrderAccountId = actor.account.Id;
-            result.defaultOrderAccountName = actor.account.Name;
-        } else {
-            result.defaultOrderAccountId = actor.account.Id;
-            result.defaultOrderAccountName = actor.account.Name;
-        }
+        result.defaultOrderAccountId = actor.account.Id;
+        result.defaultOrderAccountName = actor.account.Name;
 
         return result;
-    }
-
-    @AuraEnabled
-    public static SubmissionResult submitOrder(
-        String cartJson,
-        String submissionKey,
-        Id orderForAccountId
-    ) {
-        return submitOrder(cartJson, submissionKey, orderForAccountId, 'Online');
     }
 
     @AuraEnabled
@@ -187,10 +171,7 @@ public with sharing class OrderSubmissionService {
             Payment_Method__c = normalizedPaymentMethod
         );
 
-        Database.SaveResult orderResult = Database.insert(
-            newOrder,
-            AccessLevel.SYSTEM_MODE
-        );
+        Database.SaveResult orderResult = Database.insert(newOrder, AccessLevel.SYSTEM_MODE);
 
         if (!orderResult.isSuccess()) {
             throw new AuraHandledException(orderResult.getErrors()[0].getMessage());
@@ -213,10 +194,7 @@ public with sharing class OrderSubmissionService {
             expectedTotal += entry.UnitPrice * quantity;
         }
 
-        Database.SaveResult[] itemResults = Database.insert(
-            orderItems,
-            AccessLevel.SYSTEM_MODE
-        );
+        Database.SaveResult[] itemResults = Database.insert(orderItems, AccessLevel.SYSTEM_MODE);
 
         for (Database.SaveResult itemResult : itemResults) {
             if (!itemResult.isSuccess()) {
@@ -225,26 +203,19 @@ public with sharing class OrderSubmissionService {
         }
 
         newOrder.Status = 'Activated';
-
-        Database.SaveResult activationResult = Database.update(
-            newOrder,
-            AccessLevel.SYSTEM_MODE
-        );
+        Database.SaveResult activationResult = Database.update(newOrder, AccessLevel.SYSTEM_MODE);
 
         if (!activationResult.isSuccess()) {
             throw new AuraHandledException(activationResult.getErrors()[0].getMessage());
         }
 
         Database.SaveResult eventResult = EventBus.publish(
-            new Order_Invoice_Request__e(
-                Order_Id__c = String.valueOf(newOrder.Id)
-            )
+            new Order_Invoice_Request__e(Order_Id__c = String.valueOf(newOrder.Id))
         );
 
         if (!eventResult.isSuccess()) {
             throw new AuraHandledException(
-                'Failed to publish invoice request event: ' +
-                eventResult.getErrors()[0].getMessage()
+                'Failed to publish invoice request event: ' + eventResult.getErrors()[0].getMessage()
             );
         }
 
@@ -259,7 +230,9 @@ public with sharing class OrderSubmissionService {
     }
 
     private static String normalizePaymentMethod(String paymentMethod, String audience) {
-        String value = String.isBlank(paymentMethod) ? 'Online' : paymentMethod.trim();
+        String value = String.isBlank(paymentMethod)
+            ? (audience == 'Partner' ? 'Invoice' : 'Online')
+            : paymentMethod.trim();
 
         if (audience == 'Partner') {
             if (value != 'Invoice') {
@@ -286,12 +259,16 @@ public with sharing class OrderSubmissionService {
                 WITH SYSTEM_MODE
                 LIMIT 1
             ];
+            if (testIsPartner != null) {
+                actor.account = actor.account.clone(false, true, false, false);
+                actor.account.put('IsPartner', testIsPartner);
+            }
             actor.contactId = testContactId;
             return actor;
         }
 
         User currentUser = [
-            SELECT ContactId, Contact.AccountId, Contact.Account.Name, Contact.Account.IsPartner
+            SELECT ContactId, Contact.AccountId
             FROM User
             WHERE Id = :UserInfo.getUserId()
             WITH SYSTEM_MODE
@@ -303,25 +280,24 @@ public with sharing class OrderSubmissionService {
         }
 
         actor.contactId = currentUser.ContactId;
-        actor.account = new Account(
-            Id = currentUser.Contact.AccountId,
-            Name = currentUser.Contact.Account.Name,
-            IsPartner = currentUser.Contact.Account.IsPartner
-        );
+        actor.account = [
+            SELECT Id, Name, IsPartner
+            FROM Account
+            WHERE Id = :currentUser.Contact.AccountId
+            WITH SYSTEM_MODE
+            LIMIT 1
+        ];
 
         return actor;
     }
 
     private static Account resolveAuthorizedOrderAccount(Account actorAccount, Id orderForAccountId) {
-        if (!actorAccount.IsPartner) {
-            if (orderForAccountId != actorAccount.Id) {
-                throw new AuraHandledException('You can only place orders for your own account.');
-            }
-            return actorAccount;
+        if (!actorAccount.IsPartner && orderForAccountId != actorAccount.Id) {
+            throw new AuraHandledException('You can only place orders for your own account.');
         }
 
-        // Partners purchase under their own account. The customer account is never selected
-        // or accepted as the Order.AccountId for portal orders.
+        // Partners always place portal orders against their own Partner Account.
+        // No customer account selection is accepted for Partner checkout.
         return actorAccount;
     }
 
