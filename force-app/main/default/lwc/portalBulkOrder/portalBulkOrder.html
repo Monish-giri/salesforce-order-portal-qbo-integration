@@ -19,10 +19,14 @@
                         <h2>Enter your order lines</h2>
                         <p>Use Product Code and Quantity. You can paste spreadsheet rows or upload a CSV file.</p>
                     </div>
-                    <button class="secondary-button" type="button" onclick={downloadTemplate} disabled={isLoading}>
+                    <a
+                        class="secondary-button"
+                        href={templateUrl}
+                        download="partner-bulk-order-template.csv"
+                        target="_self">
                         <lightning-icon icon-name="utility:download" size="xx-small" alternative-text=""></lightning-icon>
                         Download Template
-                    </button>
+                    </a>
                 </div>
 
                 <div class="format-note">
