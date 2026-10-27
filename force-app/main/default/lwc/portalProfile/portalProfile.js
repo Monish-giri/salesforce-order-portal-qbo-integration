@@ -106,10 +106,11 @@ export default class PortalProfile extends LightningElement {
         });
     }
 
-    handleSaveSuccess() {
+    async handleSaveSuccess() {
         this.errorMessage = undefined;
-        this.successMessage = 'Profile details saved successfully.';
-        refreshApex(this.wiredUserResult);
+        this.successMessage = undefined;
+        await refreshApex(this.wiredUserResult);
+        this.closeProfile();
     }
 
     handleSaveError(event) {
