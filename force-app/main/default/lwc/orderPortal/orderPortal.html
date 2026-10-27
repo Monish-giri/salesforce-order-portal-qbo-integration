@@ -36,6 +36,12 @@
                         <lightning-icon icon-name="utility:product" size="x-small" alternative-text=""></lightning-icon>
                         <span>Catalog</span>
                     </button>
+                    <template if:true={isPartner}>
+                        <button class={bulkOrderNavClass} type="button" data-section="bulkOrder" onclick={handleNavigation}>
+                            <lightning-icon icon-name="utility:upload" size="x-small" alternative-text=""></lightning-icon>
+                            <span>Bulk Order</span>
+                        </button>
+                    </template>
                     <button class="nav-item" type="button" onclick={openCart}>
                         <lightning-icon icon-name="utility:cart" size="x-small" alternative-text=""></lightning-icon>
                         <span>Cart</span>
@@ -79,6 +85,13 @@
                         cart-items={cartItems}
                         oncartquantitychange={handleCartQuantityChange}>
                     </c-portal-catalog>
+                </template>
+
+                <template if:true={isBulkOrder}>
+                    <c-portal-bulk-order
+                        cart-items={cartItems}
+                        oncartquantitychange={handleCartQuantityChange}>
+                    </c-portal-bulk-order>
                 </template>
 
                 <template if:true={isCart}>
