@@ -1,0 +1,111 @@
+<template>
+    <button class="profile-trigger" type="button" onclick={openProfile} aria-label="Open your profile">
+        <span class="avatar">
+            <template if:true={photoUrl}>
+                <img src={photoUrl} alt="Profile photo" />
+            </template>
+            <template if:false={photoUrl}>
+                <lightning-icon icon-name="utility:user" size="x-small" alternative-text=""></lightning-icon>
+            </template>
+        </span>
+        <span class="profile-copy">
+            <span class="profile-name">{displayName}</span>
+            <span class="profile-label">Portal account</span>
+        </span>
+        <lightning-icon class="chevron" icon-name="utility:chevrondown" size="xx-small" alternative-text=""></lightning-icon>
+    </button>
+
+    <template if:true={isOpen}>
+        <section class="modal-backdrop" role="presentation" onclick={handleBackdropClick}>
+            <div class="profile-modal" role="dialog" aria-modal="true" aria-labelledby="profile-title" onclick={stopPropagation}>
+                <div class="modal-header">
+                    <div>
+                        <p class="section-kicker">YOUR PROFILE</p>
+                        <h2 id="profile-title">Profile settings</h2>
+                        <p>Keep your portal details up to date.</p>
+                    </div>
+                    <button class="close-button" type="button" onclick={closeProfile} title="Close profile">
+                        <lightning-icon icon-name="utility:close" size="x-small" alternative-text="Close"></lightning-icon>
+                    </button>
+                </div>
+
+                <div class="profile-content">
+                    <div class="photo-panel">
+                        <div class="large-avatar">
+                            <template if:true={photoUrl}>
+                                <img src={photoUrl} alt="Your profile photo" />
+                            </template>
+                            <template if:false={photoUrl}>
+                                <lightning-icon icon-name="utility:user" size="medium" alternative-text=""></lightning-icon>
+                            </template>
+                        </div>
+                        <div>
+                            <h3>Profile picture</h3>
+                            <p>JPG, PNG or GIF. Maximum 5 MB.</p>
+                            <lightning-input
+                                class="photo-input"
+                                type="file"
+                                label="Choose a new picture"
+                                accept=".jpg,.jpeg,.png,.gif"
+                                onchange={handlePhotoChange}
+                                disabled={isUploadingPhoto}>
+                            </lightning-input>
+                            <template if:true={isUploadingPhoto}>
+                                <lightning-spinner alternative-text="Updating profile picture" size="small"></lightning-spinner>
+                            </template>
+                        </div>
+                    </div>
+
+                    <div class="profile-section">
+                        <div class="section-heading">
+                            <h3>Personal information</h3>
+                            <p>Your name is stored on the Salesforce User record.</p>
+                        </div>
+                        <lightning-record-edit-form
+                            record-id={userId}
+                            object-api-name="User"
+                            onsuccess={handleSaveSuccess}
+                            onerror={handleSaveError}>
+                            <div class="form-grid two-column">
+                                <lightning-input-field field-name="FirstName"></lightning-input-field>
+                                <lightning-input-field field-name="LastName"></lightning-input-field>
+                            </div>
+
+                            <div class="section-heading address-heading">
+                                <h3>Address</h3>
+                                <p>This address is saved directly to the Salesforce User record.</p>
+                            </div>
+                            <div class="form-grid">
+                                <lightning-input-field field-name="Street"></lightning-input-field>
+                            </div>
+                            <div class="form-grid two-column">
+                                <lightning-input-field field-name="City"></lightning-input-field>
+                                <lightning-input-field field-name="State"></lightning-input-field>
+                                <lightning-input-field field-name="PostalCode"></lightning-input-field>
+                                <lightning-input-field field-name="Country"></lightning-input-field>
+                            </div>
+
+                            <div class="form-actions">
+                                <button class="cancel-button" type="button" onclick={closeProfile}>Cancel</button>
+                                <lightning-button variant="brand" type="submit" label="Save Changes"></lightning-button>
+                            </div>
+                        </lightning-record-edit-form>
+                    </div>
+
+                    <template if:true={errorMessage}>
+                        <div class="error-message" role="alert">
+                            <lightning-icon icon-name="utility:error" size="x-small" alternative-text="Error"></lightning-icon>
+                            <span>{errorMessage}</span>
+                        </div>
+                    </template>
+                    <template if:true={successMessage}>
+                        <div class="success-message" role="status">
+                            <lightning-icon icon-name="utility:success" size="x-small" alternative-text="Success"></lightning-icon>
+                            <span>{successMessage}</span>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </section>
+    </template>
+</template>
