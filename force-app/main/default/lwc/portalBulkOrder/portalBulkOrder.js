@@ -48,10 +48,21 @@ export default class PortalBulkOrder extends LightningElement {
         const blob = new Blob([this.templateContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const anchor = document.createElement('a');
+
         anchor.href = url;
         anchor.download = 'partner-bulk-order-template.csv';
+        anchor.style.display = 'none';
+
+        // Append the anchor before clicking it. This prevents Experience Cloud/LWS
+        // from treating the blob URL as navigation instead of a file download.
+        document.body.appendChild(anchor);
         anchor.click();
-        URL.revokeObjectURL(url);
+
+        // Give the browser time to start the download before releasing the blob URL.
+        window.setTimeout(() => {
+            anchor.remove();
+            URL.revokeObjectURL(url);
+        }, 1000);
     }
 
     parseInput() {
