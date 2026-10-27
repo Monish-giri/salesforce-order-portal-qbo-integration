@@ -6,9 +6,21 @@
                 <h2>{catalogTitle}</h2>
                 <p class="subtitle">{catalogSubtitle}</p>
             </div>
-            <div class="result-badge">
-                <span>{products.length}</span>
-                <span>available</span>
+            <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;justify-content:flex-end;">
+                <template if:true={isPartner}>
+                    <button
+                        type="button"
+                        onclick={openQuickOrder}
+                        style="display:inline-flex;align-items:center;gap:0.45rem;padding:0.55rem 0.8rem;border:1px solid #0b5cab;border-radius:0.6rem;background:#ffffff;color:#0b5cab;font-size:0.68rem;font-weight:800;cursor:pointer;white-space:nowrap;box-shadow:0 1px 2px rgba(16,24,40,0.06);"
+                        title="Create a bulk order using product codes and quantities">
+                        <lightning-icon icon-name="utility:upload" size="xx-small" alternative-text=""></lightning-icon>
+                        <span>Quick Order / CSV</span>
+                    </button>
+                </template>
+                <div class="result-badge">
+                    <span>{products.length}</span>
+                    <span>available</span>
+                </div>
             </div>
         </div>
 
