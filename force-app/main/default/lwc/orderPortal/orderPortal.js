@@ -2,8 +2,9 @@ import { LightningElement, wire } from 'lwc';
 import USER_ID from '@salesforce/user/Id';
 import { getRecord, getFieldValue } from 'lightning/uiRecordApi';
 import USER_NAME from '@salesforce/schema/User.Name';
+import USER_TYPE from '@salesforce/schema/User.UserType';
 
-const USER_FIELDS = [USER_NAME];
+const USER_FIELDS = [USER_NAME, USER_TYPE];
 
 export default class OrderPortal extends LightningElement {
     activeSection = 'catalog';
@@ -17,6 +18,10 @@ export default class OrderPortal extends LightningElement {
 
     get userName() {
         return getFieldValue(this.userRecord?.data, USER_NAME) || 'Portal User';
+    }
+
+    get isPartner() {
+        return getFieldValue(this.userRecord?.data, USER_TYPE) === 'PowerPartner';
     }
 
     get cartCount() {
@@ -36,6 +41,14 @@ export default class OrderPortal extends LightningElement {
 
     get isCatalog() {
         return this.activeSection === 'catalog' && !this.showCart;
+    }
+
+    get isBulkOrder() {
+        return this.activeSection === 'bulkOrder'
+            && this.isPartner
+            && !this.showCart
+            && !this.showCheckout
+            && !this.isOrderConfirmation;
     }
 
     get isCart() {
@@ -59,19 +72,30 @@ export default class OrderPortal extends LightningElement {
     }
 
     get isComingSoon() {
-        return !this.isCatalog && !this.isCart && !this.isCheckout && !this.isOrderConfirmation && !this.isOrders && !this.isReturns;
+        return !this.isCatalog
+            && !this.isBulkOrder
+            && !this.isCart
+            && !this.isCheckout
+            && !this.isOrderConfirmation
+            && !this.isOrders
+            && !this.isReturns;
     }
 
     get sectionTitle() {
         const titles = {
             orders: 'My Orders',
-            returns: 'Returns'
+            returns: 'Returns',
+            bulkOrder: 'Bulk Order'
         };
         return titles[this.activeSection] || 'Portal';
     }
 
     get catalogNavClass() {
         return this.navClass('catalog');
+    }
+
+    get bulkOrderNavClass() {
+        return this.navClass('bulkOrder');
     }
 
     get ordersNavClass() {
