@@ -18,7 +18,9 @@ private class OrderSubmissionServiceTest {
         Product2 product = new Product2(
             Name = 'Test Product',
             ProductCode = 'TEST-ORDER-001',
-            IsActive = true
+            IsActive = true,
+            Stock_Quantity__c = 1000,
+            Minimum_Wholesale_Quantity__c = 10
         );
         insert product;
 
@@ -237,6 +239,71 @@ private class OrderSubmissionServiceTest {
         System.assertEquals(true, second.alreadySubmitted);
         System.assertEquals('Online', second.paymentMethod);
         System.assertEquals(1, [SELECT COUNT() FROM Order WHERE Submission_Key__c = 'test-submission-duplicate']);
+        System.assertEquals(998, [SELECT Stock_Quantity__c FROM Product2 WHERE ProductCode = 'TEST-ORDER-001'].Stock_Quantity__c);
+    }
+
+    @IsTest
+    static void partnerOrderEnforcesMinimumWholesaleQuantity() {
+        Account partner = new Account(Name = 'Minimum Quantity Partner', IsPartner = true);
+        insert partner;
+        Contact contact = new Contact(LastName = 'Partner', AccountId = partner.Id, Email = 'minimum-partner@example.com');
+        insert contact;
+        PricebookEntry entry = [SELECT Id FROM PricebookEntry WHERE Pricebook2.Name = 'Order Submission Test Pricebook' LIMIT 1];
+
+        OrderSubmissionService.testActorAccountId = partner.Id;
+        OrderSubmissionService.testContactId = contact.Id;
+        OrderSubmissionService.testIsPartner = true;
+        OrderSubmissionService.testPricebookName = 'Order Submission Test Pricebook';
+
+        Test.startTest();
+        try {
+            OrderSubmissionService.submitOrder(
+                JSON.serialize(new List<Object>{new Map<String, Object>{'pricebookEntryId' => String.valueOf(entry.Id), 'quantity' => 9}}),
+                'test-b2b-below-minimum',
+                null,
+                'Invoice'
+            );
+            System.assert(false, 'Expected minimum wholesale quantity rejection.');
+        } catch (AuraHandledException ex) {
+            System.assert(ex.getMessage().contains('minimum wholesale quantity'));
+        }
+        Test.stopTest();
+
+        System.assertEquals(1000, [SELECT Stock_Quantity__c FROM Product2 WHERE ProductCode = 'TEST-ORDER-001'].Stock_Quantity__c);
+        System.assertEquals(0, [SELECT COUNT() FROM Order WHERE Submission_Key__c = 'test-b2b-below-minimum']);
+    }
+
+    @IsTest
+    static void rejectsOrderWhenStockIsInsufficient() {
+        Product2 product = [SELECT Id, Stock_Quantity__c FROM Product2 WHERE ProductCode = 'TEST-ORDER-001' LIMIT 1];
+        product.Stock_Quantity__c = 3;
+        update product;
+
+        Account customer = [SELECT Id FROM Account WHERE Name = 'Test Direct Customer' LIMIT 1];
+        Contact contact = [SELECT Id FROM Contact WHERE Email = 'order-submission-test@example.com' LIMIT 1];
+        PricebookEntry entry = [SELECT Id FROM PricebookEntry WHERE Pricebook2.Name = 'Order Submission Test Pricebook' LIMIT 1];
+
+        OrderSubmissionService.testActorAccountId = customer.Id;
+        OrderSubmissionService.testContactId = contact.Id;
+        OrderSubmissionService.testIsPartner = false;
+        OrderSubmissionService.testPricebookName = 'Order Submission Test Pricebook';
+
+        Test.startTest();
+        try {
+            OrderSubmissionService.submitOrder(
+                JSON.serialize(new List<Object>{new Map<String, Object>{'pricebookEntryId' => String.valueOf(entry.Id), 'quantity' => 4}}),
+                'test-insufficient-stock',
+                customer.Id,
+                'Online'
+            );
+            System.assert(false, 'Expected insufficient stock rejection.');
+        } catch (AuraHandledException ex) {
+            System.assert(ex.getMessage().contains('Insufficient stock'));
+        }
+        Test.stopTest();
+
+        System.assertEquals(3, [SELECT Stock_Quantity__c FROM Product2 WHERE Id = :product.Id].Stock_Quantity__c);
+        System.assertEquals(0, [SELECT COUNT() FROM Order WHERE Submission_Key__c = 'test-insufficient-stock']);
     }
 
     @IsTest
