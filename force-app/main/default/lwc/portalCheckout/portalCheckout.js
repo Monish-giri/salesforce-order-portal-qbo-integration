@@ -137,7 +137,9 @@ export default class PortalCheckout extends LightningElement {
     }
 
     async handlePlaceOrder() {
-        if (!this.cartItems.length || !this.selectedAccountId) {
+        // Once Salesforce has created the order, the parent clears the cart.
+        // A payment retry must continue with submittedOrder rather than require cart items.
+        if ((!this.cartItems.length && !this.submittedOrder) || !this.selectedAccountId) {
             this.errorMessage = 'Select a customer account before placing the order.';
             return;
         }
@@ -169,6 +171,11 @@ export default class PortalCheckout extends LightningElement {
             if (this.selectedPaymentMethod === 'Online') {
                 if (!this.submittedOrder) {
                     this.submittedOrder = await this.createSalesforceOrder();
+                    // Clear the parent cart immediately after Salesforce confirms the order.
+                    // Keep this checkout instance and submittedOrder for invoice/payment retries.
+                    this.dispatchEvent(new CustomEvent('ordercreated', {
+                        detail: this.submittedOrder
+                    }));
                 }
                 await this.waitForInvoiceAndStartPayment();
                 return;
