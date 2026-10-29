@@ -161,6 +161,57 @@ public with sharing class OrderSubmissionService {
             throw new AuraHandledException('One or more cart products are no longer available at the configured price.');
         }
 
+        // Lock the product rows before checking stock so simultaneous checkouts
+        // cannot both consume the same available quantity.
+        Set<Id> productIds = new Set<Id>();
+        for (PricebookEntry entry : entriesById.values()) {
+            productIds.add(entry.Product2Id);
+        }
+
+        Map<Id, Product2> productsById = new Map<Id, Product2>([
+            SELECT Id, Name, Stock_Quantity__c, Minimum_Wholesale_Quantity__c
+            FROM Product2
+            WHERE Id IN :productIds
+            WITH SYSTEM_MODE
+            FOR UPDATE
+        ]);
+
+        Map<Id, Integer> requestedByProduct = new Map<Id, Integer>();
+        for (Id entryId : pricebookEntryIds) {
+            PricebookEntry entry = entriesById.get(entryId);
+            Integer quantity = quantitiesByEntry.get(entryId);
+            Product2 product = productsById.get(entry.Product2Id);
+
+            if (product == null) {
+                throw new AuraHandledException('One or more cart products could not be validated.');
+            }
+
+            if (actor.isPartner) {
+                Integer minimumQuantity = product.Minimum_Wholesale_Quantity__c == null
+                    ? 1
+                    : product.Minimum_Wholesale_Quantity__c.intValue();
+                if (quantity < minimumQuantity) {
+                    throw new AuraHandledException(
+                        product.Name + ' requires a minimum wholesale quantity of ' + minimumQuantity + '.'
+                    );
+                }
+            }
+
+            Integer totalRequested = requestedByProduct.containsKey(product.Id)
+                ? requestedByProduct.get(product.Id) + quantity
+                : quantity;
+            requestedByProduct.put(product.Id, totalRequested);
+
+            Integer availableStock = product.Stock_Quantity__c == null
+                ? 0
+                : product.Stock_Quantity__c.intValue();
+            if (totalRequested > availableStock) {
+                throw new AuraHandledException(
+                    'Insufficient stock for ' + product.Name + '. Available: ' + availableStock + '.'
+                );
+            }
+        }
+
         Order newOrder = new Order(
             AccountId = orderAccount.Id,
             EffectiveDate = Date.today(),
@@ -200,6 +251,27 @@ public with sharing class OrderSubmissionService {
         for (Database.SaveResult itemResult : itemResults) {
             if (!itemResult.isSuccess()) {
                 throw new AuraHandledException(itemResult.getErrors()[0].getMessage());
+            }
+        }
+
+        // Deduct stock only after the order lines have been inserted successfully.
+        // Any later exception rolls back the order, stock changes, and invoice event together.
+        List<Product2> productsToUpdate = new List<Product2>();
+        for (Id productId : requestedByProduct.keySet()) {
+            Product2 product = productsById.get(productId);
+            Integer availableStock = product.Stock_Quantity__c == null
+                ? 0
+                : product.Stock_Quantity__c.intValue();
+            product.Stock_Quantity__c = availableStock - requestedByProduct.get(productId);
+            productsToUpdate.add(product);
+        }
+
+        Database.SaveResult[] stockResults = Database.update(productsToUpdate, AccessLevel.SYSTEM_MODE);
+        for (Database.SaveResult stockResult : stockResults) {
+            if (!stockResult.isSuccess()) {
+                throw new AuraHandledException(
+                    'Unable to reserve product stock: ' + stockResult.getErrors()[0].getMessage()
+                );
             }
         }
 
