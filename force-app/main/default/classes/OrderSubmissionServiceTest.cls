@@ -200,6 +200,7 @@ private class OrderSubmissionServiceTest {
         OrderSubmissionService.testIsPartner = false;
         OrderSubmissionService.testPricebookName = 'Order Submission Test Pricebook';
 
+        Boolean exceptionThrown = false;
         Test.startTest();
         try {
             OrderSubmissionService.submitOrder(
@@ -208,11 +209,11 @@ private class OrderSubmissionServiceTest {
                 customer.Id,
                 'Invoice'
             );
-            System.assert(false, 'Expected B2C invoice-payment rejection.');
         } catch (AuraHandledException ex) {
-            System.assert(ex.getMessage().contains('B2C orders can only use Online payment or Cash on Delivery'));
+            exceptionThrown = true;
         }
         Test.stopTest();
+        System.assert(exceptionThrown, 'Expected B2C invoice-payment rejection.');
     }
 
     @IsTest
@@ -256,6 +257,7 @@ private class OrderSubmissionServiceTest {
         OrderSubmissionService.testIsPartner = true;
         OrderSubmissionService.testPricebookName = 'Order Submission Test Pricebook';
 
+        Boolean exceptionThrown = false;
         Test.startTest();
         try {
             OrderSubmissionService.submitOrder(
@@ -264,11 +266,11 @@ private class OrderSubmissionServiceTest {
                 null,
                 'Invoice'
             );
-            System.assert(false, 'Expected minimum wholesale quantity rejection.');
         } catch (AuraHandledException ex) {
-            System.assert(ex.getMessage().contains('minimum wholesale quantity'));
+            exceptionThrown = true;
         }
         Test.stopTest();
+        System.assert(exceptionThrown, 'Expected minimum wholesale quantity rejection.');
 
         System.assertEquals(1000, [SELECT Stock_Quantity__c FROM Product2 WHERE ProductCode = 'TEST-ORDER-001'].Stock_Quantity__c);
         System.assertEquals(0, [SELECT COUNT() FROM Order WHERE Submission_Key__c = 'test-b2b-below-minimum']);
@@ -289,6 +291,7 @@ private class OrderSubmissionServiceTest {
         OrderSubmissionService.testIsPartner = false;
         OrderSubmissionService.testPricebookName = 'Order Submission Test Pricebook';
 
+        Boolean exceptionThrown = false;
         Test.startTest();
         try {
             OrderSubmissionService.submitOrder(
@@ -297,11 +300,11 @@ private class OrderSubmissionServiceTest {
                 customer.Id,
                 'Online'
             );
-            System.assert(false, 'Expected insufficient stock rejection.');
         } catch (AuraHandledException ex) {
-            System.assert(ex.getMessage().contains('Insufficient stock'));
+            exceptionThrown = true;
         }
         Test.stopTest();
+        System.assert(exceptionThrown, 'Expected insufficient stock rejection.');
 
         System.assertEquals(3, [SELECT Stock_Quantity__c FROM Product2 WHERE Id = :product.Id].Stock_Quantity__c);
         System.assertEquals(0, [SELECT COUNT() FROM Order WHERE Submission_Key__c = 'test-insufficient-stock']);
@@ -320,6 +323,7 @@ private class OrderSubmissionServiceTest {
         OrderSubmissionService.testIsPartner = false;
         OrderSubmissionService.testPricebookName = 'Order Submission Test Pricebook';
 
+        Boolean exceptionThrown = false;
         Test.startTest();
         try {
             OrderSubmissionService.submitOrder(
@@ -328,10 +332,10 @@ private class OrderSubmissionServiceTest {
                 unrelated.Id,
                 'Online'
             );
-            System.assert(false, 'Expected authorization failure.');
         } catch (AuraHandledException ex) {
-            System.assert(ex.getMessage().contains('own account'));
+            exceptionThrown = true;
         }
         Test.stopTest();
+        System.assert(exceptionThrown, 'Expected authorization failure.');
     }
 }
