@@ -239,12 +239,13 @@ private class OrderSubmissionServiceTest {
         System.assertEquals(true, second.alreadySubmitted);
         System.assertEquals('Online', second.paymentMethod);
         System.assertEquals(1, [SELECT COUNT() FROM Order WHERE Submission_Key__c = 'test-submission-duplicate']);
-        System.assertEquals(998, [SELECT Stock_Quantity__c FROM Product2 WHERE ProductCode = 'TEST-ORDER-001'].Stock_Quantity__c);
+        Product2 stockAfterRetry = [SELECT Stock_Quantity__c FROM Product2 WHERE ProductCode = 'TEST-ORDER-001' LIMIT 1];
+        System.assertEquals(998, stockAfterRetry.Stock_Quantity__c);
     }
 
     @IsTest
     static void partnerOrderEnforcesMinimumWholesaleQuantity() {
-        Account partner = new Account(Name = 'Minimum Quantity Partner', IsPartner = true);
+        Account partner = new Account(Name = 'Minimum Quantity Partner');
         insert partner;
         Contact contact = new Contact(LastName = 'Partner', AccountId = partner.Id, Email = 'minimum-partner@example.com');
         insert contact;
