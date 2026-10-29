@@ -159,6 +159,7 @@
                 <template if:true={isCheckout}>
                     <c-portal-checkout
                         cart-items={cartItems}
+                        onordercreated={handleOrderCreated}
                         onordersubmitted={handleOrderSubmitted}
                         onbacktocart={handleCheckoutBack}>
                     </c-portal-checkout>
