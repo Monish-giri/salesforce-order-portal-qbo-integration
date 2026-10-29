@@ -145,6 +145,12 @@ export default class OrderPortal extends LightningElement {
         this.showCart = true;
     }
 
+    handleOrderCreated() {
+        // The Salesforce order now exists. Clear the submitted cart immediately,
+        // but keep checkout mounted so invoice readiness and payment can be retried.
+        this.cartItems = [];
+    }
+
     handleOrderSubmitted(event) {
         this.orderConfirmation = event.detail;
         this.cartItems = [];
