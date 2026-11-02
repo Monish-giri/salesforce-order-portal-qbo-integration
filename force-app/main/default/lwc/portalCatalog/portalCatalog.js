@@ -30,6 +30,7 @@ export default class PortalCatalog extends LightningElement {
     previewTimers = new Map();
     previewTransitionTimers = new Map();
     _cartItems = [];
+    activeProceedProductId;
 
     @api
     get cartItems() {
@@ -150,6 +151,7 @@ export default class PortalCatalog extends LightningElement {
                 ...product,
                 cartQuantity,
                 isInCart: cartQuantity > 0,
+                isProceedToCart: this.activeProceedProductId === product.pricebookEntryId,
                 isSingleQuantity: cartQuantity === 1,
                 quantityDecreaseTitle: cartQuantity === 1 ? 'Remove from cart' : 'Decrease quantity',
                 quantityDecreaseLabel: cartQuantity === 1 ? 'Remove from cart' : 'Decrease quantity'
@@ -383,6 +385,8 @@ export default class PortalCatalog extends LightningElement {
     handleAddToCart(event) {
         const pricebookEntryId = event.currentTarget.dataset.id;
         this.dispatchCartQuantityChange(pricebookEntryId, 1);
+        this.activeProceedProductId = pricebookEntryId;
+        this.syncCartQuantities();
     }
 
     handleProceedToCart() {
@@ -398,6 +402,8 @@ export default class PortalCatalog extends LightningElement {
         }
 
         this.dispatchCartQuantityChange(pricebookEntryId, product.cartQuantity);
+        this.activeProceedProductId = pricebookEntryId;
+        this.syncCartQuantities();
     }
 
     handleIncreaseQuantity(event) {
@@ -419,7 +425,12 @@ export default class PortalCatalog extends LightningElement {
             return;
         }
 
-        this.dispatchCartQuantityChange(pricebookEntryId, Math.max(0, product.cartQuantity - 1));
+        const nextQuantity = Math.max(0, product.cartQuantity - 1);
+        this.dispatchCartQuantityChange(pricebookEntryId, nextQuantity);
+        if (nextQuantity === 0 && this.activeProceedProductId === pricebookEntryId) {
+            this.activeProceedProductId = undefined;
+        }
+        this.syncCartQuantities();
     }
 
     handleQuantityInput(event) {
@@ -438,6 +449,7 @@ export default class PortalCatalog extends LightningElement {
         }
 
         this.dispatchCartQuantityChange(pricebookEntryId, value);
+        this.syncCartQuantities();
     }
 
     dispatchCartQuantityChange(pricebookEntryId, quantity) {
