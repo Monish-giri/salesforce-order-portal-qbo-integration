@@ -156,10 +156,8 @@
 
 /* Corporate hover preview: larger, elevated, positioned above the product name. */
 .image-preview {
-    position: absolute;
-    z-index: 100;
-    bottom: calc(100% + 0.85rem);
-    left: 0;
+    position: fixed;
+    z-index: 10000;
     width: min(31rem, 42vw);
     height: 22rem;
     box-sizing: border-box;
