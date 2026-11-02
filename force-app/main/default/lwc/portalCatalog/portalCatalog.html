@@ -139,7 +139,7 @@
                                         </div>
                                     </div>
 
-                                    <template if:false={product.isInCart}>
+                                    <template if:false={product.isProceedToCart}>
                                         <lightning-button
                                             label="Add to cart"
                                             variant="brand"
@@ -148,7 +148,7 @@
                                         </lightning-button>
                                     </template>
 
-                                    <template if:true={product.isInCart}>
+                                    <template if:true={product.isProceedToCart}>
                                         <div class="quantity-panel" style="grid-column: 2;">
                                             <div class="quantity-controls" aria-label="Product quantity control">
                                                 <button
@@ -191,23 +191,12 @@
                                                 </span>
                                             </div>
 
-                                            <template if:true={product.isProceedToCart}>
-                                                <lightning-button
-                                                    class="confirm-cart-button"
-                                                    label="Proceed to cart"
-                                                    variant="brand"
-                                                    onclick={handleProceedToCart}>
-                                                </lightning-button>
-                                            </template>
-                                            <template if:false={product.isProceedToCart}>
-                                                <lightning-button
-                                                    class="confirm-cart-button"
-                                                    label="Add to cart"
-                                                    variant="brand"
-                                                    data-id={product.pricebookEntryId}
-                                                    onclick={handleAddSelectedQuantityToCart}>
-                                                </lightning-button>
-                                            </template>
+                                            <lightning-button
+                                                class="confirm-cart-button"
+                                                label="Proceed to cart"
+                                                variant="brand"
+                                                onclick={handleProceedToCart}>
+                                            </lightning-button>
                                         </div>
                                     </template>
                                 </div>
