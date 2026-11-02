@@ -177,21 +177,10 @@ export default class PortalCatalog extends LightningElement {
         }
 
         const contentRect = event.currentTarget.getBoundingClientRect();
-        const viewportPadding = 12;
-        const previewWidth = Math.min(496, Math.floor(window.innerWidth * 0.42), window.innerWidth - (viewportPadding * 2));
-        const previewHeight = Math.min(352, window.innerHeight - (viewportPadding * 2));
-        const left = Math.max(
-            viewportPadding,
-            Math.min(contentRect.left, window.innerWidth - previewWidth - viewportPadding)
-        );
-        const preferredTop = contentRect.top - previewHeight - viewportPadding;
-        const top = preferredTop >= viewportPadding
-            ? preferredTop
-            : Math.min(
-                window.innerHeight - previewHeight - viewportPadding,
-                contentRect.bottom + viewportPadding
-            );
-        const previewStyle = `position:fixed;left:${left}px;top:${Math.max(viewportPadding, top)}px;width:${previewWidth}px;height:${previewHeight}px;`;
+        const previewWidth = Math.min(496, Math.floor(window.innerWidth * 0.42));
+        const rightOverflow = contentRect.left + previewWidth - window.innerWidth + 16;
+        const leftOffset = rightOverflow > 0 ? -rightOverflow : 0;
+        const previewStyle = `left:${leftOffset}px;`;
 
         this.products = this.products.map((item) =>
             item.pricebookEntryId === pricebookEntryId
@@ -209,40 +198,14 @@ export default class PortalCatalog extends LightningElement {
 
     handleProductMouseLeave(event) {
         const pricebookEntryId = event.currentTarget.dataset.id;
-        this.schedulePreviewHide(pricebookEntryId);
-    }
 
-    handlePreviewMouseEnter(event) {
-        const pricebookEntryId = event.currentTarget.dataset.id;
-        this.cancelPreviewHide(pricebookEntryId);
-        this.startHoverCarousel(pricebookEntryId);
-    }
+        this.stopHoverCarousel(pricebookEntryId);
 
-    handlePreviewMouseLeave(event) {
-        const pricebookEntryId = event.currentTarget.dataset.id;
-        this.schedulePreviewHide(pricebookEntryId, 80);
-    }
-
-    schedulePreviewHide(pricebookEntryId, delay = 260) {
-        this.cancelPreviewHide(pricebookEntryId);
-        const timer = window.setTimeout(() => {
-            this.stopHoverCarousel(pricebookEntryId);
-            this.products = this.products.map((product) =>
-                product.pricebookEntryId === pricebookEntryId
-                    ? { ...product, isImagePreviewVisible: false }
-                    : product
-            );
-            this.previewTransitionTimers.delete(pricebookEntryId);
-        }, delay);
-        this.previewTransitionTimers.set(pricebookEntryId, timer);
-    }
-
-    cancelPreviewHide(pricebookEntryId) {
-        const timer = this.previewTransitionTimers.get(pricebookEntryId);
-        if (timer) {
-            window.clearTimeout(timer);
-            this.previewTransitionTimers.delete(pricebookEntryId);
-        }
+        this.products = this.products.map((product) =>
+            product.pricebookEntryId === pricebookEntryId
+                ? { ...product, isImagePreviewVisible: false }
+                : product
+        );
     }
 
     startHoverCarousel(pricebookEntryId) {
