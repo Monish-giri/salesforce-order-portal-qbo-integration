@@ -199,6 +199,15 @@
                                                     onclick={handleProceedToCart}>
                                                 </lightning-button>
                                             </template>
+                                            <template if:false={product.isProceedToCart}>
+                                                <lightning-button
+                                                    class="confirm-cart-button"
+                                                    label="Add to cart"
+                                                    variant="brand"
+                                                    data-id={product.pricebookEntryId}
+                                                    onclick={handleAddSelectedQuantityToCart}>
+                                                </lightning-button>
+                                            </template>
                                         </div>
                                     </template>
                                 </div>
