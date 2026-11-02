@@ -121,6 +121,7 @@ export default class PortalCatalog extends LightningElement {
                     currentImageIndex: 0,
                     currentImageUrl: imageUrls[0],
                     previewImageClass: 'preview-image',
+                    previewStyle: '',
                     cartQuantity,
                     isInCart: cartQuantity > 0,
                     isSingleQuantity: cartQuantity === 1,
@@ -175,11 +176,29 @@ export default class PortalCatalog extends LightningElement {
             return;
         }
 
+        const contentRect = event.currentTarget.getBoundingClientRect();
+        const viewportPadding = 12;
+        const previewWidth = Math.min(496, Math.floor(window.innerWidth * 0.42), window.innerWidth - (viewportPadding * 2));
+        const previewHeight = Math.min(352, window.innerHeight - (viewportPadding * 2));
+        const left = Math.max(
+            viewportPadding,
+            Math.min(contentRect.left, window.innerWidth - previewWidth - viewportPadding)
+        );
+        const preferredTop = contentRect.top - previewHeight - viewportPadding;
+        const top = preferredTop >= viewportPadding
+            ? preferredTop
+            : Math.min(
+                window.innerHeight - previewHeight - viewportPadding,
+                contentRect.bottom + viewportPadding
+            );
+        const previewStyle = `position:fixed;left:${left}px;top:${Math.max(viewportPadding, top)}px;width:${previewWidth}px;height:${previewHeight}px;`;
+
         this.products = this.products.map((item) =>
             item.pricebookEntryId === pricebookEntryId
                 ? {
                     ...item,
                     isImagePreviewVisible: true,
+                    previewStyle,
                     previewImageClass: 'preview-image preview-image-fade-in'
                 }
                 : item
