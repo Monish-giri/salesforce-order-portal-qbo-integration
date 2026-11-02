@@ -390,7 +390,7 @@ export default class PortalCatalog extends LightningElement {
     }
 
     handleProceedToCart() {
-        this.dispatchEvent(new CustomEvent('opencart'));
+        this.dispatchEvent(new CustomEvent('opencart', { bubbles: true, composed: true }));
     }
 
     handleAddSelectedQuantityToCart(event) {
