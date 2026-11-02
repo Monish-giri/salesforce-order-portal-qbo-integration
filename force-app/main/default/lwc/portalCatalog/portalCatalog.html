@@ -191,12 +191,14 @@
                                                 </span>
                                             </div>
 
-                                            <lightning-button
-                                                class="confirm-cart-button"
-                                                label="Proceed to cart"
-                                                variant="brand"
-                                                onclick={handleProceedToCart}>
-                                            </lightning-button>
+                                            <template if:true={product.isProceedToCart}>
+                                                <lightning-button
+                                                    class="confirm-cart-button"
+                                                    label="Proceed to cart"
+                                                    variant="brand"
+                                                    onclick={handleProceedToCart}>
+                                                </lightning-button>
+                                            </template>
                                         </div>
                                     </template>
                                 </div>
