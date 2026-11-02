@@ -87,6 +87,9 @@
                                             <div
                                                 class="image-preview"
                                                 style={product.previewStyle}
+                                                data-id={product.pricebookEntryId}
+                                                onmouseenter={handlePreviewMouseEnter}
+                                                onmouseleave={handlePreviewMouseLeave}
                                                 role="button"
                                                 tabindex="0"
                                                 title="Click to view product images"
