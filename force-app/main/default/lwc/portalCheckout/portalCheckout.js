@@ -15,6 +15,7 @@ export default class PortalCheckout extends LightningElement {
     context;
     discountSchedule = [];
     selectedAccountId;
+    selectedOrderScope = 'Self';
     selectedPaymentMethod = 'Online';
     submittedOrder;
     razorpayPaymentOrder;
@@ -36,6 +37,21 @@ export default class PortalCheckout extends LightningElement {
         return (this.context?.customerAccounts ?? []).map((account) => ({ label: account.name, value: account.id }));
     }
 
+    get partnerOrderScopeOptions() {
+        return [
+            { label: 'For my business', value: 'Self' },
+            { label: 'On behalf of a customer', value: 'Customer' }
+        ];
+    }
+
+    get isOrderingForCustomer() {
+        return this.isPartner && this.selectedOrderScope === 'Customer';
+    }
+
+    get noLinkedCustomers() {
+        return this.isOrderingForCustomer && this.customerOptions.length === 0;
+    }
+
     get paymentOptions() {
         if (this.isPartner) {
             return [
@@ -54,8 +70,11 @@ export default class PortalCheckout extends LightningElement {
     }
 
     get orderAccountName() {
+        if (this.isPartner && this.selectedOrderScope === 'Self') {
+            return this.context?.actorAccountName || 'Partner account';
+        }
         const selected = (this.context?.customerAccounts ?? []).find(account => account.id === this.selectedAccountId);
-        return selected?.name || this.context?.defaultOrderAccountName || 'Customer account';
+        return selected?.name || 'Select a customer account';
     }
 
     get itemCount() { return this.cartItems.reduce((total, item) => total + item.quantity, 0); }
@@ -107,6 +126,7 @@ export default class PortalCheckout extends LightningElement {
         try {
             this.context = await getCheckoutContext();
             this.selectedAccountId = this.context?.defaultOrderAccountId;
+            this.selectedOrderScope = 'Self';
             this.selectedPaymentMethod = this.context?.isPartner ? 'Invoice' : 'Online';
 
             if (this.context?.isPartner) {
@@ -128,7 +148,18 @@ export default class PortalCheckout extends LightningElement {
         }
     }
 
-    handleAccountChange(event) { this.selectedAccountId = event.detail.value; }
+    handleOrderScopeChange(event) {
+        this.selectedOrderScope = event.detail.value;
+        this.selectedAccountId = this.selectedOrderScope === 'Self'
+            ? this.context?.actorAccountId
+            : undefined;
+        this.errorMessage = undefined;
+    }
+
+    handleAccountChange(event) {
+        this.selectedAccountId = event.detail.value;
+        this.errorMessage = undefined;
+    }
     handlePaymentMethodChange(event) {
         this.selectedPaymentMethod = event.detail.value;
         this.submittedOrder = undefined;
@@ -140,7 +171,9 @@ export default class PortalCheckout extends LightningElement {
         // Once Salesforce has created the order, the parent clears the cart.
         // A payment retry must continue with submittedOrder rather than require cart items.
         if ((!this.cartItems.length && !this.submittedOrder) || !this.selectedAccountId) {
-            this.errorMessage = 'Select a customer account before placing the order.';
+            this.errorMessage = this.isOrderingForCustomer
+                ? 'Select the customer account you are ordering for.'
+                : 'Select the account before placing the order.';
             return;
         }
         if (!this.selectedPaymentMethod) {
