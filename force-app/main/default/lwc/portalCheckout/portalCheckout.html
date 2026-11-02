@@ -43,9 +43,29 @@
                             </div>
 
                             <template if:true={isPartner}>
-                                <div class="account-note" style="display:flex;align-items:flex-start;gap:0.65rem;padding:0.8rem 0.9rem;border:1px solid #cfe1f2;border-radius:0.7rem;background:#f5faff;">
-                                    <lightning-icon icon-name="utility:partner_fund_allocation" size="x-small" alternative-text="Partner order"></lightning-icon>
-                                    <span>Partner orders are placed under your Partner account. No customer account selection is required.</span>
+                                <div class="partner-order-selection">
+                                    <lightning-radio-group
+                                        name="partnerOrderScope"
+                                        label="Who are you purchasing for?"
+                                        options={partnerOrderScopeOptions}
+                                        value={selectedOrderScope}
+                                        type="radio"
+                                        onchange={handleOrderScopeChange}>
+                                    </lightning-radio-group>
+                                    <template if:true={isOrderingForCustomer}>
+                                        <lightning-combobox
+                                            name="customerAccount"
+                                            label="Select customer account"
+                                            placeholder="Choose a customer"
+                                            options={customerOptions}
+                                            value={selectedAccountId}
+                                            onchange={handleAccountChange}
+                                            required>
+                                        </lightning-combobox>
+                                        <template if:true={noLinkedCustomers}>
+                                            <p class="account-note">No customer accounts are currently linked to your Partner account.</p>
+                                        </template>
+                                    </template>
                                 </div>
                             </template>
 
