@@ -209,14 +209,40 @@ export default class PortalCatalog extends LightningElement {
 
     handleProductMouseLeave(event) {
         const pricebookEntryId = event.currentTarget.dataset.id;
+        this.schedulePreviewHide(pricebookEntryId);
+    }
 
-        this.stopHoverCarousel(pricebookEntryId);
+    handlePreviewMouseEnter(event) {
+        const pricebookEntryId = event.currentTarget.dataset.id;
+        this.cancelPreviewHide(pricebookEntryId);
+        this.startHoverCarousel(pricebookEntryId);
+    }
 
-        this.products = this.products.map((product) =>
-            product.pricebookEntryId === pricebookEntryId
-                ? { ...product, isImagePreviewVisible: false }
-                : product
-        );
+    handlePreviewMouseLeave(event) {
+        const pricebookEntryId = event.currentTarget.dataset.id;
+        this.schedulePreviewHide(pricebookEntryId, 80);
+    }
+
+    schedulePreviewHide(pricebookEntryId, delay = 260) {
+        this.cancelPreviewHide(pricebookEntryId);
+        const timer = window.setTimeout(() => {
+            this.stopHoverCarousel(pricebookEntryId);
+            this.products = this.products.map((product) =>
+                product.pricebookEntryId === pricebookEntryId
+                    ? { ...product, isImagePreviewVisible: false }
+                    : product
+            );
+            this.previewTransitionTimers.delete(pricebookEntryId);
+        }, delay);
+        this.previewTransitionTimers.set(pricebookEntryId, timer);
+    }
+
+    cancelPreviewHide(pricebookEntryId) {
+        const timer = this.previewTransitionTimers.get(pricebookEntryId);
+        if (timer) {
+            window.clearTimeout(timer);
+            this.previewTransitionTimers.delete(pricebookEntryId);
+        }
     }
 
     startHoverCarousel(pricebookEntryId) {
