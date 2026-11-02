@@ -124,6 +124,11 @@ export default class OrderPortal extends LightningElement {
         this.showCart = true;
     }
 
+    handleCatalogProceedToCart(event) {
+        event?.stopPropagation();
+        this.openCart();
+    }
+
     showCatalog() {
         this.orderConfirmation = undefined;
         this.showCheckout = false;
