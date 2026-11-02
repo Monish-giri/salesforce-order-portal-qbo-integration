@@ -259,8 +259,8 @@ export default class PortalCheckout extends LightningElement {
         const pathSegments = window.location.pathname.split('/').filter(Boolean);
         const sitePrefix = pathSegments[0];
         const visualforcePath = sitePrefix
-            ? `/${sitePrefix}/${sitePrefix}vforcesite/apex/RazorpayCheckoutBridge`
-            : '/vforcesite/apex/RazorpayCheckoutBridge';
+            ? `/${sitePrefix}/apex/RazorpayCheckoutBridge`
+            : '/apex/RazorpayCheckoutBridge';
 
         const params = new URLSearchParams({
             keyId: paymentOrder.keyId,
