@@ -385,6 +385,10 @@ export default class PortalCatalog extends LightningElement {
         this.dispatchCartQuantityChange(pricebookEntryId, 1);
     }
 
+    handleProceedToCart() {
+        this.dispatchEvent(new CustomEvent('opencart'));
+    }
+
     handleAddSelectedQuantityToCart(event) {
         const pricebookEntryId = event.currentTarget.dataset.id;
         const product = this.products.find(item => item.pricebookEntryId === pricebookEntryId);
