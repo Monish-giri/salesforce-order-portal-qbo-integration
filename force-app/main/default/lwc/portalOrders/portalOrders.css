@@ -599,3 +599,117 @@
         gap: 0.5rem;
     }
 }
+
+
+/* Return-request modal layout */
+.return-modal {
+    width: min(640px, 100%);
+    overflow: hidden;
+}
+
+.modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+}
+
+.return-line {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 112px;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 0.85rem 0;
+    border-bottom: 1px solid #eef2f6;
+}
+
+.return-line > div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    min-width: 0;
+}
+
+.return-line strong {
+    color: #182230;
+    font-size: 0.92rem;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
+.return-line span {
+    color: #667085;
+    font-size: 0.8rem;
+}
+
+.quantity-input {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 2.6rem;
+    padding: 0.55rem 0.7rem;
+    border: 1px solid #cfd8e3;
+    border-radius: 8px;
+    background: #fff;
+    color: #182230;
+    font: inherit;
+    text-align: center;
+}
+
+.quantity-input:focus,
+.reason-input:focus {
+    outline: 2px solid #84b8f5;
+    outline-offset: 1px;
+    border-color: #1769e0;
+}
+
+.reason-label {
+    display: block;
+    margin: 0.2rem 0 -0.55rem;
+    color: #344054;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.reason-input {
+    box-sizing: border-box;
+    display: block;
+    width: 100%;
+    min-height: 7rem;
+    padding: 0.8rem 0.9rem;
+    resize: vertical;
+    border: 1px solid #cfd8e3;
+    border-radius: 8px;
+    background: #fff;
+    color: #182230;
+    font: inherit;
+    line-height: 1.5;
+}
+
+.modal-actions {
+    align-items: center;
+    background: #fbfcfe;
+}
+
+@media (max-width: 600px) {
+    .modal-backdrop {
+        padding: 0.75rem;
+    }
+
+    .modal-header {
+        padding: 1.1rem 1rem;
+    }
+
+    .modal-body {
+        padding: 1rem;
+    }
+
+    .return-line {
+        grid-template-columns: minmax(0, 1fr) 88px;
+        gap: 0.75rem;
+    }
+
+    .modal-actions {
+        padding: 0.9rem 1rem 1rem;
+        flex-wrap: wrap;
+    }
+}
