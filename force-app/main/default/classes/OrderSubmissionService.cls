@@ -49,6 +49,18 @@ public with sharing class OrderSubmissionService {
         result.defaultOrderAccountId = actor.account.Id;
         result.defaultOrderAccountName = actor.account.Name;
 
+        if (actor.isPartner) {
+            for (Account customerAccount : [
+                SELECT Id, Name
+                FROM Account
+                WHERE Partner_Account__c = :actor.account.Id
+                WITH SYSTEM_MODE
+                ORDER BY Name
+            ]) {
+                result.customerAccounts.add(new CustomerOption(customerAccount.Id, customerAccount.Name));
+            }
+        }
+
         return result;
     }
 
@@ -363,13 +375,28 @@ public with sharing class OrderSubmissionService {
     }
 
     private static Account resolveAuthorizedOrderAccount(ActorContext actor, Id orderForAccountId) {
-        if (!actor.isPartner && orderForAccountId != actor.account.Id) {
-            throw new AuraHandledException('You can only place orders for your own account.');
+        if (orderForAccountId == actor.account.Id) {
+            return actor.account;
         }
 
-        // Partners always place portal orders against their own Partner Account.
-        // No customer account selection is accepted for Partner checkout.
-        return actor.account;
+        if (!actor.isPartner || orderForAccountId == null) {
+            throw new AuraHandledException('You can only place orders for an account you are authorized to use.');
+        }
+
+        List<Account> linkedCustomers = [
+            SELECT Id, Name
+            FROM Account
+            WHERE Id = :orderForAccountId
+              AND Partner_Account__c = :actor.account.Id
+            WITH SYSTEM_MODE
+            LIMIT 1
+        ];
+
+        if (linkedCustomers.isEmpty()) {
+            throw new AuraHandledException('The selected customer is not linked to your Partner account.');
+        }
+
+        return linkedCustomers[0];
     }
 
     private static String resolvePricebookName(String audience) {
