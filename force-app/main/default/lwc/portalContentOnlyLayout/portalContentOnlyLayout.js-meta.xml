@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>67.0</apiVersion>
+    <isExposed>true</isExposed>
+    <masterLabel>Portal Content Only Layout</masterLabel>
+    <description>Minimal Experience Cloud theme layout that renders only the page content slot. Use when the portal provides its own header and footer.</description>
+    <targets>
+        <target>lightningCommunity__Theme_Layout</target>
+    </targets>
+    <targetConfigs>
+        <targetConfig targets="lightningCommunity__Theme_Layout">
+            <property name="themeLayoutType" type="String" label="Theme Layout Type" default="Portal Content Only"/>
+        </targetConfig>
+    </targetConfigs>
+</LightningComponentBundle>
