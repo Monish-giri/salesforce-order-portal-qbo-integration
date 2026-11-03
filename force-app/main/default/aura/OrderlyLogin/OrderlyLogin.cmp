@@ -1,0 +1,25 @@
+<aura:component implements="forceCommunity:availableForAllPageTypes" access="global">
+    <div class="orderly-login-page">
+        <div class="orderly-brand">
+            <div class="orderly-mark">O</div>
+            <span>Orderly</span>
+        </div>
+
+        <section class="orderly-card">
+            <div class="orderly-eyebrow">CUSTOMER &amp; PARTNER PORTAL</div>
+            <h1>Welcome back</h1>
+            <p class="orderly-subtitle">Sign in to continue to your orders.</p>
+
+            <forceCommunity:loginForm
+                usernameLabel="Username"
+                passwordLabel="Password"
+                submitButtonLabel="Sign in"
+                showSelfRegister="false"
+                showForgotPassword="true"/>
+        </section>
+
+        <footer class="orderly-footer">
+            <span>Secure access powered by Salesforce</span>
+        </footer>
+    </div>
+</aura:component>
