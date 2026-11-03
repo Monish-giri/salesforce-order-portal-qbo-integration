@@ -8,6 +8,13 @@
             </div>
         </div>
 
+        <template if:true={isPartnerUser}>
+            <div class="orders-view-switch" role="group" aria-label="Choose which orders to view">
+                <button class={mineTabClass} type="button" data-view="mine" onclick={handleViewChange}>Orders for Me</button>
+                <button class={customersTabClass} type="button" data-view="customers" onclick={handleViewChange}>Orders for My Customers</button>
+            </div>
+        </template>
+
         <template if:true={errorMessage}>
             <div class="message error">{errorMessage}</div>
         </template>
