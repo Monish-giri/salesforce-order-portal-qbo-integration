@@ -26,7 +26,7 @@
             </div>
             <button class="orderly-submit" onclick="{!c.handleLogin}">Sign in</button>
             <div class="orderly-forgot">
-                <a href="{!$Site.BaseUrl}/secur/forgotpassword.jsp">Forgot password?</a>
+                <a href="{!$Site.BaseUrl + '/secur/forgotpassword.jsp'}">Forgot password?</a>
             </div>
         </section>
         <footer class="orderly-footer">Secure access powered by Salesforce</footer>
