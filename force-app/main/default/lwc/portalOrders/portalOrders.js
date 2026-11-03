@@ -1,5 +1,6 @@
 import { LightningElement } from 'lwc';
 import getOrders from '@salesforce/apex/PortalOrderService.getOrders';
+import isCurrentUserPartner from '@salesforce/apex/PortalOrderService.isCurrentUserPartner';
 import getOrderDetail from '@salesforce/apex/PortalOrderService.getOrderDetail';
 import createReturnRequest from '@salesforce/apex/PortalReturnRequestService.createReturnRequest';
 import createPaymentOrder from '@salesforce/apex/RazorpayPaymentService.createPaymentOrder';
@@ -17,9 +18,11 @@ export default class PortalOrders extends LightningElement {
     returnQuantities = {};
     returnSubmitting = false;
     successMessage;
+    isPartnerUser = false;
+    viewMode = 'mine';
 
     connectedCallback() {
-        this.loadOrders();
+        this.initializeOrders();
         window.addEventListener('message', this.handlePaymentMessage);
     }
 
@@ -27,12 +30,41 @@ export default class PortalOrders extends LightningElement {
         window.removeEventListener('message', this.handlePaymentMessage);
     }
 
+    async initializeOrders() {
+        this.isLoading = true;
+        try {
+            this.isPartnerUser = await isCurrentUserPartner();
+            this.viewMode = 'mine';
+            await this.loadOrders();
+        } catch (error) {
+            this.errorMessage = this.getErrorMessage(error);
+            this.orders = [];
+            this.isLoading = false;
+        }
+    }
+
+    get isMineView() { return this.viewMode === 'mine'; }
+    get isCustomersView() { return this.viewMode === 'customers'; }
+    get mineTabClass() { return this.isMineView ? 'view-tab active' : 'view-tab'; }
+    get customersTabClass() { return this.isCustomersView ? 'view-tab active' : 'view-tab'; }
+
+    async handleViewChange(event) {
+        const nextView = event.currentTarget.dataset.view;
+        if (!nextView || nextView === this.viewMode) return;
+        this.viewMode = nextView;
+        this.selectedOrder = undefined;
+        this.successMessage = undefined;
+        this.showReturnModal = false;
+        this.returnQuantities = {};
+        await this.loadOrders();
+    }
+
     async loadOrders() {
         this.isLoading = true;
         this.errorMessage = undefined;
 
         try {
-            this.orders = await getOrders();
+            this.orders = await getOrders({ viewMode: this.viewMode });
         } catch (error) {
             this.errorMessage = this.getErrorMessage(error);
             this.orders = [];
@@ -48,7 +80,7 @@ export default class PortalOrders extends LightningElement {
         this.successMessage = undefined;
 
         try {
-            this.selectedOrder = await getOrderDetail({ orderId });
+            this.selectedOrder = await getOrderDetail({ orderId, viewMode: this.viewMode });
         } catch (error) {
             this.errorMessage = this.getErrorMessage(error);
             this.selectedOrder = undefined;
@@ -314,7 +346,7 @@ export default class PortalOrders extends LightningElement {
             }
 
             this.successMessage = 'Payment completed successfully.';
-            this.selectedOrder = await getOrderDetail({ orderId: this.selectedOrder.id });
+            this.selectedOrder = await getOrderDetail({ orderId: this.selectedOrder.id, viewMode: this.viewMode });
         } catch (error) {
             this.errorMessage = this.getErrorMessage(error);
         } finally {
