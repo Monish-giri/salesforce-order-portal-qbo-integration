@@ -8,9 +8,4 @@
         <target>lightningCommunity__Page</target>
         <target>lightningCommunity__Default</target>
     </targets>
-    <targetConfigs>
-        <targetConfig targets="lightningCommunity__Page">
-            <property name="label" type="String" default="Orderly Login"/>
-        </targetConfig>
-    </targetConfigs>
 </LightningComponentBundle>
