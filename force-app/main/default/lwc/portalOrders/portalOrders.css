@@ -713,3 +713,12 @@
         flex-wrap: wrap;
     }
 }
+
+
+/* Partner order-view switch */
+.orders-view-switch { display:inline-flex; align-self:flex-start; gap:.25rem; padding:.25rem; border:1px solid #d0d5dd; border-radius:12px; background:#f8fafc; }
+.view-tab { border:0; border-radius:9px; padding:.65rem 1rem; background:transparent; color:#475467; font-size:.86rem; font-weight:600; cursor:pointer; transition:background .15s ease,color .15s ease,box-shadow .15s ease; }
+.view-tab:hover { color:#182230; }
+.view-tab.active { background:#fff; color:#175cd3; box-shadow:0 1px 3px rgba(16,24,40,.12); }
+.view-tab:focus-visible { outline:2px solid #1570ef; outline-offset:2px; }
+@media (max-width:520px) { .orders-view-switch { width:100%; } .view-tab { flex:1; padding:.6rem .45rem; font-size:.78rem; } }
