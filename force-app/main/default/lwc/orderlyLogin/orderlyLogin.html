@@ -1,0 +1,45 @@
+<template>
+    <div class="login-page">
+        <div class="login-container">
+            <div class="brand">
+                <div class="brand-mark">O</div>
+                <span>Orderly</span>
+            </div>
+            <section class="login-card">
+                <div class="eyebrow">CUSTOMER &amp; PARTNER PORTAL</div>
+                <h1>Welcome back</h1>
+                <p class="subtitle">Sign in to continue to your orders.</p>
+
+                <template if:true={errorMessage}>
+                    <div class="error-message" role="alert">{errorMessage}</div>
+                </template>
+
+                <form onsubmit={handleSubmit}>
+                    <div class="field">
+                        <label for="username">Username</label>
+                        <lightning-input data-id="username" name="username" type="text"
+                            variant="label-hidden" value={username} onchange={handleUsernameChange}
+                            placeholder="Enter your Salesforce username" required>
+                        </lightning-input>
+                    </div>
+                    <div class="field">
+                        <label for="password">Password</label>
+                        <lightning-input data-id="password" name="password" type="password"
+                            variant="label-hidden" value={password} onchange={handlePasswordChange}
+                            placeholder="Enter your password" required>
+                        </lightning-input>
+                    </div>
+                    <button class="submit-button" type="submit" disabled={isLoading}>
+                        <template if:true={isLoading}>Signing in…</template>
+                        <template if:false={isLoading}>Sign in</template>
+                    </button>
+                </form>
+
+                <div class="forgot">
+                    <a href={forgotPasswordUrl}>Forgot password?</a>
+                </div>
+            </section>
+            <footer class="footer">Secure access powered by Salesforce</footer>
+        </div>
+    </div>
+</template>
