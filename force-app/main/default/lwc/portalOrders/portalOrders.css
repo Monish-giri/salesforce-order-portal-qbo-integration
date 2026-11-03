@@ -722,3 +722,27 @@
 .view-tab.active { background:#fff; color:#175cd3; box-shadow:0 1px 3px rgba(16,24,40,.12); }
 .view-tab:focus-visible { outline:2px solid #1570ef; outline-offset:2px; }
 @media (max-width:520px) { .orders-view-switch { width:100%; } .view-tab { flex:1; padding:.6rem .45rem; font-size:.78rem; } }
+
+
+/* My Orders page heading hierarchy */
+.orders-page > .view-heading .section-kicker {
+    color: #175cd3;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    margin: 0 0 0.45rem;
+}
+.orders-page > .view-heading h1 {
+    margin: 0;
+    color: #182230;
+    font-size: 1.75rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.25;
+}
+.orders-description {
+    margin: 0.45rem 0 0;
+    color: #667085;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
