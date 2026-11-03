@@ -1,76 +1,24 @@
 .THIS {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 40px 24px;
-    box-sizing: border-box;
-    background:
-        radial-gradient(circle at 12% 12%, rgba(25, 118, 210, .12), transparent 32%),
-        radial-gradient(circle at 88% 88%, rgba(83, 151, 232, .12), transparent 30%),
-        #f4f8fc;
-    font-family: "Salesforce Sans", Arial, sans-serif;
+    min-height: 100vh; display:flex; align-items:center; justify-content:center;
+    padding:40px 24px; box-sizing:border-box;
+    background:radial-gradient(circle at 12% 12%,rgba(25,118,210,.12),transparent 32%),
+       radial-gradient(circle at 88% 88%,rgba(83,151,232,.12),transparent 30%),#f4f8fc;
+    font-family:"Salesforce Sans",Arial,sans-serif;
 }
-.THIS .orderly-login-page {
-    width: 100%;
-    max-width: 460px;
-}
-.THIS .orderly-brand {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    margin: 0 0 28px;
-    color: #16325c;
-    font-size: 25px;
-    font-weight: 700;
-    letter-spacing: -.5px;
-}
-.THIS .orderly-mark {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 42px;
-    height: 42px;
-    border-radius: 13px;
-    background: linear-gradient(135deg, #1684e8, #0756a5);
-    color: white;
-    font-size: 24px;
-    box-shadow: 0 8px 18px rgba(10, 92, 170, .22);
-}
-.THIS .orderly-card {
-    padding: 38px 36px 34px;
-    border: 1px solid #e2eaf3;
-    border-radius: 22px;
-    background: #fff;
-    box-shadow: 0 18px 50px rgba(20, 55, 100, .10);
-}
-.THIS .orderly-eyebrow {
-    color: #1473c9;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 1.8px;
-}
-.THIS h1 {
-    margin: 10px 0 8px;
-    color: #142b49;
-    font-size: 30px;
-    font-weight: 700;
-    letter-spacing: -1px;
-}
-.THIS .orderly-subtitle {
-    margin: 0 0 28px;
-    color: #64758b;
-    font-size: 14px;
-}
-.THIS .orderly-footer {
-    margin-top: 24px;
-    color: #7a8ba1;
-    font-size: 12px;
-    text-align: center;
-}
-@media (max-width: 480px) {
-    .THIS { padding: 24px 16px; }
-    .THIS .orderly-card { padding: 30px 22px; }
-    .THIS h1 { font-size: 26px; }
-}
+.THIS .orderly-login-page { width:100%; max-width:460px; }
+.THIS .orderly-brand { display:flex;align-items:center;justify-content:center;gap:12px;margin:0 0 28px;color:#16325c;font-size:25px;font-weight:700;letter-spacing:-.5px; }
+.THIS .orderly-mark { display:flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:13px;background:linear-gradient(135deg,#1684e8,#0756a5);color:#fff;font-size:24px;box-shadow:0 8px 18px rgba(10,92,170,.22); }
+.THIS .orderly-card { padding:38px 36px 34px;border:1px solid #e2eaf3;border-radius:22px;background:#fff;box-shadow:0 18px 50px rgba(20,55,100,.10); }
+.THIS .orderly-eyebrow { color:#1473c9;font-size:11px;font-weight:700;letter-spacing:1.8px; }
+.THIS h1 { margin:10px 0 8px;color:#142b49;font-size:30px;font-weight:700;letter-spacing:-1px; }
+.THIS .orderly-subtitle { margin:0 0 28px;color:#64758b;font-size:14px; }
+.THIS .orderly-field { margin:0 0 18px; }
+.THIS .orderly-field label { display:block;margin:0 0 8px;color:#30445d;font-size:13px;font-weight:600; }
+.THIS .orderly-submit { width:100%;margin-top:8px;padding:12px 18px;border:0;border-radius:10px;background:#0967b2;color:#fff;font-size:15px;font-weight:600;cursor:pointer;transition:background .15s,transform .15s; }
+.THIS .orderly-submit:hover { background:#07569a;transform:translateY(-1px); }
+.THIS .orderly-error { margin:0 0 18px;padding:12px 14px;border:1px solid #f3b8b8;border-radius:8px;background:#fff1f1;color:#a61b1b;font-size:13px; }
+.THIS .orderly-forgot { margin-top:18px;text-align:center; }
+.THIS .orderly-forgot a { color:#0967b2;text-decoration:none;font-size:13px; }
+.THIS .orderly-forgot a:hover { text-decoration:underline; }
+.THIS .orderly-footer { margin-top:24px;color:#7a8ba1;font-size:12px;text-align:center; }
+@media (max-width:480px) { .THIS{padding:24px 16px}.THIS .orderly-card{padding:30px 22px}.THIS h1{font-size:26px} }
